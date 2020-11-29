@@ -1,0 +1,18 @@
+/* A modified Lotka model (A==B) */
+
+mixed = 1;
+
+method = 1;
+
+prnmode = 0;
+
+etime = 1500.0;
+dtime=1.0;
+
+1: A + X -> 2X; k>=0.1;
+2: X + Y -> 2Y; k>=0.101;
+3: Y + A -> 2A; k>=0.1;
+
+[A](0) = 2.0;
+[X](0) = 2.0;
+[Y](0) = 2.0;

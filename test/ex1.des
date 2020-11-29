@@ -1,0 +1,43 @@
+/* Dette er en kommentar */
+(* og det er dette ogsaa *)
+
+
+etime = 10.0;    /* slut tid */
+dtime = 0.01;    /* print interval */
+
+debug = 0;       /* slaa test-udskrifter fra */
+prnmode = 1;     /* hvordan printes, 1=normal */
+
+epsr = 1.0e-10;  /* nojagtighed, relativ */
+epsa = 1.0e-10;  /* nojagtighed, absolut */
+
+method = 1;      /* losningsmetode */
+
+
+/* hvad skal printes */
+datafile = "minedata";
+#print [H2], [H(+)];
+
+/* bruger-konstanter: */
+A1 = 1.2e20;
+E1 = 70;
+
+R = 8.314;
+
+Ctotal = 5.0;
+
+
+/* reaktionerne:  */
+1: H2 + 2 O2   -> 2 H2O; v>=A*exp(-E1/(R*T))*[H2]*[O2]^2;
+2: H(+) + SO4(-2) <-> HSO4(-); k>=2.0; k<=3.0;
+T' = ...;
+
+/* stokiometrisk baand: */
+[H(+)] = Ctotal - [SO4(-2)] - [HSO4(-)];
+
+
+/* begyndelseskonc. */
+[H2](0) = 1.0;
+[O2](0) = 1.2;
+T(0) = 273;
+

@@ -1,0 +1,393 @@
+% Last updated: 18 Apr 1995
+\documentstyle[12pt]{article}
+
+\newcommand{\ie}{{\em i.e.\ }}
+\newcommand{\eg}{{\em e.g.\ }}
+\newcommand{\etc}{{\em etc.\ }}
+\newcommand{\etal}{{\em et al.\ }}
+\newcommand{\smbox}[1]{\mbox{{\footnotesize #1}}}
+\newcommand{\diff}[2]{\frac{{\rm d}#1}{{\rm d}#2}}
+\newcommand{\R}{{\rm R}}
+\newcommand{\chem}[1]{\mbox{$\rm #1$}}
+\author{Preben Graae S{\o}rensen, Finn Hynne and Keld Nielsen \\ Department of
+  Theoretical Chemistry \\ H.C. {\O}rsted Institute \\
+  Universitetsparken 5 \\ 2100 Copenhagen \\ Denmark \\
+  Kenneth Geisshirt \\ Department of Life Sciences and Chemistry \\
+  Roskilde University \\ P.O.\ Box 260 \\ 4000 Roskilde \\ Denmark} 
+\title{Yet Another Chemical Compiler}
+\date{18 April 1995}
+
+\begin{document} 
+
+%\bibliographystyle{unsrt}
+\maketitle
+
+\begin{abstract}
+  This paper describes a new chemical compiler we have developed. The
+  package consists of a program, which is able to convert a set of chemical
+  reactions into a simulation program, and solvers of differential
+  equations.
+\end{abstract}
+
+\section{Introduction}
+Many authors have reported development of chemical compilers, see \eg
+Stabler \etal \cite{Stabler78}, Carver \etal \cite{79}, Deuflhard
+\etal \cite{Deuflhard}, Ipsen \etal \cite{Ipsen91}, Edelson
+\cite{Edelson76}, Rasmussen \etal \cite{ChemSimul84}, Bieniasz
+\cite{Bieniasz92}. But they are all 
+more or less primitive compared to the one we are going to present
+here. Often they have been used in a specialised subject, \eg
+atmospheric chemistry, while our system is a general-purpose one.
+
+\section{Motivation}
+In general, problems in chemical kinetics are described by $n$
+coupled differential equations
+
+\begin{equation}
+\label{KinODE}
+  \diff{\vec{c}}{t} = \vec{f}(\vec{c}),
+\end{equation}
+with the initial concentrations $\vec{c}(0) = \vec{c}_0$.
+
+If we have $n$ species and $m$ reactions, we have $n$ differential
+equations, each with up to $m$ terms. It is not difficult to write
+down the equations from the reactions, but the probability of making
+an error is nearly 1. We human beings have one major disadvantage -
+boring work is error prone, and to write down rate expressions must be
+regarded as boring.
+
+When we automatise the process, the focus is move from writting down
+rate expressions to the actual simulations. In order words, we will
+gain in productivity in our work.
+
+Large kinetic models are difficult to work with. As already mentioned,
+the work of transforming a kinetic model into a simulation program is
+huge. In order to reduce the number of variables, many researchers apply
+the quasi steady state approximation (QSSA). But the problem is that
+the QSSA may not be valid; and this is not know in advance. A chemical
+compiler does the use of the QSSA obsolent.
+
+\section{The compiler}
+Our chemical compiler is based on a certain input language to describe
+chemical reactions. The language is formally given as an
+LALR(1)\footnote{LookAhead 1 symbol, read Left to Right.}
+grammar, see \eg Aho \etal \cite{Dragon}, Levine \etal \cite{YaccLex}
+for a more detailed description. The advantages of using such an
+abstract definition of the input format is that there exist tools
+which can generate the parser automaticly. The parser is the part of a
+compiler which read the input file and checks the syntax.
+
+Furthermore the compiler is written in ANSI-C, which means that it is
+easy to port to various Unix-based computer systems, and we have even
+ported it to MS-DOS\footnote{It can only run on i386-based computers
+or higher using a DOS-extender, \eg DJGPP or EMX.}.
+
+An input file consists of a number of sections: constants,
+reactions/equations, constraints, and initial concentrations.
+Expressions found in ordinary programming languages like Fortran-77
+and C are used, \ie we we below say an expression, think of it as an
+expression from a program.
+
+Constants are declared in the beginning of a file. The declaration is
+simply:
+
+\begin{verbatim}
+  name = 10;
+\end{verbatim}
+where {\tt name} is the name of the constant, and after the equal sign
+comes a (general) expression.
+
+The reactions are written in a natural way - natural for a chemist at
+least. An example is the reaction $\chem{H^+} + \chem{HO^-}
+\rightarrow \chem{H_2O}$ is written as
+
+\begin{verbatim}
+ 1: H(+) + HO(-) -> H2O; k>=1.0e+14;
+\end{verbatim}
+where {\tt k>=} represents the rate constant, and the number in the
+beginning of the line is the number of the reaction. If a reaction is
+written in this way, it is assumed, that it follows a rate law which
+is consistent with the law of mass
+action. But the user is able to supplied her own rate expression. The
+Michaelis-Menten mechanism consists of three reactions, Laidler
+\cite{Laidler:ChemKin}
+
+\begin{equation}
+  E + S \raisebox{-12pt}{\shortstack{$k_a$ \\ $\rightleftharpoons$ \\
+$k'_a$}} (ES) \stackrel{k_b}{\rightarrow} P+E,
+\end{equation}
+
+The rate law is
+
+\begin{equation}
+  \diff{[P]}{t} = \frac{k_b[S]}{K_M+[S]}[E]_0,
+\end{equation}
+where $K_M = \frac{k_b+k'_a}{k_a}$. The input to our compiler could be
+
+\begin{verbatim}
+ KM = (kb+ka2)/ka1;
+ 1: S -> P; v>=(kb*[S])/(KM+[S])*E0;
+\end{verbatim}
+if we assumed that the constants are declared in the input file.
+
+In many chemical models, there are constraints on the concentration of
+some species. We have chosen that all supported constraints must have
+the form
+
+\begin{equation}
+{\rm [Spec]} ={\rm  expr;}
+\end{equation}
+where {\tt [Spec]} denotes the concentration of {\tt Spec}, which is
+contrained, and {\tt expr} is an expression, which may contain the
+concentrations of other species. The constraints implemented in this
+fashion is not the same as a QSSA species. While in the QSSA the
+concentration becomes constant after a while, our constraints are
+strictly valid at all times.
+
+The last section of the file consists of initial concentrations. An
+example is
+
+\begin{verbatim}
+[H(+)] = 1.0e-7;
+\end{verbatim}
+
+A larger example of an input file is shown below. The overall reaction
+is decomposition of ozone with iron, \cite{Frank}.
+
+\begin{verbatim}
+etime = 10.0;
+dtime = 0.05;
+prnmode = 1;
+
+
+2:  Fe(+2) + O3         -> FeO(+2) + O2;             k>=8.2e5;
+3:  FeO(+2) + Fe(+2)    -> 2Fe(+3) + H2O;            k>=1.4e5;
+4:  2FeO(+2)            -> 2Fe(+3) + OH(-) + HO2(-); k>=50;
+5:  FeO(+2) + H2O2      -> Fe(+3) + HO2 + OH(-);     k>=1.0e4;
+6:  FeO(+2) + HO2       -> Fe(+3) + O2 +OH(-);       k>=2.0e6;
+11: FeO(+2)             -> Fe(+3) + OH + OH(-);      k>=1.3e-2;
+13: FeO(+2) + OH        -> Fe(+3) + HO2(-);          k>=1.0e7;
+
+[O3](0)     = 1.3e-4;
+[Fe(+2)](0) = 1.1e-4;
+[H2O2](0)   = 1.0e-5;
+\end{verbatim}
+
+\section{Symbolic versus numerical differentiation}
+Our chemical compiler is able to do symbolic differentiation of
+expression when generating the subroutines needed to do the
+simulations. It is a simple matter to do this kind of operation, if
+the rate expressions follows the law of mass action. The chemical
+compiler described here, is able to do differentiation of any
+expression. 
+
+We are able to demonstrate that the symbolic differentiation is
+better than the numerical one. Not only do we not make any
+approximation errors, we also save computer time!
+
+In the following discussion, the time of the basic operations are
+denoted by $T_{\smbox{oper}}$. By basic operations, we mean addition,
+subtraction, multiplication, division, and power-raising. If $f$ and
+$g$ are two general expression, the time of evalutating $f \mbox{ oper }
+g$ is given by
+
+\begin{eqnarray}
+    T(f\pm g) &= T(f) + T(g) + T_{\smbox{add}} \\
+    T(f\cdot g) &= T(f) + T(g) + T_{\smbox{mul}} \\
+    T\left(\frac{f}{g}\right) &= T(f) + T(g) + T_{\smbox{div}} \\
+    T(f^g) &= T(f) + T(g) + T_{\smbox{pow}},
+\end{eqnarray}
+where we have assumed that time of addition is the same as for a
+subtraction. The time to fetch a variable from the storage of the
+computer is $T_{\smbox{var}}$, while loading a constant takes
+$T_{\smbox{const}}$.
+
+Kinetics that follows the law of mass action, can be expressed as
+
+\begin{equation}
+  f_i = \sum_{r=1}^n \nu_{ir}k_r \prod_{s=1}^m c_s^{\nu_{sr}},
+\end{equation}
+and the time it takes to evaluate this is
+
+\begin{eqnarray}
+  T(f_i) &=& (2n+nm)T_{\smbox{const}} + nmT_{\smbox{var}} +
+(2n+nm)T_{\smbox{mul}} \nonumber \\  
+& & + nmT_{\smbox{pow}} + nT_{\smbox{add}}.
+\end{eqnarray}
+
+A numerical differentiation scheme is, Kincaid \etal \cite{NumAna:KC}
+
+\begin{equation}
+  \frac{\partial f_i}{c_j} \approx \frac{f_i(c_j+h) - f_i(c_j-h)}{2h}
+\equiv \frac{\delta f_i}{\delta c_j},
+\end{equation}
+while the element of the Jacobian matrix exactly is
+
+\begin{equation}
+  \frac{\partial f_i}{\partial c_j} = \sum_{r=1}^n \left(\nu_{ir} k_r
+  \left(\prod_{s=1,s\not=j}^m c_s^{\nu_{sj}}\right)
+  \nu_{ij}c_j^{\nu_{ij}-1}\right). 
+\end{equation}
+
+The time consumption for these two differentiation schemes are
+
+\begin{eqnarray}
+  T\left(\frac{\delta f_i}{\delta c_j}\right) &=& (4n + 2nm +
+  4)T_{\smbox{const}} + 
+  (2nm + 2)T_{\smbox{var}} \nonumber \\ 
+  & & + (4n+2nm+1)T_{\smbox{mul}} + T_{\smbox{div}}
+  + (2n+3)T_{\smbox{add}} + 2nmT_{\smbox{pow}}, \\
+  T\left(\frac{\partial f_i}{\partial c_j}\right) &=&
+  (nm+3n)T_{\smbox{const}} + nmT_{\smbox{var}} \nonumber \\
+  & & + nmT_{\smbox{pow}} + (mn+3n)T_{\smbox{mul}} + nT_{\smbox{add}}.
+\end{eqnarray}
+
+As we see, the symbolic scheme is in general faster than the numerical
+one. Of course it is take longer time to generate the expressions when
+the chemical compiler is running, but this we will gain during the
+simulation. 
+
+\section{Numerical procedures}
+\label{sec:NumProc}
+The compiler has been developed in order to help to do various
+numerical tasks, \ie simulations and continuations. The primary work
+area for our compiler is dynamical simulations of macroscopic chemical
+kinetics, and therefore we have spent such effort in developing
+numerical solvers for ordinary differential equations.
+
+\subsection{Ordinary differential equations}
+\label{sec:ODEs}
+The general model of chemical kinetics is
+
+\[
+  \diff{\vec{c}}{t} = \vec{f}(\vec{c}),
+\]
+where $\vec{c}$ is an $n$-dimensional vector and $\vec{f}$ is a
+general function mapping $\R^n$ onto $\R^n$. The solution is unique if
+we specify the initial conditions.
+
+In the literature of numerical analysis one can find many numerical
+schemes for solving ordinary differential equations, and we have
+selected only a few. 
+
+
+\subsection{Fourth order Runge-Kutta}
+\label{sec:RK4}
+The most simple solver is a fourth order Runge-Kutta. The method is
+described \eg by Press \etal \cite[pp.\ 710--714]{NumAna:NumRec}. 
+
+If the solution at step $n$ is $\vec{c}_n$, then the solution at $n+1$
+is computed as
+
+\begin{eqnarray*}
+  \vec{k}_1 &=& h\vec{f}(\vec{c}_n), \\
+  \vec{k}_2 &=& h\vec{f}(\vec{c}_n + \frac{\vec{k}_1}{2}), \\
+  \vec{k}_3 &=& h\vec{f}(\vec{c}_n + \frac{\vec{k}_2}{3}), \\
+  \vec{k}_4 &=& h\vec{f}(\vec{c}_n + \vec{k}_3), \\
+  \vec{c}_{n+1} &=& \vec{c}_n + \frac{\vec{k}_1}{6} +
+  \frac{\vec{k}_2}{3} + \frac{\vec{k}_3}{3} + \frac{\vec{k}_4}{6},
+\end{eqnarray*}
+where $h$ is the step length.
+
+The method is a said previously of order 4, and it cannot solve stiff
+equations.
+
+
+\subsection{Calahan}
+Calahan \cite{Calahan} has described a scheme for solving stiff
+equations. The method can be characterised as a semi-implicit third
+order Rosenbrock method.
+
+One step is given as
+
+\begin{eqnarray*}
+  \vec{k}_{n+1} &=& h \left( {\matrix{E} - h a_1
+    \matrix{J}(\vec{c}_n)} \right)^{-1} \vec{f}(\vec{c}_n), \\
+  \vec{l}_{n+1} &=& h \left( {\matrix{E} - h a_1
+    \matrix{J}(\vec{c}_n)} \right)^{-1} \vec{f}(\vec{c}_n + b_1
+  \vec{k}_{n+1}), \\
+  \vec{c}_{n+1} &=& \vec{c}_n + R_1\vec{k}_{n+1} + R_2\vec{l}_{n+1},
+\end{eqnarray*}
+where $h$ is the step length, $\matrix{J}$ is the Jacobian matrix of
+$\vec{f}$, and $\matrix{E}$ is a unit matrix.
+
+The constants are: $a_1 = \frac{3+\sqrt{3}}{6}$, $b_1 =
+-\frac{2}{\sqrt{3}}$, $R_1 = \frac{3}{4}$, and $R_2 = \frac{1}{4}$.
+
+\subsection{Fifth order Runge-Kutta}
+\label{sec:RKFNK}
+
+RKFNK
+
+\subsection{Generalised Runge-Kutta}
+\label{sec:GRK4T}
+The Runge-Kutta scheme can be extended in order to be able to handle
+stiff equations. Kaps \etal \cite{Kaps79} have deduced such a method.
+The method used is modified as outlined by Press \etal \cite[pp.\
+738--742]{NumRec}, Kaps \etal \cite{Kaps85}, and Hairer \etal
+\cite{Hairer91}.
+
+
+
+\subsection{Step control}
+\label{sec:StepControl}
+
+
+
+
+\section{Examples}
+We have tested our integrator for ordinary differential equations with
+many different test examples. The figures are running time in seconds.
+
+\begin{table}[htbp]
+  \begin{center}
+    \leavevmode
+    \begin{tabular}{lrrr}
+      \hline
+      Test & Calahan & RKFNC   & GRK4T  \\ \hline
+      A1   & 3.01    & 1.56    & 0.83   \\
+      A2   & 4.80    & 257.72  & 2.54   \\
+      A3   & 1.73    & 67.22   & 0.53   \\
+      A4   & 23.96   & 117.91  & 9.32   \\
+      B1   & 27.61   & 4.37    & 6.06   \\
+      B2   & 4.61    & 0.54    & 2.01   \\
+      B3   & 6.18    & 0.69    & 1.89   \\
+      B4   & 10.89   & 1.27    & 5.13   \\
+      B5   & 35.54   & 6.30    & 11.59  \\
+      C1   & 1.70    & 1.45    & 0.71   \\
+      C2   & 1.38    & 1.20    & 0.70   \\
+      C3   & 1.03    & 1.09    & 0.60   \\
+      C4   & 1.63    & 1.06    & 0.71   \\
+      C5   & 1.93    & 1.18    & 0.84   \\
+      D1   & 4.70    & 6.16    & 2.57   \\
+      D3   & 0.87    & 3.63    & 0.95   \\
+      D4   & 1.61    & 71.67   & 0.75   \\
+      D5   & 0.70    & 14.45   & 0.57   \\
+      D6   & 0.88    &    &        \\
+      Lorenz & 4.90  & 0.84  & 2.94   \\
+    \hline
+    \end{tabular}
+  \end{center}
+  \caption{Time measurements of misc.\ numerical schemes. The
+    measurements were done on an i486-based PC (25 MHz) running Linux
+    v1.0. The times are in seconds, and they are the total time spent
+    on the integration (user + system time).}
+  \label{tab:TimeNumScheme}
+\end{table}
+
+Since we are chemists, we have tested our new compiler with chemical
+mechanics for different reactions. We will here give a few examples
+
+
+
+\section{Conclusion}
+We have now shown the implementation of a new chemical compiler. It is
+designed in such a way, so it can be extended in the future. 
+
+The compiler and the integrators are put in the public domain, and the
+packages can be obtained from the authors. 
+
+%\bibliography{datalogi,chemkin,fyskemi,numana}
+\end{document}
+
+

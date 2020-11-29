@@ -1,0 +1,82 @@
+
+PROCEDURE GAUSE (n: INTEGER; gg: glnpbynp; pref: glnarray; 
+                 VAR m,k:INTEGER; VAR beta,b: glnarray);
+
+LABEL 2;
+(*
+CONST
+ eps = 1L-20;
+ *)
+
+
+VAR
+ irr,irk:glindx;
+ i,j,id,ir,is:INTEGER;
+ p,amax:LONGREAL;
+ xx,yy:glnarray;
+
+BEGIN
+ id:=1;
+ m:=1;
+ FOR i:=1 TO (n+1) DO
+  BEGIN
+   irk[i]:=0;
+   irr[i]:=0;
+  END;
+2:ir:=1;
+ is:=1;
+ amax:=0;
+ FOR i:=1 TO n DO
+  BEGIN
+   IF irr[i]=0 THEN
+     FOR j:=1 TO (n+1) DO
+      BEGIN
+       p:=pref[j]*abs(gg[i,j]);
+       IF (p-amax)>0 THEN
+        BEGIN
+         ir:=i;
+         is:=j;
+         amax:=p;
+        END;
+      END;
+  END;
+ IF amax<epsmach THEN m:=0;
+ IF amax<>0 THEN
+  BEGIN
+   irr[ir]:=is;
+   FOR i:=1 TO n DO
+    BEGIN
+     IF (i<>ir) AND (gg[i,is] <>0) THEN
+      BEGIN
+       p:=gg[i,is]/gg[ir,is];
+       FOR j:=1 TO (n+1) DO gg[i,j]:=gg[i,j]-p*gg[ir,j];
+       gg[i,is]:=0;
+       b[i]:=b[i]-p*b[ir];
+      END;
+    END;
+   id:=id+1;
+   IF id<=n THEN GOTO 2;
+   FOR i:=1 TO n DO
+    BEGIN
+     ir:=irr[i];
+     xx[ir]:=b[i]/gg[i,ir];
+     irk[ir]:=1;
+    END;
+   k:=0;
+   REPEAT
+    k:=k+1;
+   UNTIL irk[k]=0;
+   FOR i:=1 TO n DO
+    BEGIN
+     ir:=irr[i];
+     yy[ir]:=-gg[i,k]/gg[i,ir];
+    END;
+   FOR i:=1 TO (n+1) DO
+    BEGIN
+     b[i]:=xx[i];
+     beta[i]:=yy[i];
+    END;
+   b[k]:=0;
+   beta[k]:=0;
+  END;
+ END;  (* gause *)

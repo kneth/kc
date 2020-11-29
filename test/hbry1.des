@@ -1,0 +1,22 @@
+/* Reaction of H2 with Br2 */
+
+stime=0; dtime=50; etime=2000;
+espr=1.0e-6; epsa=1.0e-20;
+
+T   = 600; R=8.314/4.184/1000; /* kcal/grad/mol */
+k1  = (10**10)*exp(-32/R/T);
+km1 = 8.8e8;
+k2  = (10**11.43)*exp(-19.7/R/T);
+km2 = 3.00e8*exp(-2.2/R/T);
+k3  = (10**11.97)*exp(-3.7/R/T);
+km3 = (10**10.9)*exp(-41.7/R/T);
+
+method = 1;
+
+1: Br2 + M   <=> 2Br + M;   k>=k1; k<=km1;
+2: Br + H2   <=> HBr + H;   k>=k2; k<=km2;
+3: H + Br2   <=> HBr + Br;  k>=k3; k<=km3;
+
+
+[H2](0) = 0.001; [Br2](0) = 0.001;
+[M] = 0.1;

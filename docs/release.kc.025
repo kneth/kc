@@ -1,0 +1,38 @@
+Release note for Kinetic Compiler version 0.25. The version is
+released in Semtember 1993. The packages includes code written by P.G.
+Sorensen, K. Neilsen, O. Jensen (et al.) and K. Geisshirt. 
+
+The Kinetic Compiler is a front-end to various other programs. The
+main input is chemical models - a set of reactions - but ordinary
+differential equations can also be used. Below the features are
+summarised:
+
+o Models can be up to 150 reactions and each reaction can evolve up to
+  150 species.
+o The rate of the reactions can be one of the following three:
+  (i)   mass action (default)
+  (ii)  power law 
+  (iii) user-defined rate expression
+o Ordinary differential equations can be specified instead of
+  reactions, and ODE and chemical reaction can the mixed.
+o Constraints on the concentrations can be specified. This reduces
+  the dimension of the concentration spaces.
+o All manipulations of expression are done symbolically, even
+  differentiation.
+o The Kinetic Compiler generates code which can - at the moment - be
+  used to:
+  (i)   dynamical simulations, i.e. finding the concentrations as
+        function of time in a well-stirred reaction tank.
+  (ii)  calculating various properties for the model.
+  (iii) continuations with one parameter.
+  (iv)  simulations of inhomogenous reactions, i.e. diffusion-reaction
+        systems. 
+o Two manuals are written:
+  (i)   Programmer's reference manual
+  (i)   User's manual
+o Species related constants can be written into the model.
+
+The program is written in ANSI-C and uses lex and yacc. The program is
+easy to port to various platforms (tested on HP-UX and Linux). The
+program is generating some Pascal code, but p2c can be used as
+compiler for this code.

@@ -1,0 +1,8 @@
+kc -m2 < $1
+cc -Aa -o $1.exe -O RDadi2nf model.c -lm
+kc -m2 < $1
+cc -Aa -O -o $1.exe RDadi2nf.c model.c -lm
+nohup nice +19 $1.exe &
+kc -m2 < $1
+cc -Aa -O -o $1.exe RDadi2nf.c model.c -lm
+nohup nice +19 $1.exe adi2nf.ini $1 &

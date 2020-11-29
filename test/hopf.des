@@ -1,0 +1,12 @@
+etime= 60.0;
+dtime= 0.1;
+epsr= 1.0E-10;
+epsa= 1.0E-20;
+debug= 2;
+m= -0.10;
+
+x'= m*x+x*y*y-y;
+y'= x+m*y-x*x;
+
+x(0)= 1.0;
+y(0)= 1.0;

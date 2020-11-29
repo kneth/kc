@@ -1,0 +1,53 @@
+/* Test model is from "Bifurcation diagram ..." by Ipsen et al. */
+
+Ceo = 0.000833333;
+j0 = 2.77L-3;
+stime = 0;
+dtime = 10;
+etime = 6000;
+epsr = 1.0L-4;
+espa = 1.0L-20;
+
+101: HBrO2              -> P; k> = j0;
+101: Br(-)              -> P; k> = j0;
+103: CeIV               -> P; k> = j0;
+104: HOBr               -> P; k> = j0;
+105: BrO2               -> P; k> = j0;
+106: Br2                -> P; k> = j0;
+107: BrMA               -> P; k> = j0;
+109: MAR                -> P; k> = j0;
+110: MAin               -> MA; k> = j0;
+
+1:  BrO(-3) + Br(-) + 2H(+) <=> HBrO2 + HOBr; k>=0.01352/0.1/0.26/0.26; k<=3.2;
+2:  HBrO2 + Br(-) + H(+)     -> 2HOBr; k>=5.2L+5/0.26;
+3:  BrO(-3) + HBrO2 + H(+)  <=> 2BrO2 + H2O; k>=0.858/0.1/0.26; k<=4.2L+7/55.5;
+4:  BrO2 + CeIII + H(+)     <=> HBrO2 + CeIV; k>=1.612L+4/0.26; k<=7.0L+3;
+5:  2HBrO2                   -> HOBr + BrO(-3) + H(+); k>=3.0L+3;
+6:  Br(-) + HOBr + H(+)     <=> Br2 + H2O; k>=6.0L+8/0.26; k<=2/55.5;
+7:  MA + Br2                 -> BrMA + Br(-) + H(+); k>=40.0;
+8:  MA + HOBr                -> BrMA + H2O; k>=8.2;
+9:  MA + CeIV                -> MAR + CeIII + H(+); k>=0.3;
+10: BrMA + CeIV              -> CeIII + Br(-) + P; k>=30.0;
+11: HOBr                     -> P; k>=0.080;
+12: HOBr                     -> Br(-); k>=0.140;
+13: MAR + HOBr               -> Br(-) + P; k>=1.0E+7;
+14: 2MAR                     -> MA + P; k>=3.0E+9;
+15: MAR + BrMA               -> MA + Br(-) + P; k>=2.4E+4;
+16: MAR + Br2                -> BrMA + Br(-); k>=1.5L+8;
+
+[H(+)] = 0.26;
+[P] = 0;
+[H2O] = 55.5;
+[BrO(-3)] = 0.1;
+[MAin] = 0.25;
+[CeIII] = Ceo-[CeIV];
+
+[HBrO2](0) = 2.85055L-7;
+[Br(-)](0) = 1.42745L-6;
+[CeIV](0) = 2.84792L-6;
+[HOBr](0) = 6.13549L-6;
+[BrO2](0) = 3.09064L-8;
+[Br2](0) = 4.20280L-8;
+[MA](0) = 2.47010L-1;
+[BrMA](0) = 1.20977L-3;
+[MAR](0) = 3.98455L-9;

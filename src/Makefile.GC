@@ -1,0 +1,56 @@
+OBJECTS = main.o tableman.o symbmath.o codegen.o misc.o codecall.o
+NUMLIBS = eigen.o matrix.o complex.o quench.o
+YACC    = bison
+LEX     = flex
+CC      = gcc
+CFLAGS  = -O2 -D_PLATFORM_GCC_ -static -D_USE_GARBAGE_COL_
+LIBS    = -lm -lgc
+YFLAGS  = -y
+GENS    = waves.o kncont.o kgode.o conis.o mixed.o 
+RM	= rm
+RMFLAGS	= -f
+DIST    = $(PREFIX)/bin
+
+kc:  $(OBJECTS) $(GENS) $(NUMLIBS)
+	$(CC) $(CFLAGS) $(OBJECTS) $(GENS) $(NUMLIBS) $(LIBS) -o kc
+	strip kc
+	mv kc $(DIST)
+main.o: config.h parser.c lex.c main.c
+	$(CC) $(CFLAGS) -c main.c
+tableman.o: config.h tableman.c tableman.h
+	$(CC) $(CFLAGS) -c tableman.c
+parser.c: config.h kc.y lex.c
+	$(YACC) $(YFLAGS) kc.y
+	mv y.tab.c parser.c
+lex.c: kc.l 
+	$(LEX) kc.l
+	mv lex.yy.c lex.c
+symbmath.o: config.h symbmath.h symbmath.c
+	$(CC) $(CFLAGS) -c symbmath.c
+codegen.o: config.h codegen.h codegen.c
+	$(CC) $(CFLAGS) -c codegen.c
+waves.o: config.h waves.c waves.h
+	$(CC) $(CFLAGS) -c waves.c
+kncont.o: config.h kncont.h kncont.c
+	$(CC) $(CFLAGS) -c kncont.c
+kgode.o: config.h kgode.c kgode.h
+	$(CC) $(CFLAGS) -c kgode.c
+mixed.o: config.h mixed.c mixed.h
+	$(CC) $(CFLAGS) -I. -I../Solvers -c mixed.c
+misc.o: misc.c config.h misc.h
+	$(CC) $(CFLAGS) -c misc.c
+codecall.o: config.h codecall.c codecall.h 
+	$(CC) $(CFLAGS) -c codecall.c
+conis.o: config.h conis.c conis.h
+	$(CC) $(CFLAGS) -I. -I../Solvers -c conis.c
+eigen.o: ../Solvers/eigen.c ../Solvers/eigen.h
+	$(CC) $(CFLAGS) -c -I../Solvers ../Solvers/eigen.c
+matrix.o: ../Solvers/matrix.c ../Solvers/matrix.h
+	$(CC) $(CFLAGS) -c -D_PLATFORM_LINUX_ -I../Solvers ../Solvers/matrix.c
+complex.o: ../Solvers/complex.c ../Solvers/complex.h
+	$(CC) $(CFLAGS) -c -I../Solvers ../Solvers/complex.c
+quench.o: ../Solvers/quench.c ../Solvers/quench.h
+	$(CC) $(CFLAGS) -c -I../Solvers ../Solvers/quench.c
+
+clean:
+	$(RM) $(RMFLAGS) *.o parser.c lex.c

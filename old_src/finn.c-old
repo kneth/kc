@@ -1,0 +1,87 @@
+/************************************************************************* 
+  Finn - a code generator for kc. 
+  CopyWrong by Kenneth Geisshirt, 1993, 1994.
+
+  See kc.tex for details
+*************************************************************************/
+
+#include <stdio.h>
+#include <malloc.h>
+#include <time.h>
+#include "config.h"
+#include "symbmath.h"
+#include "tableman.h"
+#include "misc.h"
+#include "codegen.h"
+
+
+void Finn(void) {
+
+  double charge, temp, coeff;
+  char   *name, *rename;
+  Tree   v_temp, tmp, temp_tree;
+  int    i, j, l, react_no, finished, constraint, dyn, dyn2;
+  int    num_of_spec, max_iter;
+  double eps=1e-18; /* default value */
+  struct { double num; } jac_num[MaxSpec][MaxSpec];
+  double jac[MaxSpec][MaxSpec];
+  double c0[MaxSpec];
+
+  name=(char *)malloc(sizeof(char));
+  rename=(char *)malloc(sizeof(char));
+
+  GenerateRateExpr();
+  GenerateJacobi();
+  
+  num_of_spec=NoOfSpec()+NumOfDynVar()-NumOfConstraint(); 
+  temp=GetConstant("epsa");
+  if (GetError()==NoError) 
+    eps=temp;
+  temp=GetConstant("maxiter");
+  if (GetError()==NoError)
+    max_iter=(int)temp;
+  else
+    max_iter=30;
+
+  dyn=1;
+  for(i=1; i<=NoOfSpec(); i++) {
+    GetSpecNo(i, name, &charge);
+    if (IsSpecInConstraint(name, charge)==0) {
+      c0[dyn-1]=GetBeginConc(name, charge);
+      dyn++;
+    }
+  }
+  for(i=0; i<=NumOfDynVar(); i) {
+    GetDynVarNo(i, name);
+    c0[i+NoOfSpec()-NumOfConstraint()-1]=GetInitValue(name);
+  }
+  
+  EvalJacobian(c0, jac);
+
+  /* Printing jacobi matrix */
+  dyn=1;
+  for(i=1; i<=NoOfSpec(); i++) {
+    GetSpecNo(i, name, &charge);
+    if (IsSpecInConstraint(name, charge)==0) {
+      dyn2=1;
+      for(j=1; j<=NoOfSpec(); j++) {
+	GetSpecNo(j, name, &charge);
+	if (IsSpecInConstraint(name, charge)==0) { 
+	  printf("J(%d,%d) = %e\n", dyn, dyn2, jac_num[dyn-1][dyn2-1].num);
+          dyn2++;
+        } /* if */
+      } /* for j */
+      dyn++;
+    } /* if */
+  } /* for i */
+
+#ifdef HPUX
+  hqr2alg(num_of_spec, jac_num, max_iter, eps);
+#else
+  fprintf(stderr, "Only the Jacoby matrix could be evaluated.\n");
+#endif
+
+} /* Finn */
+
+
+

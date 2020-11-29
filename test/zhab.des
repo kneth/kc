@@ -1,0 +1,40 @@
+/* J. Phys. Chem., pp. 7578-7584, 97(29), 1993 */
+
+
+/* Rate constants at T=20C */
+
+k2  = 7.57e+6;
+km2 = 0;
+k3  = 2;
+km3 = 0;
+k4  = 8.6e+3;
+km4 = 0.0;
+k5  = 10;
+km5 = 4.2e+6;
+k6  = 1.66e+7;   /* Phen as catalyst */
+km6 = 0.3;
+k7  = 3.0e-6;
+km7 = 0;
+k9  = 5.0e-6;
+
+
+/* From fig. 4 */
+
+A  = 0.25; 
+h0 = 0.59;
+C  = 2.0e-3;
+B  = 0.016;
+q  = 0.5;
+
+
+k4star = k4*(1+0.87*h0);
+
+
+
+X' = (-k2*X+k3*A)/(k2*X+k3*A)*(q*k7*k8*(B*Z)/(k8+km7*h0*(C-Z))+k9*B)-
+        2*k4star*X*X - k5*h0*A*X + km5*U*U + k6*U*(C-Z) - km6*X*Z;
+
+U' = 2*k5*h0*A*X - 2*km5*U*U - k6*U*(C-Z) + km6*X*Z;
+
+Z' = k6*U*(C-Z) - km6*X*Z - (k7*k8*B*Z)/(k8+km7*h0*(C-Z));
+

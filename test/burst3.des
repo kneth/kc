@@ -1,0 +1,62 @@
+/* Belousov - Zhabotinsky reaction, Burst generation */
+/* k = 2.9; g = 0.42; kf6 = k*g; kf7 = k * ( 1 - g ) ; */
+/* Reduceret model, KN 27.9 1994 */
+
+dtime = 10.00; 
+etime = 20000.0; 
+htime = 0.005;
+epsr = 1.0E-4;  
+epsa = 1.0E-20;
+
+
+prnmode = 0;
+method = 4;
+stepadjust = 0.9;
+maxinc = 1.5;
+mindec = 0.5;
+htimemin = 1.0E-20;
+datafile = "burstdat1";
+
+
+/* Parameters */
+/*j0      = 8.500000L-05;*/
+C0      = 0.86L-4; 
+
+ 
+#parameter j0  = 0.85E-04, 0.0, 1.0, 1.0E-8, 0.000001, 1.0;
+#parameter C0  = 0.86E-04, 0.0, 1.0, 1.0E-8, 0.000001, 1.0;
+
+
+/* Flow terms */
+101:  HBrO2              -> P                ; k> = j0;
+102:  Br(-)              -> P                ; k> = j0;
+103:  CeIV               -> P                ; k> = j0;
+104:  HBrO               -> P                ; k> = j0;
+105:  BrO2               -> P                ; k> = j0;
+106:  BrMA               -> P                ; k> = j0;
+
+
+1:  BrO3(-) + Br(-) + 2H(+)   -> HBrO2 + HBrO          ; k> = 2.0; 
+2:  HBrO2   + Br(-) + H(+)    -> 2HBrO                 ; k> = 2.0L6;
+3:  BrO3(-) + HBrO2 + H(+)   <=> 2BrO2 + H2O           ; k> = 33.0; k< = 7.0L5;
+4:  BrO2    + CeIII + H(+)   <=> HBrO2 + CeIV          ; k> = 6.2L4;k< = 7.0L3;
+5:  2HBrO2                    -> HBrO + BrO3(-) + H(+) ; k> = 3.0L3;
+6:  HBrO    + MA              -> BrMA + H2O            ; k> = 8.2;
+7:  CeIV    + MA              -> CeIII + P             ; k> = 0.3; 
+8:  CeIV    + BrMA            -> Br(-) + CeIII         ; k> = 30.0;   
+
+[BrO3(-)] = 0.012;
+[MA]      = 0.167;
+[H(+)]    = 1.0; 
+[H2O]     = 55.5; 
+[P]       = 0.0;
+
+[CeIII]   = C0 - [CeIV];
+
+
+[HBrO2](0)   = 4.153821e-08;
+[Br(-)](0)   = 3.217686e-07;
+[CeIV](0)    = 7.906439e-07;
+[HBrO](0)    = 2.281131e-08;
+[BrO2](0)    = 5.854012e-09;
+[BrMA](0)    = 1.696279e-03;

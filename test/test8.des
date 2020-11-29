@@ -1,0 +1,6 @@
+/* Test of functions */
+
+x'=cos(t);
+t'=1;
+
+t(0)=1; x(0)=0;

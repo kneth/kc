@@ -1,0 +1,557 @@
+% Last updated: 6 Apr 1995
+\section{Introduction}
+The kinetic compiler is a program which converts a chemical model into an
+equivalent simulation program.
+
+This manual describes the kinetic compiler {\tt kc} version 1.00. The manual
+will describe the program from the user's point of view, \ie the input
+format and not the internal workings.
+
+The internals of the compiler are documented elsewhere, Geisshirt
+\cite{kc:prog}. This document can be obtained from the author.
+
+The kinetic compiler forms a language much like an ordinary programming 
+language. The only difference is the size. While real programming languages 
+are big, the kinetic compiler's is small.
+
+In this manual I will use {\tt type writing} in examples and terminals 
+in grammars. The brackets ([ and ]) will surround optional parts, 
+while curled brackets (\{ and \}) will be 0, 1 or more repetitions of a 
+part in the grammars. A vertical line ($|$) denotes a choice between 
+two grammar parts. Normal parenthesis group grammar parts.
+
+\newpage
+\section{Basics}
+In this section I will examine the basic components of {\tt kc}, \ie
+numbers, names and expressions. 
+
+\subsection{Numbers}
+In the language of {\tt kc} there is only one type of numbers. It is essential
+floating-point numbers. They have the form: \\
+\{ {\tt digit}\} [{\tt .} {\tt digit}\{{\tt digit}\} [({\tt E}$|${\tt
+e}) {\tt +} $|${\tt -} {\tt digit} {\tt digit}]
+
+The following numbers are legal:
+\begin{verbatim}
+322
+5.0
+0.1
+5.0e+10
+\end{verbatim}
+
+Negative numbers are supported as a part of the expressions instead of
+a part of the number. Please note, that the sign of the exponents have
+to be written, \eg like the last number above.
+
+\subsection{Species}
+Species are essential to the kinetic compiler. A species consists of a name
+and a charge. The ``grammar'' of a species is: \\
+{\tt name} [{\tt (} ({\tt +}$|${\tt -}) [{\tt number}]{\tt )}] 
+
+A name is a letter followed by letters and digits. The following species are
+legal:
+\begin{verbatim}
+H2O
+H(+)
+SO4(-2)
+\end{verbatim}
+
+The parenthesis is the charge of the species. A dot (.) denotes
+radicals, and if the charge is omitted, it is assumed to be zero.
+
+Capital letters and non-capital letters are {\em not} the same, \ie the
+compiler is case-sensitive. The sign of the charge must be written
+down, \ie both minus and plus signs!
+
+\subsection{Concentrations}
+Concentrations can be specified in {\tt kc}. They are written using the
+convention in chemistry, \ie a species in brackets ([ and ]). The 
+concentration of {\tt H2O} can be written as {\tt [H2O]}.
+
+\subsection{Expressions}
+Expressions are meant to implement general calculations in the
+compiler. The expressions are the same as found in ordinary
+programming languages.
+
+An expression ({\tt expr}) is defined recursively by:\\
+{\tt expr} op {\tt expr}
+
+The op is an operator. It can be one of the five operators used in
+mathematics, \ie addition, subtraction, multiplication, division,
+and power-raising.
+ 
+They are written as:
+
+\begin{center}
+\begin{tabular}{llc}
+\hline
+Operator & In {\tt kc} & Precedence \\ \hline 
+Addition & {\tt +}     & 3          \\  
+Subtraction & {\tt -}  & 3          \\  
+Multiplication & {\tt *} & 2        \\  
+Division & {\tt /}     & 2          \\ 
+Power    & {\tt **} or {\tt $\hat{}$} & 1 \\ 
+\hline
+\end{tabular}
+\end{center}
+
+Expressions can be surrounded by parenthesis, \ie {\tt ( expr )}. An 
+expression can also just be a numeric constant (a number) or a 
+symbolic constant (a name). One can in some cases also use concentrations
+in an expression, see section \ref{model}. Finally, an expression can
+change sign by {\tt - expr}. 
+
+Functions can also be used in expressions. All the usual functions are
+implemented. An application of a function has the form:
+
+\begin{verbatim}
+f ( expr )
+\end{verbatim}
+where {\tt expr} is an expression and {\tt f} is the function. The
+following functions are implemented:
+
+\begin{center}
+\begin{tabular}{ll}
+\hline
+Function & Description \\ \hline
+{\tt sin} & sine \\
+{\tt cos} & cosine \\
+{\tt tan} & tangent \\
+{\tt asin} & the inverse of sine, \ie $\sin^{-1}$ \\
+{\tt acos} & the inverse of cosine, \ie $\cos^{-1}$ \\
+{\tt atan} & the inverse of tangent, \ie $\tan^{-1}$ \\
+{\tt sinh} & hyperbolic sine \\
+{\tt cosh} & hyperbolic cosine \\
+{\tt tanh} & hyperbolic tangent \\
+{\tt asinh} & the inverse of hyperbolic sine \\
+{\tt acosh} & the inverse of hyperbolic cosine \\
+{\tt atanh} & the inverse of hyperbolic tangent \\
+{\tt exp} & the exponetial function ($e^x$) \\
+{\tt ln} & base $e$ logarithm \\
+{\tt log} & base 10 logarithm \\
+\hline
+\end{tabular}
+\end{center}
+
+Let me close this section with an example:
+
+\begin{verbatim}
+A*exp(-dE/(k*T))-1.5*C^2
+\end{verbatim}
+
+\subsection{Running {\tt kc}}
+Running the compiler is easy. It is done by typing the following on the
+command-line: \\
+{\tt kc} [options] {\tt < input-file} 
+
+The compiler creates the output files. All options are a hyphen (minus sign)
+followed by a letter. There are the following options:
+
+\begin{center}
+\begin{tabular}{ll} 
+\hline
+Option & Description \\ \hline 
+q      & quiet mode \\
+h      & Help        \\  
+m      & Mode        \\ \hline 
+\end{tabular}
+\end{center}
+
+The last option (m) is followed by a number. The mode is a code generator,
+which generates code to a specific program. To see which modes {\tt kc}
+supports, run the program with option h ({\tt kc -h}). In
+the present version the following code generators are supported
+
+\begin{center}
+\begin{tabular}{cll}
+\hline
+Mode & Code generator & Description \\ \hline
+2    & KGadi          & A solver for reaction-diffusion systems \\
+3    & kci            & A dynamical simulator written in ANSI-C \\
+5    & KnCont         & Continuation program \\ 
+6    & Finn           & Calculating various properties \\ \hline
+\end{tabular}
+\end{center}
+
+\newpage
+\section{The input}
+In this section I will explain the overall structure of the input to 
+the {\tt kc}. The input to {\tt kc} consists of three parts; 
+definitions, the model and constraints.
+Each part is in the following subsections. The three parts are written
+in the same order in the input file.
+
+\subsection{Definitions}
+In this part of the input file, one can define constants, which can be used
+later in the input file. A (symbolic) constant is a name, which has been
+assigned a value. The constants are written as:
+
+\begin{verbatim}
+const = expr;
+\end{verbatim}
+
+The compiler must be able to evaluate the expression at that moment,
+\ie the expression is not allowed to contain any undefined constants.
+The constant can also be a string. In that case the expression on the
+left hand side is a sequence of letters and digits surrounded by
+quotation marks. Note that it is not possible to used full stops (.),
+dashed (-) or anything like that in strings.
+
+In this part the user can also specify which symbolic names, which are
+going to be used in a continuation. The parameter declaration is
+
+\begin{verbatim}
+#paramter {param expr, expr, expr, expr, expr};
+\end{verbatim}
+
+These five values are used in the continuation, but I will not
+describe them here, since the supporting mode is not yet fully functional.
+
+\subsection{The model}
+\label{model}
+The model is a set of chemical reactions and/or a set of ordinary
+differential equations. The reactions are written in the
+``usual'' way, \ie a coefficient and a species plus another coefficient and 
+a species and so on. Two different reactions can be used; uni-directional and 
+bi-directorial. They are written using {\tt ->} and {\tt <->}. The 
+bi-directorial reaction can also use {\tt <=>}. 
+
+The rate constants are written after the reaction. A reaction always
+begin by a number. A legal reaction is:
+
+\begin{verbatim}    
+1: H(+) + HO(-) <-> H2O; k>=1.0; k<=2.0;
+\end{verbatim}
+
+The default code generating uses the law of mass action. This default can 
+be overriden. One can either use power law or general expressions. The
+first is simple. After the reaction, one can write the power constants. Their
+grammar is {\tt c(species) = expr}. When using the power law, the user must
+still write the rate constants.
+
+The general expression kinetic is also very simple to write down. Instead of
+rate constants, the user can write a general expression. They are
+thought to be used in enzyme kinetics, but may also be useful in other
+areas. A legal input of this kind is 
+
+\begin{verbatim}
+1: A + B <-> C; v>=2*[A]; k<=10
+\end{verbatim}
+
+Note that it is possible to use a mix of the three kinetics (mass action, power
+and general) in the same model.
+
+Often the parameter in a continuation is a rate constant. In this
+case, the rate constant is just set equal to the name of the
+parameter, \ie the name declared in at the {\tt \#}{\tt parameter} directive.
+
+Ordinary differential equations are normally written as
+
+\[
+  \frac{dx}{dt} = f(x),
+\]
+and the compiler's grammar is
+
+\begin{verbatim}
+name' = expr;
+\end{verbatim}
+where {\tt name} is the $x$ and {\tt expr} is the velocity field specified
+by $f$. 
+
+\subsection{Constraints}
+\label{SpecConst}
+In the last part of the input, all the constraints and initial conditions are
+placed. It is also possible to specify constants for the species. 
+
+The constraints have the form {\tt [species] = expr}. The constraints reduces
+the number of dynamical variables in the model. Chemical equilibrium
+is also modelled this way. A legal constraint is {\tt [A] = 12-[B]}.
+
+Initial conditions specify which values the concentrations of the species have
+at $t=0$. This is done by {\tt [species](0) = expr}. If no initial
+concentration is given, the compiler assumes, that the concentration is
+zero. For dynamical variables defined by ordinary differential
+equations, the initial value can also be specified. This is done by
+{\tt name(0) = expr}. 
+
+To each species one can assign a number of constants. Some code generators 
+may use \eg the diffusion coefficient of the species. The constants 
+will have a name followed by the species in parenthesis, \eg
+{\tt D(A) = 1e-5}. 
+
+\newpage
+\section{The code generators}
+For each code generator, there are various constants and parameters,
+which can be given a value. In this section I will discuss the various code
+generators.
+
+\subsection{kci}
+Kci is able to solve ordinary differential equations numerically.
+There is a number of parameters, which can be get.
+
+\begin{center}
+\begin{tabular}{llr}
+\hline
+Parameter & Description & Default value \\ \hline
+dtime     & interval between printouts & 2.0 \\
+etime     & time for endning simulation & 200.0 \\
+htime     & initial step size & 1.0 \\
+stime     & initial time & 0.0 \\
+epsr      & relative tolerence & $10^{-5}$ \\
+epsa      & absolute tolerence & $10^{-10}$ \\
+epsmin    & minimal precision  & machine precision\footnote{The
+  computer's precision is determined at run-time.} \\
+method    & integration method (see below) & 1 \\
+stepadjust &            & 0.9 \\
+maxinc    &             & 1.5 \\
+mindec    &             & 0.5 \\
+scaling   &             & 0 \\
+htimemin  & minimal step size & $10^{-20}$ \\
+datafile  & name of output file & kinwrkdat \\
+printafter & time to start printing & 0\\
+mode      & mode (see below) & 0 \\ 
+prnmode   & printing mode (see below) & 0 \\
+debug     & debug level (see below) & 0 \\
+\hline
+\end{tabular}
+\end{center}
+
+The ``method'' determines which integration scheme to use, and it can have
+the following values: 
+
+\begin{center}
+\begin{tabular}{rl}
+\hline
+Value      & Method \\ \hline
+1          & Calahan \\
+2          & Rosenbrock (RKFNC) \\
+3          & 4th order Runge-Kutta \\
+4          & Generalised Runge-Kutta \\
+5          & Rosenbrock for nonautonomous systems \\
+7          & Generalised Runge-Kutta for nonautonomous systems \\ 
+\hline
+\end{tabular}
+\end{center}
+
+The ``mode'' parameter decides different ways of using the simulator.
+The ``mode'' 0 is default. The table below gives the possibilities:
+
+\begin{center}
+  \begin{tabular}{rl}
+    Mode  & Description \\ \hline
+    0     & Ordinary simulation \\
+    1     & Make perturbations \\
+    \hline
+  \end{tabular}
+\end{center}
+
+The perturbation is a simple feature: At a specified time, a vector is
+added to the concentration vector (one can have negative values -
+simulates dilution). The time for the first perturbation is given by
+the parameter ``ptime'', while new perturbations are done by an
+interval ``dptime''. If ``dptime'' is zero (default) only one
+perturbation is done.
+
+In general the output file is readable by GNUplot. At the begining of
+the file, the names of the dynamical variables are found. Some modes
+may write additional information in the file and at the end. The
+parameters ``prnmode'' and ``debug'' determine the additional
+information printed.
+
+\begin{center}
+  \begin{tabular}{rl}
+    prnmode   & Description \\ \hline
+     0        & equidistant and extrama points \\
+     1        & equidistant points only \\
+   \hline
+   \end{tabular}
+\end{center}
+
+
+\begin{center}
+  \begin{tabular}{rl}
+    debug   & Description \\ \hline
+     0      & none \\
+     1      & time, steplength, and dynamical variables \\
+     2      & as 1 + control parameters \\
+     3      & initial values of control parameters \\
+   \hline
+   \end{tabular}
+\end{center}
+
+
+In order to make the work easier for the user, there exists a small
+script. The script runs the kinetic compiler, a C compiler \etc The
+script is called kci\footnote{Kinetic Compiler and Integrator.}. If
+the model is stored in a file called {\tt foo.des}, a simulation is
+performed by {\tt kci foo.des}. It should be noted that the MS-DOS
+version of the kinetic compiler uses a similar batch file (the name is
+the same).
+
+\subsection{Kin}
+\label{KCMAN:CodeKin}
+Kin is a simulation package for chemical reaction, or to be more
+precise, it is a solver of ordinary differential equations. 
+Calahan's method is used to solve stiff problems. This mode is
+obsolent.
+
+The following parameters can be set as constants in the input to {\tt
+  kc}:
+
+\begin{center}
+\begin{tabular}{llr}
+\hline
+Parameter & Description & Default value \\ \hline
+tb        &             & 1  \\
+dt        & step between prints   & 1 \\
+etime     & end time    & 10 \\
+hb        &             & 1 \\
+epsr      & relative precision & $1 \cdot 10^{-3}$ \\
+epsa      & absolute precision & $1 \cdot 10^{-20}$ \\ 
+mode      & run mode & none \\ 
+ptime     & perturbation time & none \\ \hline
+\end{tabular}
+\end{center}
+
+The ``mode'' parameter have the following meaning:
+
+\begin{center}
+\begin{tabular}{ll}
+\hline
+Value & Description \\ \hline
+0     & Ordinary simulation \\
+1     & Make a perturbation at {\tt ptime} \\ \hline
+\end{tabular}
+\end{center}
+
+If initial concentrations are specified, they will be used. The
+concentrations used in the perturbation are declared as species
+related constants, see section \ref{SpecConst}. The name of the
+constant is {\tt pert}, and an example is:
+
+\begin{verbatim}
+pert(X)  = 0.1;
+\end{verbatim}
+
+The output will always be stored on the file {\tt kinwrk.dat}, which is
+readable by GNUplot\footnote{GNUplot is a plotting program, which can
+  be obtained by anonymous ftp.}.
+
+The easiest way to use this mode, is to use the script {\tt kkin}. 
+Let us assume that the input file is called {\tt model.des}. The
+run is then done by the command: {\tt kkin model.des}. 
+
+\subsection{KGadi}
+This code generator supplies code to a simulator of reaction-diffusion
+systems. Therefore diffusion coefficients must be specified. They are
+specified by the species-related constant {\tt D}. Diffusion
+coefficients for variables specified by differential equations cannot
+be defined in the input to {\tt kc}. The user must edit the routine
+{\tt init\_diff\_const} in the file {\tt model.c} by hand. There are the
+following constants to be used:
+
+\begin{center}
+\begin{tabular}{llr}
+\hline
+Parameter & Description & Default value \\ \hline
+mgrid     & grid points, horizontal & none \\
+ngrid     & grid points, vertical   & none \\
+length    & length of system & 100 \\
+dt        & time step        & 2 \\
+update    & time between saving on disk & 10 \\
+print1    & time before saving & 100\\
+print2    & time for ending saving & 100 \\ 
+mode      & run mode & 0 \\ \hline
+\end{tabular}
+\end{center}
+
+The ``mode'' parameter determines which kind of simulation to perform.
+If the parameter is not defined, it will be a ordinary simulation,
+where the concentrations are saved every ``update'' second. 
+The table below shows the possibilities.
+
+\begin{center}
+\begin{tabular}{rl}
+\hline
+Value   & Description \\ \hline
+0       & Ordinary simulation. \\
+1       & Generates a sequence of ``images'' between ``print1'' and
+``print2''. \\
+\hline
+\end{tabular}
+\end{center}
+
+The easist way to use this mode, is to use the script called
+{\tt rdsim}. If the model is in file {\tt file.mod}, a simulation is
+performed by the command {\tt rdsim file.mod}.
+
+\newpage
+\section{Known bugs}
+No program is bug free, and {\tt kc} is no exception. I have knowledge
+of the following bugs:
+
+\begin{enumerate}
+\end{enumerate}
+ 
+\newpage.   
+\section{An example}
+The following is an example of input to {\tt kc}.
+
+{\footnotesize
+\begin{verbatim}
+/* Test model is from "Bifurcation diagram ..." by Ipsen et al. */
+
+Ceo = 0.000833333;
+j0 = 2.77L-3;
+stime = 0;
+dtime = 10;
+etime = 6000;
+psr = 1.0L-4;
+espa = 1.0L-20;
+
+101: HBrO2              -> P;  k> = j0;
+101: Br(-)              -> P;  k> = j0;
+103: CeIV               -> P;  k> = j0;
+104: HOBr               -> P;  k> = j0;
+105: BrO2               -> P;  k> = j0;
+106: Br2                -> P;  k> = j0;
+107: BrMA               -> P;  k> = j0;
+109: MAR                -> P;  k> = j0;
+110: MAin               -> MA; k> = j0;
+
+1:  BrO(-3) + Br(-) + 2H(+) <=> HBrO2 + HOBr; k>=0.01352/0.1/0.26/0.26; k<=3.2;
+2:  HBrO2 + Br(-) + H(+)     -> 2HOBr; k>=5.2L+5/0.26;
+3:  BrO(-3) + HBrO2 + H(+)  <=> 2BrO2 + H2O; k>=0.858/0.1/0.26; k<=4.2L+7/55.5;
+4:  BrO2 + CeIII + H(+)     <=> HBrO2 + CeIV; k>=1.612L+4/0.26; k<=7.0L+3;
+5:  2HBrO2                   -> HOBr + BrO(-3) + H(+); k>=3.0L+3;
+6:  Br(-) + HOBr + H(+)     <=> Br2 + H2O; k>=6.0L+8/0.26; k<=2/55.5;
+7:  MA + Br2                 -> BrMA + Br(-) + H(+); k>=40.0;
+8:  MA + HOBr                -> BrMA + H2O; k>=8.2;
+9:  MA + CeIV                -> MAR + CeIII + H(+); k>=0.3;
+10: BrMA + CeIV              -> CeIII + Br(-) + P; k>=30.0;
+11: HOBr                     -> P; k>=0.080;
+12: HOBr                     -> Br(-); k>=0.140;
+13: MAR + HOBr               -> Br(-) + P; k>=1.0E+7;
+14: 2MAR                     -> MA + P; k>=3.0E+9;
+15: MAR + BrMA               -> MA + Br(-) + P; k>=2.4E+4;
+16: MAR + Br2                -> BrMA + Br(-); k>=1.5L+8;
+
+[H(+)]    = 0.26;
+[P]       = 0;
+[H2O]     = 55.5;
+[BrO(-3)] = 0.1;
+[MAin]    = 0.25;
+[CeIII]   = Ceo-[CeIV];
+
+[HBrO2](0) = 2.85055L-7;
+[Br(-)](0) = 1.42745L-6;
+[CeIV](0)  = 2.84792L-6;
+[HOBr](0)  = 6.13549L-6;
+[BrO2](0)  = 3.09064L-8;
+[Br2](0)   = 4.20280L-8;
+[MA](0)    = 2.47010L-1;
+[BrMA](0)  = 1.20977L-3;
+[MAR](0)   = 3.98455L-9;
+\end{verbatim}
+}
+

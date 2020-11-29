@@ -1,0 +1,53 @@
+/* Belousov- Zhabotinsky reaction */
+/* Model: Ore3 , open system     */
+/* Rate constants: FF             */
+
+/* alpha == 8.8439412233931e-1  */
+/* beta  == -3.0474328890306e-1 */
+
+method = 1;
+ 
+kf1 = 2.000;
+kf2 = 3.00e+06;
+kf3 = 3.00e+03;
+kf4 = 42;
+kf5 = 1.320e-01;
+kf6 = 3.499e-02;
+
+epsa = 1.0e-8;
+epsr = 1.0e-8;
+
+mgrid = 150;
+ngrid = 150;
+length = 10;
+print = 500;
+update = 10;
+prnmode = 1;
+
+/*ptime = 250.0;
+dptime = 35;
+*/
+etime = 4000.0;
+dtime=1.0;
+
+1:  A + Y + 2H  -> X + U        ; k> = kf1; 
+2:   X + Y + H -> 2U            ; k> = kf2;
+3:          2X -> U + A + H     ; k> = kf3;
+4:   A + X + H -> 2X + 2Z      ; k> = kf4; 
+5:           Z -> Y + C         ; k> = kf5;
+6:           Z -> P             ; k> = kf6;
+
+
+[A] = 1.2010890017923e-2; [H] = 1.085; [U] = 0; [C] = 0; [P] = 0;
+
+/*[X](0) = 3.5542466388658e-8;
+[Y](0) = 2.1695957353919e-7;
+[Z](0) = 2.1510799247202e-7;*/
+[X](0) = 2.363198e-8;
+[Y](0) = 2.488627e-7;
+[Z](0) = 1.502933e-7;
+D(X) = 1.0e-5;
+D(Y) = 1.9e-5;
+D(Z) = 0.6e-5;
+
+pert(X) = 5.0e-9;

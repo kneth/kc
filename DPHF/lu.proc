@@ -1,0 +1,119 @@
+ PROCEDURE ludcmp(VAR a: glnpbynp; n,np: integer;
+       VAR indx: glindx; VAR d: LONGREAL);
+  CONST
+     tiny=1.0e-20;
+  VAR
+     k,j,imax,i: integer;
+     sum,dum,big: LONGREAL;
+     vv: glnarray;
+  BEGIN
+     d := 1.0;
+     FOR i := 1 to n DO BEGIN
+        big := 0.0;
+        FOR j := 1 to n DO IF (abs(a[i,j]) > big) THEN big := abs(a[i,j]);
+        IF (big = 0.0) THEN BEGIN
+writeln('ludcmp: ',i,j); 
+for j:=1 to n do writeln('test : a[i,j] : ',i,j,a[i,j]);
+           alarm(0,'LUDCMP - singular matrix');
+        END;
+        vv[i] := 1.0/big
+     END;
+     FOR j := 1 to n DO BEGIN
+        IF (j > 1) THEN BEGIN
+           FOR i := 1 to j-1 DO BEGIN
+              sum := a[i,j];
+              IF (i > 1) THEN BEGIN
+                 FOR k := 1 to i-1 DO BEGIN
+                    sum := sum-a[i,k]*a[k,j]
+                 END;
+                 a[i,j] := sum
+              END
+           END
+        END;
+        big := 0.0;
+        FOR i := j to n DO BEGIN
+           sum := a[i,j];
+           IF (j > 1) THEN BEGIN
+              FOR k := 1 to j-1 DO BEGIN
+                 sum := sum-a[i,k]*a[k,j]
+              END;
+              a[i,j] := sum
+           END;
+           dum := vv[i]*abs(sum);
+           IF (dum > big) THEN BEGIN
+              big := dum;
+              imax := i
+           END
+        END;
+        IF (j <> imax) THEN BEGIN
+           FOR k := 1 to n DO BEGIN
+              dum := a[imax,k];
+              a[imax,k] := a[j,k];
+              a[j,k] := dum
+           END;
+           d := -d;
+           vv[imax] := vv[j]
+        END;
+        indx[j] := imax;
+        IF (j <> n) THEN BEGIN
+           IF (a[j,j] = 0.0) THEN a[j,j] := tiny;
+           dum := 1.0/a[j,j];
+           FOR i := j+1 to n DO BEGIN
+              a[i,j] := a[i,j]*dum
+           END
+        END
+     END;
+     IF (a[n,n] = 0.0) THEN a[n,n] := tiny
+  END; (* ludcmp *)
+
+ PROCEDURE lubksb(a: glnpbynp; n,np: integer; indx: glindx; VAR b: glnarray);
+  VAR
+     j,ip,ii,i: integer;
+     sum: LONGREAL;
+  BEGIN
+     ii := 0;
+     FOR i := 1 to n DO BEGIN
+        ip := indx[i];
+        sum := b[ip];
+        b[ip] := b[i];
+        IF  (ii <> 0) THEN BEGIN
+           FOR j := ii to i-1 DO BEGIN
+              sum := sum-a[i,j]*b[j]
+           END
+        END ELSE IF (sum <> 0.0) THEN BEGIN
+           ii := i
+        END;
+        b[i] := sum
+     END;
+     FOR i := n DOWNTO 1 DO BEGIN
+        sum := b[i];
+        IF (i < n) THEN BEGIN
+           FOR j := i+1 to n DO BEGIN
+              sum := sum-a[i,j]*b[j]
+           END
+        END;
+        b[i] := sum/a[i,i]
+     END
+  END; (* lubksb *)
+
+
+ PROCEDURE inversmatrix(n: INTEGER; P:glnpbynp; VAR IP: glnpbynp);
+
+  VAR
+   i,j: INTEGER;
+   d: LONGREAL;
+   A: glnpbynp;
+   int: glindx;
+   evec,ekon: glnarray;
+
+  BEGIN
+   A:= P; 
+   FOR i:=1 TO n DO ekon[i]:=0.0;
+   ludcmp(A,n,n,int,d);
+   FOR i:=1 TO n DO
+    BEGIN
+     evec:= ekon; evec[i]:= 1.0;
+     lubksb(A,n,n,int,evec);
+     FOR j:=1 TO n DO IP[j,i]:= evec[j];
+    END;
+   END; (* inversmat *)

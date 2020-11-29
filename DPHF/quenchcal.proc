@@ -1,0 +1,72 @@
+  FUNCTION argu(g,h: LONGREAL): LONGREAL;
+   CONST
+     PI = 3.141592654;
+   VAR
+    angle: LONGREAL;
+
+   BEGIN
+    IF g<>0 THEN
+     BEGIN
+      angle:= ARCTAN(h/g);
+      IF g<0 THEN angle:= angle+PI;
+      IF angle>PI THEN angle:= angle-2*PI;
+     END
+    ELSE IF h>0 THEN angle:= PI/2 ELSE angle:= -PI/2;
+    argu:= 360/2/PI*angle;
+   END; (* argu *)
+
+  FUNCTION radius(a,b: LONGREAL): LONGREAL;
+
+   BEGIN
+    radius:= SQRT(SQR(a)+SQR(b));
+   END; (* radius *)
+
+ PROCEDURE compamppha(n: INTEGER; P: glnpbynp;
+                       VAR amp,phase: glnarray);
+
+  VAR
+   i: INTEGER;
+   u,v: glnarray;
+
+  BEGIN
+   FOR i:=1 TO n DO
+    BEGIN
+     u[i]:= P[i,1];
+     v[i]:= P[i,2];
+    END;
+   FOR i:=1 TO n DO
+    BEGIN
+     amp[i]:= radius(u[i],v[i]);
+     phase[i]:= argu(u[i],v[i]);
+    END;
+   END; (* comamppha *)
+
+ PROCEDURE stopdata(n,m: INTEGER; xx: glnarray; IP: glnpbynp;
+                    VAR q,fi: glnarray; VAR qd,fid: LONGREAL);
+
+  VAR
+   gd,hd: LONGREAL;
+   i: INTEGER;
+   g,h: glnarray;
+
+  BEGIN
+   FOR i:=1 TO n DO
+    BEGIN
+     g[i]:= IP[1,i];
+     h[i]:= IP[2,i];
+    END;
+   FOR i:=1 TO n DO
+    BEGIN
+     q[i]:= 1/radius(g[i],h[i]);
+     fi[i]:= argu(-g[i],-h[i]);
+    END;
+   gd:= 0; hd:= 0;
+   FOR i:=1 TO n DO
+    BEGIN
+     gd:= gd+g[i]*xx[i];
+     hd:= hd+h[i]*xx[i];
+    END;
+   gd:= -gd; hd:= -hd;
+   qd:= -xx[m]/radius(gd,hd);
+   fid:= argu(-gd,-hd);
+  END; (* stopdata *)

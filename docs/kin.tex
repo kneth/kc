@@ -1,0 +1,180 @@
+\documentstyle{article}
+\author{Kenneth Geisshirt}
+\title{The {\tt kin} precompilers}
+\date{4 August 1992}
+\begin{document}
+\maketitle
+\section{Preface}
+The {\tt kin} programs are precompilers, which translate chemical equations 
+into runnable programs. The generated program 'solves' the chemical system.
+
+The precompilers are written in ANSI-C, so porting them are easy (recompile them).
+The output is fairly difficult, because it is HP-Pascal code (difficult for people, who
+don't have a HP-Pascal compiler on their system). 
+
+The precompiler transforms the chemical model into differential equations using the
+mass-action law. The system consists of two programs. The first one is {\tt kinc}
+which generates velocities and jacobians. The other is {\tt kins} which does
+the same plus generates the second order tensor. 
+
+The integration finds the concentrations with respect of time.
+
+A older version of the system is running as an interactive PC-program (rather,
+running on a Partner from Regnecentralen). This version can also do graphics 
+manipulations on the data obtained from the integration process.
+
+\section{How to run it}
+The requirements to the computer, which is going to run {\tt kin} is, that it 
+has a C compiler (ANSI compatible) and a HP-Pascal. Assuming that the computer 
+does not have a HP-Pascal, then the requirements are a C-compiler and a  
+Pascal-to-C translator, e. g. {\em p2c} by Daves Gillespie \footnote{The system
+installed (and running) on {\em tiger} at PICHT is of the later type.}. In the following
+it is assumed that no Pascal compiler is present.
+
+Running the {\tt kin} system is a bit tricking at the moment, because I don't know
+the Unix operating system well enough. But the following procedure can be used. 
+\begin{enumerate}
+ \item You have to be in the right directory. In this context the right directory
+       is up to you, but you have to write it into the {\tt tkin} script (variable
+       {\tt MYPATH} contains the information).
+       The directory has to be a subdirectory to the one containing the integrator and
+       other vital files. The script doesn't have to be in either directories.    
+ \item The system is now executed by the command {\tt tkin model}, where {\tt model} is
+       file containing your model. The integrator will be started as soon as the compilation
+       is done, so redirection is recommended.
+\end{enumerate}
+
+\section{Minimal user's manual}
+This section is not intented to be a full description of the system, but a brief introduction
+so the reader should be able to use the system.
+
+The input format is straightforward (when you have tried it a few times). The model
+consists of chemical equations, initial concentrations and linear constrains. The last
+two sections are optional. Parameters can be defined every where in the 'source'
+file.
+
+For further information on the input, I have written some small examples. These shows some of the
+key points in the {\tt kin} system.
+
+\subsection{Equations}
+All the equations are on the form:
+\begin{verbatim}
+  number : A + B + ... -> Q + R + ... ; k> = number
+\end{verbatim}
+The first number is a positive integer, while the last number is a floating-point constant.
+The colon after the first number have to be there, otherwise it is a syntax error. The reactants
+and products are written in the usual way. Coefficients are naturally allowed. The names of the
+species do not have anything to do with the real world; they are 'just' variables. Two kinds of
+reactions are allowed. They are one-way reaction {\tt ->} and two-ways reaction {\tt <=>}. For two-
+way reactions two rate constants must be supplied. The rate constants are written on the same line after a
+semicolon. A {\tt >} denoted the reaction from left to right, while {\tt <} denotes the reaction from
+righ to left. A space after {\tt >} and {\tt <} is very important.
+
+\subsection{Initial concentrations}
+Initial concentrations are written after the equations. The default value is $0.0$, but the user can
+request other values at $t=0$. The syntax is simple; it is:
+\begin{verbatim}
+  [J](0) = number
+\end{verbatim}
+where {\tt J} is a species, and {\tt number} is a constant (can of course be a parameter). 
+
+\subsection{Linear constrains}
+The linear constrains in this version of {\tt kin} are very simple. As the name says, it is only
+linear, and a constrain has the form:
+\begin{verbatim}
+  [J] = number - [A] - ...
+\end{verbatim}
+Of course there can be coefficients before a concentration, but they have to be numbers. 
+Further, the concentrations on the right side can be omitted, i. e.
+a concentration is constant at all time.
+
+\subsection{Parameters}
+A parameter declaration has the form:
+\begin{verbatim}
+  name = expr
+\end{verbatim}
+where {\tt name} is the symbolic name of the parameter, and {\tt expr} is a expression. The expression
+is a general expression, i. e. the four mathematical operators can be used. There are some predefined
+parameters. They are shown below.
+
+\begin{tabular}{llr}
+ Name   & Description    & Default value \\ 
+ stime  & start time     & $0$ \\ 
+ dtime  & step length    & $1$ \\
+ etime  & end time       & $10$ \\
+ epsr   & relative error & $10^{-3}$ \\
+ epsa   & absolute error & $10^{-20}$ \\
+ name   & name of output file & "kinwrk.dat" 
+\end{tabular}
+
+The value of these parameters will be copied into the integrator, they and will therefore have
+and an effect on the program.
+
+\subsection{Call of external functions}
+The {\tt kin} system has a feature of calling external functions. The only 
+predefined function is {\tt arrh} which computes rate constants according
+to the Arrhenius' formula. The form of a call of an external function is:
+\begin{verbatim}
+ func <: p1, p2, ..., pn :>(0)
+\end{verbatim}
+where {\tt func} is the name of the function and {\tt pi} is the parameters
+to the function. The result of the call is returned in the {\em first}
+parameter, i. e. a call to the Arrhenius function will be:
+\begin{verbatim}
+  arrh <: k, a, E, T :>(0)
+\end{verbatim}
+
+An example of the format of external functions can be found in the file
+{\tt arrh.c}, which is supplied with the {\tt kin} system.
+
+The use of external functions will cause a warning from {\tt p2c}, because
+a parameter is not defined {\footnote{The warning is: {\tt Expected a 
+expression, found a semicolon}}}, but this warning can be ignored. 
+
+\subsection{Comments}
+Comments can be placed everywhere in the source file. The comments are in C-
+style, i. e. they have the form:
+
+\begin{verbatim}
+  /* This is a comment */
+\end{verbatim}
+
+\subsection{Numbers}
+There is a minor problem when using the system on {\em tiger}. The   
+{\em p2c} translator seems to have problem when translating double
+precision floating-point numbers, e. g. {\tt 1.0L-1}. Don't use
+them but use only normal numbers, e. g. {\tt 1.0E-1}.
+
+\subsection{Limits}
+{\tt kin} has some limitations, especially in the number of reactions and species. The table below shows
+these limitations.
+\begin{tabular}{lr}
+ Reactions  & 150 \\  
+ Species    &  50 \\
+ Reactants  &   5 \\
+ Constrains &   5 \\
+ Species in constrains & 10 \\
+ Parameters & 100 \\
+ External function & 50 
+\end{tabular}
+
+\section{Good and bad things}
+The {\tt kin} has its advantages and its disadvantages. In this section I will shortly discuss some
+of them.
+
+The disadvantages are:
+\begin{enumerate}
+ \item Only mass-action law.
+ \item No ions and therefore no diffusion can be modeled.
+ \item The syntax of the constrains is not smart, and they can only be linear.
+ \item No equilibriums can be modeled directly, but only as fast two-way reactions.
+ \item Code generator is not easy to port (have to use strange translators).
+\end{enumerate}
+
+The advantages are:
+\begin{enumerate}
+ \item Easy syntax for chemical equations. It is must like ordinary mechanism. 
+ \item Does the boring job, i. e. the chemist can do what is his job: making
+       chemical models \footnote{Boring work often leads to errors!}.
+\end{enumerate}
+\end{document}

@@ -1,0 +1,52 @@
+/* Belousov- Zhabotinsky reaction */
+/* Model: the Oscillatory Bromate Oxidation of Cerium in open systems */
+/* Sorensen, Hynne, Nielsen, 1990 */
+
+mixed=2;
+
+kf1 = 2.0;   kr1= 3.2;
+kf2 = 3.0e6; kr2= 2.0E-5;
+kf3 = 42.0;  kr3= 7.64E5;
+kf4 = 8.0E4; kr4= 8.9E3;
+kf5 = 3.0E3; kr5= 1.0E-8;
+kf6 = 0.02918;
+kf7 = 0.078;
+kf8 = 0.080;
+kf9 = 0.14;
+
+j0 = 3.3236E-5;
+C0 = 8.3E-5;
+
+stime = 0; dtime=1; etime = 16000; epsr = 1.0e-06; epsa = 1.0e-14;
+debug= 1;
+ref= 3;
+
+ 
+11:  HBrO2                     -> P                        ; k> =j0;
+12:  Br(-)                     -> P                        ; k> =j0;
+13:  Ce(+4)                    -> P                        ; k> =j0;
+14:  HBrO                      -> P                        ; k> =j0;
+15:  BrO2                      -> P                        ; k> =j0;
+
+
+
+1:  BrO3(-) + Br(-) + 2H       <-> HBrO2 + HBrO        ; k> =kf1; k< = kr1;
+2:  HBrO2 + Br(-) + H          <-> 2HBrO               ; k> =kf2; k< = kr2;
+3:  BrO3(-) + HBrO2 + H        <-> 2BrO2 + H2O         ; k> =kf3; k< = kr3;
+4:  BrO2 + Ce(+3) + H          <-> HBrO2 + Ce(+4)      ; k> =kf4; k< = kr4;
+5:  2HBrO2                     <-> HBrO + BrO3(-) + H  ; k> =kf5; k< = kr5;
+6:  Ce(+4)                      -> Br(-) + Ce(+3)      ; k> =kf6;
+7:  Ce(+4)                      -> P + Ce(+3)          ; k> =kf7;
+8:  HBrO                        -> Br(-)               ; k> =kf8;
+9:  HBrO                        -> P                   ; k> =kf9;
+
+[P] = 0; [H] = 1.0; [BrO3(-)] = 0.012; 
+[H2O]= 55.5;
+[Ce(+3)]= C0 - [Ce(+4)];
+
+
+[Ce(+4)](0) = 0.3074E-6;
+[Br(-)](0)  = 0.2049E-6; 
+[HBrO](0)   = 0.2168E-6; 
+[HBrO2](0)  = 3.480E-8; 
+[BrO2](0)  =  5.000E-9; 

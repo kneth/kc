@@ -1,0 +1,96 @@
+/****************************************************************************
+  The following model is from a paper by Farrow and Edelson:
+  Int. J. Chem. Kin., vol. 6, pp. 787-800 (1974).
+*****************************************************************************/
+
+etime = 200;
+dtime = 0.1;
+
+#print [NO], [NO2], [O3], [C3H6]; 
+
+1:   NO2			-> NO + O;			k>=0.37;
+2:   O + O2			-> O3;				k>=22;
+3:   O3 + NO			-> NO2 + O2;			k>=22.5;
+4:   O3 + NO2			-> NO3 + O2;			k>=0.049;
+5:   NO3 + NO2			-> N2O5;			k>=858;
+6:   N2O5			-> NO3 + NO2;			k>=2.76;
+7:   N2O5 + H2O			-> 2HNO3;			k>=0.75;
+8:   NO3 + NO2			-> NO + O2 + NO2;		k>=0.49;
+9:   O + NO2			-> O2 + NO;			k>=5150;
+10:  NO3 + NO			-> 2NO2;			k>=1.4e+5;
+11:  NO + NO2 + H2O		-> 2HNO2;			k>=1.0e-3;
+12:  HNO2			-> NO + OH(.);			k>=1.0e-2;
+14:  CO + OH(.) + O2		-> CO2 + HO2(.);		k>=9.8e-4;
+15:  HO2(.) + NO		-> NO2 + OH(.);			k>=30;
+16:  HO2(.) + NO2		-> HNO2 + O2;			k>=1.0e-3;
+17:  OH(.) + NO2		-> HNO3;			k>=1470;
+18:  OH(.) + NO			-> HNO2;			k>=1.0e+4;
+19:  2HO2(.)			-> H2O2 + O2;			k>=70;
+20:  C3H6 + O			-> CH3CH2(.) + CHO(.);		k>=2925;
+21:  C3H6 + O			-> CH3(.) + CH3CO(.);		k>=500;
+22:  C3H6 + O + O2		-> C2H4O2 + HCHO;		k>=1.25e-3;
+23:  C3H6 + O3			-> C2H4O2 + HCHO;		k>=7.0e-3;
+24:  C3H6 + O3			-> CH3CHO + CH2O2;		k>=7.0e-3;
+25:  C2H4O2			-> CH3O(.) + CHO(.);		k>=0.3;
+26:  C2H4O2 + NO		-> CH3CHO + NO2;		k>=3;
+27:  C2H4O2 + NO2		-> CH3CHO + NO3;		k>=0.1;
+28:  CH2O2			-> OH(.) + CHO(.);		k>=0.3;
+29:  CH2O2 + NO			-> HCHO + NO2;			k>=3;
+30:  CH2O2 + NO2		-> HCHO + NO3;			k>=0.1;
+31:  CH3(.) + O2		-> CH3O2(.);			k>=15;
+32:  CH3O2(.) + NO		-> CH3O(.) + NO2;		k>=6;
+33:  CH3O(.) + O2		-> HCHO + HO2(.);		k>=0.26;
+34:  CH3O(.) + NO2		-> CH3NO3;			k>=16.2;
+35:  CH3CH2(.) + O2		-> CH3CH2O2(.);			k>=15;
+36:  CH3CH2O2(.) + NO		-> NO2 + CH3CH2O(.);		k>=6;
+37:  CH3CH2O(.) + O2		-> CH3CHO + HO2(.);		k>=0.26;
+38:  CH3CH2O(.) + NO2		-> CH3CH2NO3;			k>=16.2;
+39:  C3H6 + OH(.) + O2		-> CH3CO2HCH2OH(.);		k>=0.075;
+40:  CH3CO2HCH2OH(.)		-> CH3CH2CHO + HO2(.);		k>=1.0e-3;
+41:  CH3CO2HCH2OH(.) + NO	-> CHCOHCH2OH(.) + NO2;		k>=6;
+42:  CH3COHCH2OH(.) + O2	-> CH3CHO + HOCH2O2(.);		k>=0.015;
+43:  HOCH2O2(.) + NO		-> HOCH2O(.) + NO2;		k>=4;
+44:  HOCH2O2(.) 		-> HCHO + HO2(.);		k>=1.0e-3;
+45:  HOCH2O(.)			-> HCHO + OH(.);		k>=3000;
+46:  C3H6 + OH(.) + O2		-> CH3COHHCH2O2(.);		k>=0.05;
+47:  CH3COHHCH2O2(.)		-> CH32CO + HO2(.);		k>=1.0e-3;
+48:  CH3COHHCH2O2(.) + NO	-> CH3COHHCH2O(.) + NO2;	k>=6;
+49:  CH3COHHCH2O(.) + O2	-> HCHO + CH3COHHO2(.);		k>=0.015;
+50:  CH3COHHO2(.)		-> CH3CHO + HO2(.);		k>=0.001;
+51:  CH3COHHO2(.) + NO		-> CH3COHHO(.) + NO2;		k>=6;
+52:  CH3COHHO(.) + O2		-> CH3COOH + HO2(.);		k>=0.005;
+53:  CH2COHHO(.)		-> CH3CHO + OH(.);		k>=2000;
+54:  C3H6 + OH(.)		-> CH2CHCH2(.) + H2O;		k>=5000;
+55:  CH3CO(.) + O2		-> CH3COO2(.);			k>=15;
+56:  CH3COO2(.) + NO		-> CH3COO(.) + NO2;		k>=8;
+57:  CH3COO(.) + NO		-> CH3CO(.) + NO2;		k>=0.1;
+58:  CH3COO2(.) + NO2		-> CH3COO2NO2;			k>=2;
+59:  CH3COO(.)			-> CH3(.) + CO2;		k>=1.0e-4;
+60:  CH3COO2NO2 + NO		-> CH3COO(.) + 2NO2;		k>=0.16;
+61:  CH3COO2NO2			-> CH3COO(.) + NO3;		k>=0.01;
+62:  CH3O2(.) + NO2		-> CH3O2NO2;			k>=1.0e-3;
+63:  CH3O2NO2 + NO		-> CH3O(.) + 2NO2;		k>=0.1;
+64:  CH3O2NO2			-> CH3O(.) + NO3;		k>=0.05;
+65:  CH3CH2O2(.) + NO2		-> CH3CH2O2NO2;			k>=1.0e-3;
+66:  CH3CH2O2NO2 + NO		-> CH3CH2O(.) + 2NO2;		k>=0.1;
+67:  CH3CH2O2NO2		-> CH3CH2O(.) + NO3;		k>=0.05;
+68:  HCHO			-> H(.) + CHO(.);		k>=3.3e-5;
+69:  HCHO + O			-> OH(.) + CHO(.);		k>=220;
+70:  HCHO + O3			-> OH(.) + CHO(.) + O2;		k>=2.45e-5;
+71:  HCHO + OH(.)		-> CHO(.) + H2O;		k>=2.4e+4;
+72:  CH3CHO			-> CH3(.) + CHO(.);		k>=3.6e-3;
+73:  CH3CHO + O			-> CH3CO(.) + OH(.);		k>=294;
+74:  CH3CHO + O3		-> CH3CO(.) + OH(.) + O2;	k>=5.0e-4;
+75:  CH3CHO + OH(.)		-> CH3CO(.) + H20;		k>=2.5e+4;
+76:  CHO(.) + O2		-> CO + HO2(.);			k>=2.5;
+77:  CHO(.) + OH(.)		-> CO + H2O;			k>=3.6e+4;
+78:  2CH3O(.)			-> HCHO + CH3OH;		k>=3.6e+5;
+79:  CH3CH2O(.) + CH3CH2O(.)	-> CH3CHO + CH2CH2OH;		k>=3.5e+5;
+80:  CH3COO(.) + CH3O(.)	-> HCHO + CH3COOH;		k>=3.6e+5;
+81:  CH3COO(.) + CH3Ch2O(.)	-> CH3CHO + CH3COOH;		k>=3.6e+5;
+
+
+[NO](0)   = 1.612;
+[NO2](0)  = 0.088;
+[O3](0)   = 0.000;
+[C3H6](0) = 3.290;

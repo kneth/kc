@@ -1,0 +1,12 @@
+stime = 0;
+dtime = 1.0e-5;
+etime = 10.0e-3;
+
+datafile = "data14a";
+
+1: H + NO2   -> OH + NO;    k>=2.9e10;
+2: OH + OH   -> H2O + O;    k>=1.55e9;
+3: O + OH    -> O2 + H;     k>=1.1e10;
+
+[H](0) = 4.5e-7;
+[NO2](0) = 4.5e-7;

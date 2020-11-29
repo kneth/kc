@@ -1,0 +1,77 @@
+This directory contains a number of numerical routines. This file
+explains them briefly.
+
+KGadi.c
+-------
+It is a simulation program for reaction-diffusion systems in two
+spatial dimensions. The scheme is based on Alternating Direction
+Implicit scheme.
+
+Author: Kenneth Geisshirt.
+
+
+complex.*
+---------
+A small library for doing complex computations.
+
+Author: Kenneth Geisshirt.
+
+
+per1d.c
+-------
+This is also a simulation program for reaction-diffusion systems, but
+it is only for one spatial dimension. It is based on Cranck-Nicolson.
+
+Author: Kenneth Geisshirt.
+
+
+matrix.*
+--------
+A small library for manipulating matrices and vectors. It contains
+solvers for systems of linear equations.
+
+Author: Kenneth Geisshirt.
+
+
+eigen.*
+-------
+It contains a routine to computing eigenvectors and eigenvalues of a
+general matrix.
+
+Author: Kenneth Geisshirt (based on Keld Nielsen's Pascal code).
+
+
+kksolver.c
+----------
+Driver for solvers for ordinary differential equations.
+
+Authors: Keld Nielsen and Kenneth Geisshirt.
+
+
+odeserv.*
+---------
+Service routines for ODE solvers.
+
+Authors: Keld Nielsen and Kenneth Geisshirt.
+
+
+odesolv.*
+---------
+ODE solvers.
+
+Authors: Keld Nielsen and Kenneth Geisshirt.
+
+
+
+integr.*
+--------
+A small library for integrating functions.
+
+Author: Kenneth Geisshirt.
+
+nonlin.*
+--------
+A library of functions to solving nonlinear algrebraic
+equations.
+
+Author: Kenneth Geisshirt

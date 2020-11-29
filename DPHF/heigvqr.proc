@@ -1,0 +1,635 @@
+
+PROCEDURE blokcheck (A: glnpbynp; n,i: INTEGER;
+                     VAR blok: BOOLEAN);
+
+ BEGIN
+  IF i=n THEN blok:=FALSE ELSE
+    IF (ABS(A[i,i+1]-A[i+1,i])>epsblk) AND
+     (ABS(A[i,i]-A[i+1,i+1])<=epsblk)
+     THEN blok:=TRUE 
+    ELSE blok:=FALSE;
+ END; (* blokcheck *)
+
+ PROCEDURE normalizingmatrix(n: INTEGER; A: glnpbynp; fixedref: BOOLEAN; 
+		    VAR ref: INTEGER; VAR V: glnpbynp);
+
+   VAR
+    j,col: INTEGER;
+    c1,c2,c3: fcomplex;
+    sqrnorm,norm,max: LONGREAL;
+    blok: BOOLEAN;
+
+ BEGIN
+  col:=1;
+  REPEAT
+   IF NOT(fixedref) THEN BEGIN
+    ref:=1; 
+    Complex(V[ref,col],V[ref,col+1],c1); Cnorm(c1,max);
+    FOR j:=2 TO n DO BEGIN
+      Complex(V[j,col],V[j,col+1],c2); Cnorm(c2,sqrnorm);
+      IF sqrnorm>max THEN BEGIN 
+       ref:=j; max:=sqrnorm; END; 
+     END;
+    END;
+   blokcheck(A,n,col,blok);
+   IF blok THEN BEGIN
+    Complex(V[ref,col],V[ref,col+1],c1);
+    FOR j:=1 TO n DO BEGIN
+     Complex(V[j,col],V[j,col+1],c2);
+     Cdiv(c2,c1,c3);
+     V[j,col]:= c3.re; V[j,col+1]:= c3.im;
+    END;
+    col:=col+2;
+   END
+   ELSE BEGIN
+    norm:=ABS(V[ref,col]);
+    IF norm<>0.0 THEN FOR j:=1 TO n DO V[j,col]:=V[j,col]/norm;
+    col:=col+1;
+   END;
+  UNTIL col>n;
+ END; (* normalizingmatrix *)
+
+ PROCEDURE permutation (n: INTEGER; VAR P,A,B :glnpbynp;
+                        kolon: BOOLEAN);
+
+  VAR
+   nr:glindx;
+   blok:BOOLEAN;
+   max,x:LONGREAL;
+   im,j,ki,u,i,k,ii:INTEGER;
+   AA: glnpbynp;
+
+  BEGIN
+   AA:= A;
+   FOR i:=1 TO n DO BEGIN
+     nr[i]:=i;
+     FOR k:=1 TO n DO P[i,k]:=0; END;
+   i:=1; ii:=1; ki:=1;
+   WHILE i<n DO BEGIN
+     blokcheck(A,n,i,blok);
+     IF blok THEN BEGIN
+       A[i+1,i+1]:=A[i,i];
+       AA[i+1,i+1]:=AA[i,i];
+       IF A[i,i+1]>0 THEN BEGIN
+         A[i+1,i]:=A[i,i+1]; A[i,i+1]:=-A[i+1,i];
+         AA[i+1,i]:=AA[i,i+1]; AA[i,i+1]:=-AA[i+1,i];
+         FOR j:=1 TO n DO B[j,i+1]:=-B[j,i+1]; END
+       ELSE BEGIN
+       A[i+1,i]:=-A[i,i+1];
+       AA[i+1,i]:=-AA[i,i+1]; END;
+       j:=i;
+       FOR k:=ii TO (ii+1) DO BEGIN
+         x:= AA[k,k]; AA[k,k]:= AA[j,j]; AA[j,j]:= x; 
+         u:=nr[k]; nr[k]:=nr[j]; nr[j]:=u;
+         j:=j+1; END;
+       IF ii>1 THEN BEGIN
+         IF AA[ii,ii]>AA[1,1] THEN BEGIN
+           j:=ii;
+           FOR k:=1 TO 2 DO BEGIN
+             x:= AA[k,k]; AA[k,k]:= AA[j,j]; AA[j,j]:= x; 
+             u:=nr[k]; nr[k]:=nr[j]; nr[j]:=u;
+             j:=j+1; END;
+          END;
+        END;
+       ki:=i; i:=i+2; ii:=ii+2;
+      END
+     ELSE i:=i+1;
+    END; (* while *)
+
+  IF n>3 THEN BEGIN
+   REPEAT
+    im:= ii; i:= ii; max:= AA[im,im];
+    REPEAT
+     i:=i+1;
+     IF AA[i,i]>max THEN BEGIN
+       im:=i; max:=AA[i,i]; END;
+    UNTIL i>=n;
+    IF im>ii THEN BEGIN
+      x:= AA[ii,ii]; u:= nr[ii]; AA[ii,ii]:= max; nr[ii]:= nr[im]; 
+      AA[im,im]:= x; nr[im]:= u; END;
+    ii:= ii+1;
+   UNTIL ii>=n; 
+   END;
+   FOR i:=1 TO n DO
+   IF kolon THEN P[nr[i],i]:=1
+   ELSE P[i,nr[i]]:=1;
+  END; (* permutation *)
+
+
+ PROCEDURE produkt (n: INTEGER; VAR C:glnpbynp; A,B:glnpbynp);
+
+  VAR
+   x:LONGREAL;
+   i,l,k:INTEGER;
+
+  BEGIN
+   FOR i:=1 TO n DO
+    FOR l:=1 TO n DO
+     BEGIN
+      x:=0;
+      FOR k:=1 TO n DO x:=x+A[i,k]*B[k,l];
+      C[i,l]:=x;
+     END;
+  END; (* produkt *)
+
+ PROCEDURE transponer (n: INTEGER; VAR Q:glnpbynp; P:glnpbynp);
+
+  VAR
+   i,k:INTEGER;
+
+  BEGIN
+   FOR i:=1 TO n DO
+    FOR k:=1 TO n DO Q[i,k]:=P[k,i];
+  END; (* transponer *)
+
+PROCEDURE ombytning (n: INTEGER; VAR A,B: glnpbynp);
+
+VAR
+ PR,PS: glnpbynp;
+
+BEGIN
+ permutation(n,PS,A,B,true);
+ produkt(n,B,B,PS);
+ transponer(n,PR,PS);
+ produkt(n,A,PR,A);
+ produkt(n,A,A,PS);
+END; (* ombytning *) 
+
+PROCEDURE balance(n,b:INTEGER; VAR a:glnpbynp; 
+                  VAR low,hi:INTEGER; VAR d:glnarray);
+ (* reduce the norm of a[1..n,1..n] by exact  diagonal *)
+ (* similarity transformations stored in d[1..n] *)
+
+ LABEL 10,20,30,40,50;
+
+ VAR
+  i,j,k,l: INTEGER;
+  b2,c,f,g,r,s: LONGREAL;
+  noconv: BOOLEAN;
+
+ PROCEDURE exc(m:INTEGER);
+  VAR 
+   f: LONGREAL; i: INTEGER;
+  BEGIN
+   d[m]:=j;
+   IF j<>m THEN BEGIN
+    FOR i:=1 TO k DO BEGIN 
+     f:=a[i,j]; a[i,j]:=a[i,m]; a[i,m]:=f; END;
+    FOR i:=l TO n DO BEGIN 
+     f:=a[j,i]; a[j,i]:=a[m,i]; a[m,i]:=f; END;
+   END; (* j<>m *)
+  END; (* exc *)
+
+ BEGIN
+  b2:=b*b; l:=1; k:=n;
+
+  (* search for rows isolating an eigenvalue and push them down *)
+
+ 10:
+  FOR j:=k DOWNTO 1 DO BEGIN
+   r:=0;
+   FOR i:=1 TO j-1 DO r:=r+ABS(a[j,i]);
+   FOR i:=j+1 TO k DO r:=r+ABS(a[j,i]);
+   IF r=0 THEN BEGIN
+    exc(k); k:=k-1; GOTO 10 END;
+  END; (* j *)
+
+  (* search for columns isolating an eigenvalue and push them down *)
+
+ 20:
+  FOR j:=l TO k DO BEGIN
+   c:=0;
+   FOR i:=l TO j-1 DO c:=c+ABS(a[i,j]);
+   FOR i:=j+1 TO k DO c:=c+ABS(a[i,j]);
+   IF c=0 THEN BEGIN
+    exc(l); l:=l+1; GOTO 20 END;
+  END; (* j *)
+
+  (* now balance the submatrix in rows l though k *)
+
+  low:=l; hi:=k;
+  FOR i:=l TO k DO d[i]:=1;
+
+ 30:
+  noconv:=FALSE;
+  FOR i:=l TO k DO BEGIN
+   r:=0; c:=0;
+   FOR j:=l TO i-1 DO BEGIN
+    c:=c+ABS(a[j,i]); r:=r+ABS(a[i,j]); END; (* j *)
+   FOR j:=i+1 TO k DO BEGIN
+    c:=c+ABS(a[j,i]); r:=r+ABS(a[i,j]); END; (* j *)
+   g:=r/b; f:=1; s:=c+r;
+
+ 40: IF c<g THEN BEGIN
+   f:=f*b; c:=c*b2; GOTO 40; END;
+   g:=r*b;
+
+ 50: IF c>=g THEN BEGIN
+   f:=f/b; c:=c/b2; GOTO 50; END;
+
+   (* the preceding four lines may be replaced by a machine *)
+   (* language procedure computing the exponent sig such    *)
+   (* that sqrt(r/(c*b))<=b^sig<sqrt(r*b/c). Now balance    *)
+
+   IF (c+r)/f<0.95*s THEN BEGIN
+    g:=1/f; d[i]:=d[i]*f; noconv:=TRUE;
+    FOR j:=l TO n DO a[i,j]:=a[i,j]*g;
+    FOR j:=1 TO k DO a[j,i]:=a[j,i]*f;
+   END; (* if *)
+   (* the j loops may be done by exponent modification *)
+   (* in machine language                              *)
+  END; (* i *)
+  IF noconv THEN GOTO 30;
+ END; (* balance *)
+
+PROCEDURE balbak(n,low,hi,m: INTEGER; VAR z:glnpbynp; d:glnarray);
+ VAR
+  i,j,k:INTEGER; s: LONGREAL;
+
+ BEGIN
+  FOR i:=low TO hi DO BEGIN
+   s:=d[i];
+   (* left-hand eigenvectors are back transformed, if the *)
+   (* foregoing statement is replaced by s:=1/d[i]        *)
+   FOR j:=1 TO m DO z[i,j]:=z[i,j]*s;
+  END; (* i *)
+  FOR i:=low-1 DOWNTO 1 DO BEGIN
+   k:=ROUND(d[i]);
+   IF k<>i THEN FOR j:=1 TO m DO BEGIN
+     s:=z[i,j]; z[i,j]:=z[k,j]; z[k,j]:=s;
+   END; (* j *)
+  END; (* i *)
+  FOR i:=hi+1 TO n DO BEGIN
+   k:=ROUND(d[i]);
+   IF k<>i THEN FOR j:=1 TO m DO BEGIN
+     s:=z[i,j]; z[i,j]:=z[k,j]; z[k,j]:=s;
+   END; (* j *)
+  END; (* i *)
+ END; (* balbak *)
+ 
+
+PROCEDURE elmhes(n,k,l: INTEGER; VAR a: glnpbynp; VAR int: glindx);
+
+ VAR
+  i,j,la,m: INTEGER;
+  x,y: LONGREAL;
+
+ BEGIN
+  la:= l-1;
+  FOR m:=k+1 TO la DO BEGIN
+   i:=m; x:= 0.0;
+   FOR j:=m TO l DO 
+    IF ABS(a[j,m-1])>ABS(x) THEN BEGIN
+     x:=a[j,m-1]; i:= j; END;
+   int[m]:=i;
+   IF i<>m THEN BEGIN (* interchange rows and columns of array a *)
+    FOR j:=m-1 TO n DO BEGIN
+     y:= a[i,j]; a[i,j]:= a[m,j]; a[m,j]:= y; END;
+    FOR j:=1 TO l DO BEGIN
+     y:=a[j,i]; a[j,i]:=a[j,m]; a[j,m]:=y; END;
+   END; (* interchange *)
+   IF x<>0.0 THEN 
+    FOR i:=m+1 TO l DO BEGIN
+     y:=a[i,m-1];
+     IF y<>0.0 THEN BEGIN
+      a[i,m-1]:=y/x; y:=y/x;
+      FOR j:=m TO n DO a[i,j]:= a[i,j]-y*a[m,j];
+      FOR j:=1 TO l DO a[j,m]:= a[j,m]+y*a[j,i];
+     END; (* y<>0.0 *)
+    END; (* i *)
+  END; (* m *)  
+ END; (* elmhes *)
+
+PROCEDURE elmtrans(n,low,upp:INTEGER; h:glnpbynp; int:glindx;
+                   VAR v:glnpbynp);
+
+ VAR
+  i,j,k: INTEGER;
+
+ BEGIN
+  FOR i:=1 TO n DO BEGIN
+   FOR j:=1 TO n DO v[i,j]:= 0.0; v[i,i]:= 1.0; END;
+   FOR i:=upp-1 DOWNTO low+1 DO BEGIN
+    j:=int[i];
+    FOR k:=i+1 TO upp DO v[k,i]:=h[k,i-1];
+    IF i<>j THEN BEGIN
+     FOR k:=i TO upp DO BEGIN
+      v[i,k]:= v[j,k]; v[j,k]:=0.0;
+     END; (* k *)
+     v[j,i]:= 1.0;
+    END; (* i<>j *)
+   END; (* i *)
+ END; (* elmtrans *)
+
+
+PROCEDURE hqr2(n,low,upp,maxits:INTEGER;macheps:LONGREAL;
+              eigveccalc: BOOLEAN; 
+              VAR h,vecs:glnpbynp;VAR wr,wi:glnarray;
+              VAR cnt:glindx;VAR fail:BOOLEAN);
+
+ LABEL
+  10,20,31,32,33,40,50,60,70;
+
+ VAR
+  i,j,k,l,m,na,its,en: INTEGER;
+  p,q,r,s,t,w,x,y,z,ra,sa,vr,vi,norm: LONGREAL;
+  notlast: BOOLEAN;
+  c1,c2,c3: fcomplex;
+
+ BEGIN
+  fail:=FALSE;
+  FOR i:=1 TO low-1 DO BEGIN
+   wr[i]:=h[i,i]; wi[i]:=0.0; cnt[i]:=0; END; (* isolated roots *)
+  FOR i:=upp+1 TO n DO BEGIN
+   wr[i]:=h[i,i]; wi[i]:=0.0; cnt[i]:=0; END; (* isolated roots *)
+  en:=upp; t:=0.0;
+
+ 10:
+  IF en<low THEN GOTO 60;
+  its:=0; na:=en-1;
+
+  (* look for single small sub-diagonal element *)
+
+ 20:
+  FOR l:=en DOWNTO low+1 DO 
+   IF ABS(h[l,l-1])<=macheps*(ABS(h[l-1,l-1])+ABS(h[l,l])) 
+    THEN GOTO 31;
+   l:=low;
+
+ 31:
+  x:=h[en,en]; IF l=en THEN GOTO 40;
+  y:=h[na,na]; w:=h[en,na]*h[na,en]; IF l=na THEN GOTO 50;
+  IF its=maxits THEN BEGIN
+   cnt[en]:=maxits+1; fail:=TRUE; GOTO 70; END;
+  IF ((its MOD 10) = 0) THEN BEGIN (* form exceptional shift *)
+   t:=t+x;
+   FOR i:=low TO en DO h[i,i]:=h[i,i]-x;
+   s:=ABS(h[en,na])+ABS(h[na,en-2]); y:=0.75*s; x:=y;
+   w:=-0.4375*s*s; END;
+  its:=its+1;
+
+  (* look for two consecutive small sub-diagonal elements *)
+  FOR m:=en-2 DOWNTO l DO BEGIN
+   z:=h[m,m]; r:=x-z; s:=y-z;
+   p:=(r*s-w)/h[m+1,m]+h[m,m+1];
+   q:=h[m+1,m+1]-z-r-s; r:=h[m+2,m+1];
+   s:=ABS(p)+ABS(q)+ABS(r); p:=p/s; q:=q/s; r:=r/s;
+   IF m=l THEN GOTO 32;
+   IF (ABS(h[m,m-1])*(ABS(q)+ABS(r)))<= 
+       (macheps*ABS(p)*(ABS(h[m-1,m-1])+ABS(z)+ABS(h[m+1,m+1])))
+        THEN GOTO 32;
+  END; (* m *)
+
+ 32:
+  FOR i:=m+2 TO en DO h[i,i-2]:=0.0;
+  FOR i:=m+3 TO en DO h[i,i-3]:=0.0;
+
+  (* double QR step involving rows l to en and *)
+  (* columns m to en of the complete array     *)
+
+  FOR k:=m TO na DO BEGIN
+   notlast:= (k<>na);
+   IF k<>m THEN BEGIN
+    p:=h[k,k-1]; q:=h[k+1,k-1];
+    IF notlast THEN r:=h[k+2,k-1] ELSE r:= 0;
+    x:=ABS(p)+ABS(q)+ABS(r); IF x=0 THEN GOTO 33;
+    p:=p/x; q:=q/x; r:=r/x;
+   END;
+   s:= SQRT(p*p+q*q+r*r);
+   IF p<0 THEN s:=-s;
+   IF k<>m THEN h[k,k-1]:=-s*x 
+    ELSE IF l<>m THEN h[k,k-1]:= -h[k,k-1];
+   p:=p+s; x:=p/s; y:=q/s; z:=r/s; q:=q/p; r:=r/p;
+
+   (* row modification *)
+   FOR j:=k TO n DO BEGIN
+    p:=h[k,j]+q*h[k+1,j];
+    IF notlast THEN BEGIN
+     p:=p+r*h[k+2,j]; h[k+2,j]:=h[k+2,j]-p*z; END;
+    h[k+1,j]:=h[k+1,j]-p*y; h[k,j]:=h[k,j]-p*x; 
+   END; (* j *)
+   IF k+3<en THEN j:=k+3 ELSE j:=en;
+
+   (* column modification *)
+   FOR i:=1 TO j DO BEGIN
+    p:= x*h[i,k]+y*h[i,k+1];
+    IF notlast THEN BEGIN
+     p:=p+z*h[i,k+2]; h[i,k+2]:=h[i,k+2]-p*r; END;
+    h[i,k+1]:=h[i,k+1]-p*q;h[i,k]:=h[i,k]-p;
+   END; (* i *)
+
+   (* accumulate transformation *)
+   FOR i:=low TO upp DO BEGIN
+    p:=x*vecs[i,k]+y*vecs[i,k+1];
+    IF notlast THEN BEGIN
+     p:=p+z*vecs[i,k+2]; vecs[i,k+2]:=vecs[i,k+2]-p*r; END;
+    vecs[i,k+1]:=vecs[i,k+1]-p*q;
+    vecs[i,k]:=vecs[i,k]-p;
+   END;
+ 
+ 33:
+  END; (* k *)
+  GOTO 20;
+
+  (* one root found *)
+ 40:
+  h[en,en]:=x+t; wr[en]:=h[en,en]; wi[en]:=0.0;
+  cnt[en]:=its; en:=na; GOTO 10;
+
+  (* two roots found *)
+ 50:
+  p:=(y-x)/2; q:=p*p+w; z:=SQRT(ABS(q));
+  h[en,en]:=x+t; x:=h[en,en]; h[na,na]:= y+t;
+  cnt[en]:=-its; cnt[na]:=its;
+  IF q>0 THEN BEGIN (* real pair *)
+   IF p<0.0 THEN z:=p-z ELSE z:=p+z;
+   wr[na]:=x+z; s:=x-w/z; wr[en]:=s; wi[na]:=0.0; wi[en]:=0.0;
+   x:=h[en,na]; r:=SQRT(x*x+z*z); p:=x/r; q:=z/r;
+   FOR j:=na TO n DO BEGIN
+    z:=h[na,j]; h[na,j]:=q*z+p*h[en,j];
+    h[en,j]:=q*h[en,j]-p*z;
+   END; (* row modification *)
+   FOR i:=1 TO en DO BEGIN
+    z:=h[i,na]; h[i,na]:=q*z+p*h[i,en];
+    h[i,en]:=q*h[i,en]-p*z;
+   END; (* column modification *)
+   FOR i:=low TO upp DO BEGIN
+    z:=vecs[i,na]; vecs[i,na]:=q*z+p*vecs[i,en];
+    vecs[i,en]:=q*vecs[i,en]-p*z;
+   END; (* accumulate *)
+  END (* pair of real roots *)
+  ELSE BEGIN (* complex pair *)
+   wr[na]:=x+p; wr[en]:=x+p; wi[na]:=z; wi[en]:=-z;
+  END; (* two roots found *)
+  en:= en-2; GOTO 10;
+
+
+(* all roots found, now backsubstitute *)
+
+60:
+ IF NOT eigveccalc THEN GOTO 70;
+ norm:=0.0; k:=1;
+ FOR i:=1 TO n DO BEGIN
+  FOR j:=k TO n DO norm:=norm+ABS(h[i,j]);
+  k:=i; END; (* norm *)
+
+ (* backsubstitution *)
+ FOR en:=n DOWNTO 1 DO BEGIN
+  p:=wr[en]; q:=wi[en]; na:=en-1;
+  IF q=0.0 THEN BEGIN (* real vector *)
+   m:=en; h[en,en]:=1.0;
+   FOR i:=na DOWNTO 1 DO BEGIN
+    w:=h[i,i]-p; r:=h[i,en];
+    FOR j:=m TO na DO r:=r+h[i,j]*h[j,en];
+    IF wi[i]<0.0 THEN BEGIN
+     z:=w; s:=r; END
+    ELSE BEGIN
+     m:=i;
+     IF wi[i]=0.0 THEN
+      IF w<>0.0 THEN h[i,en]:=-r/w ELSE h[i,en]:=-r/macheps/norm
+     ELSE BEGIN
+     (* solve w*h[i,en]+x*h[i+1,en]=-r *)
+     (*       y*h[i,en]+z*h[i+1,en]=-s *)
+      x:=h[i,i+1]; y:=h[i+1,i];
+      q:=SQR(wr[i]-p)+wi[i]*wi[i];
+      t:=(x*s-z*r)/q; h[i,en]:=t;
+      IF ABS(x)>ABS(z) THEN h[i+1,en]:=(-r-w*t)/x 
+       ELSE h[i+1,en]:=(-s-y*t)/z;
+     END; (* wi[i]>0.0 *)
+    END; (* wi[i]>=0.0 *)
+   END; (* i *)
+  END (* real vector *)
+  ELSE 
+  IF q<0.0 THEN BEGIN (* complex vector associated with lambda=p-i*q *)
+   m:=na;
+   IF ABS(h[en,na])>ABS(h[na,en]) THEN BEGIN
+    h[na,na]:=-(h[en,en]-p)/h[en,na];
+    h[na,en]:=-q/h[en,na];
+   END
+   ELSE BEGIN 
+    Complex(-h[na,en],0.0,c1); Complex(h[na,na]-p,q,c2);
+    Cdiv(c1,c2,c3); h[na,na]:= c3.re; h[na,en]:= c3.im;
+    END;
+   h[en,na]:=1.0; h[en,en]:=0.0;
+   FOR i:=na-1 DOWNTO 1 DO BEGIN
+    w:=h[i,i]-p; ra:=h[i,en]; sa:=0.0;
+    FOR j:=m TO na DO BEGIN
+     ra:=ra+h[i,j]*h[j,na];
+     sa:=sa+h[i,j]*h[j,en];
+    END;
+    IF wi[i]<0.0 THEN BEGIN
+     z:=w; r:=ra; s:=sa; 
+    END
+    ELSE BEGIN
+     m:=i;
+     IF wi[i]=0.0 THEN BEGIN
+                         Complex(-ra,-sa,c1); Complex(w,q,c2);
+                         Cdiv(c1,c2,c3); h[i,na]:= c3.re; h[i,en]:= c3.im;
+                       END 
+     ELSE BEGIN
+     (* solve complex equations see page 387 *)
+      x:=h[i,i+1]; y:=h[i+1,i];
+      vr:=SQR(wr[i]-p)+wi[i]*wi[i]-q*q;
+      vi:=(wr[i]-p)*2.0*q;
+      IF (vr=0.0) AND (vi=0.0) 
+       THEN vr:=macheps*norm*(ABS(w)+ABS(q)+ABS(x)+ABS(y)+ABS(z));
+      Complex(x*r-z*ra+q*sa,x*s-z*sa-q*ra,c1);Complex(vr,vi,c2);
+      Cdiv(c1,c2,c3); h[i,na]:= c3.re; h[i,en]:= c3.im;
+      IF ABS(x)>ABS(z)+ABS(q) THEN BEGIN
+       h[i+1,na]:=(-ra-w*h[i,na]+q*h[i,en])/x;
+       h[i+1,en]:=(-sa-w*h[i,en]-q*h[i,na])/x;
+      END
+      ELSE BEGIN
+	    Complex(-r-y*h[i,na],-s-y*h[i,en],c1); Complex(z,q,c2);
+            Cdiv(c1,c2,c3); h[i+1,na]:= c3.re; h[i+1,en]:= c3.im;
+           END; 
+     END; (* wi[i]>0.0 *) 
+    END; (* wi[i]>=0.0 *) 
+   END; (* i *) 
+  END; (* complex vector *) 
+ END; (* backsubstitution *) 
+
+ (* vectors of isolated roots *)
+ FOR i:=1 TO low-1 DO 
+  FOR j:=i+1 TO n DO vecs[i,j]:=h[i,j];
+ FOR i:=upp+1 TO n DO 
+  FOR j:=i+1 TO n DO vecs[i,j]:=h[i,j];
+
+ (* multiply by transformation matrix to give *)
+ (* vectors of original full matrix           *)
+ FOR j:=n DOWNTO low DO BEGIN
+  IF j<=upp THEN m:=j ELSE m:=upp; l:=j-1;
+  IF wi[j]<0.0 THEN BEGIN
+   FOR i:=low TO upp DO BEGIN 
+    z:=0.0; y:=z;
+    FOR k:=low TO m DO BEGIN
+     y:=y+vecs[i,k]*h[k,l]; z:=z+vecs[i,k]*h[k,j];
+    END;
+    vecs[i,l]:=y; vecs[i,j]:=z;
+   END; (* i *)
+  END (* wi[j]<0.0 *)
+  ELSE IF wi[j]=0.0 THEN 
+   FOR i:=low TO upp DO BEGIN
+    z:=0.0;
+    FOR k:=low TO m DO z:=z+vecs[i,k]*h[k,j];
+    vecs[i,j]:=z;
+   END; (* i *)
+ END; (* j *)
+
+70:
+END; (* hqr2 *)
+
+
+PROCEDURE hqr2alg(n,ref: INTEGER; VAR A,T: glnpbynp; VAR tmx:INTEGER;
+                  epshqr2: LONGREAL; result,eigveccalc,fixedref: BOOLEAN);
+
+  
+  VAR
+   wr,wi,bald:glnarray;
+   i,j,ballow,balhi:INTEGER;
+   intout: glindx;
+   fail,left,right: BOOLEAN;
+
+  BEGIN
+   balance(n,10,A,ballow,balhi,bald);
+   elmhes(n,ballow,balhi,A,intout);
+   elmtrans(n,ballow,balhi,A,intout,T); 
+   tmx:= maxithqr2;
+   hqr2(n,ballow,balhi,tmx,epshqr2,eigveccalc,A,T,wr,wi,intout,fail);
+   IF fail THEN alarm(0,'hqr2alg: fail in hqr2 alg.');
+   tmx:= 0;
+   FOR i:=1 TO n DO IF ABS(intout[i])>tmx THEN tmx:=ABS(intout[i]);
+   FOR i:=1 TO n DO
+    FOR j:=1 TO n DO A[i,j]:=0.0;
+   i:=1;
+   REPEAT
+    IF wi[i]<>0.0 THEN BEGIN
+     A[i,i]:=wr[i]; A[i+1,i+1]:=wr[i];
+     A[i,i+1]:=wi[i]; A[i+1,i]:=wi[i+1];
+     i:=i+2;
+    END
+    ELSE BEGIN
+     A[i,i]:=wr[i]; A[i,i+1]:=wi[i]; A[i+1,i]:=wi[i];
+     i:=i+1;
+    END;
+   UNTIL (i>=n);
+   IF i=n THEN A[i,i]:= wr[i];
+   ombytning(n,A,T);
+   IF eigveccalc THEN BEGIN 
+    balbak(n,ballow,balhi,n,T,bald);
+    normalizingmatrix(n,A,fixedref,ref,T);
+   END;
+   left:=false;
+   right:=false;
+   IF result THEN
+    FOR i:=1 TO n DO BEGIN
+      IF NOT(right) AND (i<n) THEN
+       left:=(ABS(A[i,i+1]-A[i+1,i])>epsblk)
+              AND (ABS(A[i,i]-A[i+1,i+1])<=epsblk);
+      IF right THEN A[i,1]:=A[i-1,1] ELSE A[i,1]:=A[i,i];
+      IF left THEN A[i,2]:=A[i,i+1] 
+       ELSE IF right THEN A[i,2]:=-A[i-1,2] ELSE A[i,2]:=0;
+      right:=left;
+      left:=false;
+     END;
+  END;  (* hqr2alg *)

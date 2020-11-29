@@ -1,0 +1,12 @@
+cp /usr/users/kneth/num/kksolver.c .
+cp /usr/users/kneth/num/matrix.o .
+cp /usr/users/kneth/num/integr.o .
+cp /usr/users/kneth/num/odesolv.o .
+cp /usr/users/kneth/num/odeserv.o .
+/usr/users/kneth/bin/kc -m3 -v < $1
+cc -O2 -w -Olimit 1000 -D_PLATFORM_ULTRIX_ -c -I. -I/usr/users/kneth/num -I- kksolver.c
+cc -O2 -w -Olimit 1000 -D_PLATFORM_ULTRIX_ matrix.o kksolver.o integr.o odesolv.o odeserv.o -lm
+rm -f model.c model.h kksolver.c kksolver.o matrix.o integr.o odesolv.o odeserv.o
+pixie a.out
+a.out.pixie
+prof -pixie a.out |more

@@ -1,0 +1,232 @@
+% Last updated: 5 Oct 1994
+\documentclass[12pt]{article}
+
+\newcommand{\ie}[0]{{\it i.e.\ \/}}
+\newcommand{\eg}[0]{{\it e.g.\ \/}}
+\newcommand{\diff}[2]{\frac{{\mathrm d}#1}{{\mathrm d}#2}}
+
+\setlength{\parindent}{0cm}
+\setlength{\parskip}{0.1cm}
+
+\title{A Small Package of \\ Numerical Methods in ANSI C}
+\author{Kenneth Geisshirt \and Keld Nielsen}
+\date{5 October 1994}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+\label{sec:Intro}
+
+This brief report documents the numerical libraries which we have
+developed. The code is written in ANSI-C, \cite{CProgLan}. This fact
+makes the code very portable, especially Unix based systems should be
+able to run it.
+
+The library is purposed to be a general-purpose numerical library.
+This means that there is routines for many different problems. 
+
+The following sections describe each a library. The routines are
+discussed, and general guidelines are given. The names of the
+libraries are given in {\tt typewriting}, and this also gives the name
+of the source and object files.
+
+The implementation presented here should not be consider to be advanced.
+It is meant to be small and simple. It contains the routines which we
+have found useful in our applications, which is mainly the simulation
+of chemical reactions.
+
+
+\section{Integration of functions}
+\label{sec:InteFunc}
+
+The scope of the library called {\tt integr} is to evaluate definite
+integration, \ie to compute
+
+\begin{equation}
+  \int_a^b f(x, \vec{\mu}) {\mathrm d}x,
+\end{equation}
+where $\vec{\mu}$ is a number of parameters. All the routines in the
+library have the same structure. 
+
+The function $f$ is assumed to be declared as
+
+\begin{verbatim}
+double f(double x, double *mu)
+\end{verbatim}
+
+The integration routines can be called as
+
+\begin{verbatim}
+Inte(N, a, b, mu, &f)
+\end{verbatim}
+where {\tt N} is the number of sunintervals which should be used, {\tt
+  a}, {\tt b} and {\tt mu} correspond to $a$, $b$ and $\vec{\mu}$
+respectively, and of course {\tt f} is $f$. The function returns the
+value of the integral as a double-precision value.
+
+There are three choices of integration methods available. {\tt Gauss5}
+is a five-point Gaussian quadrature, {\tt Simpson} is the composite
+Simpson's rule, and {\tt Trapez} is the composite trapezoid rule.
+
+
+\section{Complex numbers}
+\label{sec:complex}
+
+Many numerical applications are using complex numbers, and we provide
+a small implementation in form of the {\tt complex} library. 
+
+The complex numbers are given their own type. It is called {\tt
+  Complex}, and therefore a proper declaration of the complex number
+$z$ is
+
+\begin{verbatim}
+Complex z;
+\end{verbatim}
+
+The real and imaginary parts of {\tt z} are address as {\tt z.re} and
+{\tt z.im}, respectively.
+
+
+\subsection{ComplexAssign}
+\label{sec:ComplexAssign}
+\begin{verbatim}
+ComplexAssign(double x, double y, Complex *z)
+\end{verbatim}
+
+This routines assign the complex number $z$ a value, namely $z =
+x+\imath y$.
+
+
+\subsection{ComplexAdd}
+\label{sec:ComplexOper}
+\begin{verbatim}
+ComplexAdd(Complex a, Complex b, Complex *z);
+ComplexSub(Complex a, Complex b, Complex *z);
+ComplexMul(Complex a, Complex b, Complex *z);
+ComplexDiv(Complex a, Complex b, Complex *z);
+\end{verbatim}
+
+Depending on the routine, it computes either the sum, the difference,
+the product or the quotient of the two number $a$ and $b$ and returns
+the result in $z$. For {\tt ComplexDiv} the result is $\frac{a}{b}$
+and for {\tt ComplexSub} is $a-b$.
+
+
+\subsection{ComplexNorm}
+\label{sec:ComplexNorm}
+\begin{verbatim}
+double ComplexNorm(Complex z);
+\end{verbatim}
+
+The function computes the norm of $z$.
+
+
+\subsection{ComplexArg}
+\label{sec:ComplexArg}
+\begin{verbatim}
+double ComplexArg(Complex z);
+\end{verbatim}
+
+the function computes the argument of $z$.
+
+
+\section{Eigenvalues}
+\label{sec:Eigen}
+In order to calculate eigenvalues and -vectors of general real
+matrices, we have implemented one routine in the library {\tt eigen}.
+An eigenvalue problem is the equation
+
+\begin{equation}
+{\mathbf A}\cdot\vec{x} = \lambda\vec{x},
+\label{EigenEq}
+\end{equation}
+where ${\mathbf A}$ is a $n\times n$ matrix, $\vec{x}$ is
+$n$-dimensional vector (called eigenvector) and $\lambda$ is a
+complex number (called the eigenvalues). 
+
+The routine has a very simple interface, namely
+
+\begin{verbatim}
+void Eigen(int n, double **A, int maxiter, Complex *vals, Complex
+**vecs)
+\end{verbatim}
+
+The arguments are explained in the table below.
+
+\begin{center}
+  \begin{tabular}{|l|l|}
+    \hline
+    Argument       & Description \\ \hline
+    {\tt n}        & the dimension $n$ \\
+    {\tt A}        & a real $n\times n$ matrix \\
+    {\tt maxiter}  & the maximal number of iterations \\
+    {\tt vals}     & the $n$ eigenvalues packed as a vector \\
+    {\tt vecs}     & the $n$ eigenvectors packed as a matrix \\ \hline
+  \end{tabular}
+\end{center}
+
+
+\section{Ordinary differential equations}
+\label{sec:ODEs}
+In many physical applications one wants to solve ordirary differential
+equations. We have implemented a library called {\tt odesolv} which is
+a good tool. The library consists of a number of methods. Each method
+is implemented as a subroutine, which take one step with a given
+length. Each routine returns also an error estimate.
+
+The first group of routines take solves the equation
+
+\begin{equation}
+  \diff{\vec{x}}{t} = \vec{f}(\vec{x}),
+  \label{ODEauto}
+\end{equation}
+\ie a autononymous ordinary differential equation of 1st order. The
+routines have a common interface, namely
+
+\begin{verbatim}
+method(int n, double dt, double *x, double *xnew, double *err, 
+       void (*f)(double *, double *), void (*jac)(double *))
+\end{verbatim}
+
+The arguments are summarised below.
+
+\begin{center}
+  \begin{tabular}{|l|l|}
+    Argument    & Description \\ hline
+    {\tt n}     & the dimension \\
+    {\tt dt}    & step length \\
+    {\tt x}     & $\vec{x}$ before the step \\
+    {\tt xnew}  & $\vec{x}$ after the step \\
+    {\tt err}   & the error estimate \\
+    {\tt f}     & a pointer to $\vec{f}$ \\
+    {\tt jac}   & a pointer to a function which computes the jacobian
+    \\ 
+    \hline
+  \end{tabular}
+\end{center}
+
+The argument {\tt f} is a pointer to a function, which first argument
+is $\vec{x}$ and as second argument is $\vec{f}(\vec{x})$. The
+argument {\tt jac} is a pointer to a routine, which computes the
+elements of the jacobian matrix, \ie
+
+\begin{equation}
+  J_{ij} = \left. \frac{\partial f_i}{\partial x_j}\right|_{\vec{x}}.
+  \label{Jac}
+\end{equation}
+
+The matrix is communicated through a global variable {\tt
+  jaccobi_matx} (the user must allocate it, but but define it).
+
+Not all the routines are using the jacobian matrix, and therefore this
+argument may be omitted.
+
+
+\section{Vectors and matrices}
+\label{sec:VecMatx}
+
+
+\end{document}
+

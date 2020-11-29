@@ -1,0 +1,6 @@
+kc -m3 -q < $1
+cp /users/kneth/Projects/kc/Solvers/kksolvers.c .
+cc -O -Aa -o x$1 kksolvers.c -lm
+rm -f kksolvers.c
+x$1
+rm -f x$1

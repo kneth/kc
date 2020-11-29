@@ -1,0 +1,164 @@
+\documentstyle{article}
+\author{Kenneth Geisshirt}
+\title{Preanalysis of kinetic precompiler}
+\date{5 August 1992}
+\begin{document}
+\maketitle
+\section{Paths to go}
+There exist two paths, which can be used. The first is to extend the
+{\tt kin} program and the other is to start from scratch, i.\ e.\ to
+begin from nothing and write every line of code. This preanalysis' aim
+is to uncover the two paths and give (unprecise) plans of proceeding.
+
+\section{Extending {\tt kin}}
+Extending an existing program can only be done when the new program is
+a superset of the previously. This is true in this case. But, and there 
+is a but, there are some major disadvantages which have to be considered.
+Of course there are also advantages, some obvious and some not.
+
+Let me begin with the advantages. The first one is obvious; a lot of the
+work has already been done. This means that a lot of time can be saved.
+The saved time can then be used on the extension. But even this obvious
+advantages can easily degenerate to nothing, if the program is written in
+a way, which prohibits extension. A non-extentable program is written so
+the structure is a spagetti-form, and there is no documentation of what
+the data structures are doing. The {\tt kin} system has a good structure,
+but lacks of documentation. There are comments in the source file, but
+the data structures (and their operations) are not documented. 
+
+The second advantage is the concept of superset. The new program can still
+use old input without changes, like the upgrade from Fortran-77 to
+Fortran-90 (or in some cases from C to C++).
+In reaching this goal, the programmer has to be aware of the
+goal. 
+
+One of the disadvantages is already mentioned briefly. If the system has no
+structure the programmer will use too much time in finding the places to
+make the extensions. This is actually the case with {\tt kin} in one
+respect. The feature of calling external functions was added after the
+designing the system. It is therefore a ad hoc solution of a program, and
+it is not the most structured solution.
+
+Even though the structure of the {\tt kin} system is well-formed, the 
+lack of concrete data types is a major problem. There are of course 
+variuos data structures, but they are defined, so they are fitting their
+purpose. They are not defined as black-boxes, so the programmer is 
+able to take advantage the actual representation. This missing structure
+can, in my opion, give problems when extending the program. Black-boxes in
+modules are easier to alter and extend, because they don't interact with
+each other and the main program. 
+
+If one has to extend the {\tt kin} system, one has to find out the precise
+meaning of every variable and statement (almost). This requires time, 
+maybe two days or more. Then the extension can be made. The problem is, that
+changes in the input format may lead to changes in already existing code,  
+which complicates the matter.
+
+\section{Writing every line of code}
+Writing the program from the bare nothing is like inventing the wheel twice
+when somebody already had solved some of the problems. Some of the problems
+{\em are} solved in the {\tt kin} system. By starting from scratch one
+can be free of the failures and misunderstandings
+of the past, i.\ e.\ old programs. 
+
+Instead of analysing the problem once more (a lot of the analysis from
+the previous section could easily the reused here), I will setup some
+kind of a plan of work. The plan can of course only a guide of the
+work.
+
+\subsection{Format of input}
+The format of the input is of great importance. It is important, because
+of two reasons. The first is, that this is what the user is going to live 
+live with as long as he or the program is alive. The second reason is, that
+a mistake or error in the early step of development, can easily ruin the
+project. It is very expensive (especially in time) to change decisions
+made early in the project, because all the analysis, design and implementation
+have to be done again.
+
+\subsection{Reading input}
+If the format of the input is given as (LALR) grammar, a lexical analyser
+and parser can be generated using the standard tools {\em lex} and {\em
+yacc}. At the moment I am not used to use {\em lex}, but the
+manual can be found on the CD-ROM. The actual work is to write down
+the semantic actions, which are to be inserted into the source file
+used by {\em yacc} - to write down the grammar is only a question of
+minutes, when it is defined. 
+But the semantic actions are not of interest in this section! When 
+using these two tools 
+this part of
+the project is almost trivial. 
+There exists substitutes called {\em Flex} and {\em Bison}
+\footnote{{\em Bison} is already installed on Tiger.}, but they
+do the same job as {\em lex} and {\em yacc}. Another substitute
+is {\em BOBS}, which replaces both {\em lex} and {\em yacc} but uses
+Pascal as programming language.
+
+By using these tools, one can save time
+on the testing of the lexical analyser and the parser \footnote{One
+has to assume, that one's tools are free of errors.}. 
+
+\subsection{Data types}
+I prefer to call them data types instead of data structures, because I will
+see them as black-boxes, and the application programmer is not to know
+their actual representation. To make to illusion of a black-box perfectly
+I will defined operations, which restrict the interface to a mininal one.
+
+The data types used in this kind of application (compiler-like), is
+often of the type insert-and-retrieve. The following data types seems
+natural:
+\begin{enumerate}
+ \item Species.
+ \item Reactions/mechamism, a kind of stoichiometric matrix.
+ \item Parameters.
+ \item Contrains.
+\end{enumerate}
+
+The data type of species could have information on the name, the charge, 
+different properties of the actual specie (like enthalpy of formation). 
+The data type of reactions must then have information on which species 
+involved in which reaction, the rate constant, etc. 
+
+Since the data types are insert-and-retrive types, the design and implementation
+can be done in matters of days (at most a week). 
+
+\subsection{Semantic actions}
+This is the key problem in writing a (pre)compiler, even for a small langauge.
+The semantic actions demand knowledge of both the source and target 'langauge'.
+In this case, that means the programmer (me) has to be familiar with the process
+of transforming the chemical model into a numerical model or input to 
+different programs. The semantic actions are to be called by the parser. When
+using {\em yacc} the actions are inserted directly into the input file for
+{\em yacc}. The semantic action can be used as a analysis of which data types
+there are needed, especially which operations are needed. 
+
+Since this is the key problem in the implementation, it will also be the part
+which consumed most of the time. But when it is clear, how the actions are
+going to be, it is merely just to type them into the program text. Finding
+the proper actions and implement them, will take up about a week's work. 
+
+\subsection{Testing}
+To test a new program, and especially (pre)compilers, is very time consuming.
+A proper, well-documented testing would take the same time as develop the
+program, i.\ e.\ two weeks. Of course one can assumed that all tools are
+working correctly, and therefore the lexical analyser is correct. The parser
+will also be correct in the sense it is shifting and reducing in the right
+order. But still, one has to test the semantic actions and by them also the
+various data types, which have been defined.
+
+\subsection{Some already written}
+Even through it sounds as a contradiction, I don't have to start from scratch,
+because I have already written some of the code. Well, the grammar/input format have
+to be extended, but the data types are implemented. Some of the code generator
+is implemented. The missing parts are mainly semantic actions and some code
+generating stuff.
+
+To work on in this direction is more promissing. I will write the all code,
+but I don't have to start from point zero again. This code was written 
+more modular that the {\tt kin} system, so extending it with features like
+power law and general mechanism cannot the the hardest work. 
+
+There exists also some documentation of this project. This documentation's
+aim is to describe the implementation, i.\ e.\ which data types are used 
+and so on.
+
+\end{document}

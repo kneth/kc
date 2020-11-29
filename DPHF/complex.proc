@@ -1,0 +1,41 @@
+PROCEDURE Complex(a,b: LONGREAL; VAR c: fcomplex);
+ BEGIN
+  c.re:= a; c.im:= b;
+ END; (* Complex *)
+
+PROCEDURE Cnorm(a: fcomplex; VAR norm: LONGREAL);
+ BEGIN
+  norm:= a.re*a.re + a.im*a.im;
+ END; (* Cnorm *)
+
+PROCEDURE Cmul(a,b: fcomplex; VAR c: fcomplex);
+ (* c = a*b *)
+ BEGIN
+  c.re:= a.re*b.re - a.im*b.im;
+  c.im:= a.re*b.im + a.im*b.re;
+ END; (* Cmul *)
+
+PROCEDURE Cadd(a,b: fcomplex; VAR c: fcomplex);
+ (* c = a+b *)
+ BEGIN
+  c.re:= a.re+b.re; c.im:= a.im+b.im;
+ END; (* Cadd *)
+
+
+PROCEDURE RCmul(a: fcomplex; x: LONGREAL; VAR c: fcomplex);
+ (* c = x*a *)
+ BEGIN
+  c.re:= x*a.re; c.im:= x*a.im;
+ END; (* RCmul *)
+
+PROCEDURE Cdiv(a,b: fcomplex; VAR c: fcomplex);
+ (* c = a/b *)
+ (* procedure Cnorm is used *)
+ VAR
+  norm: LONGREAL;
+
+ BEGIN
+  Cnorm(b,norm);
+  c.re:= (a.re*b.re + a.im*b.im)/norm;
+  c.im:= (a.im*b.re - a.re*b.im)/norm;
+ END; (* Cdiv *)

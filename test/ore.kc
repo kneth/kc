@@ -1,0 +1,46 @@
+/* Belousov- Zhabotinsky reaction      */
+/* Model: Oregonator , open system     */
+/* Rate constant k1 decreased          */
+
+stime = 1; dtime = 1; etime = 10; 
+
+htime = 0.005;
+epsr = 1.0E-8;  
+epsa = 1.0E-8;
+
+#print [HBrO2];
+
+
+
+prnmode = 1;
+
+j0 = 1.105;
+kf1 = 2; 
+kf2 = 3.00e+6;
+kf3 = 42;
+kf4 = 3.0e+3;
+kf5 = 0.132;
+kf6 = 0.035;
+
+101:  HBrO2                  ->  P                 ; k> = j0;
+102:  Br(-)                    ->  P                 ; k> = j0;
+103:  Ce(+4)                   ->  P                 ; k> = j0;
+
+1:  BrO3(-) + Br(-) + 2H     -> HBrO2 + HOBr          ; k> = kf1; 
+2:  HBrO2 + Br(-) + H      -> 2HOBr                 ; k> = kf2;
+3:  BrO3(-) + HBrO2 + H    -> 2Ce(+4)        ; k> = kf3; 
+4: 2HBrO2                -> HOBr + BrO3(-) + H      ; k> = kf4;
+5:  Ce(+4) + BrMA          -> Br(-)                   ; k> = kf5;
+6:  Ce(+4)                 -> P                     ; k> = kf6;
+
+[BrMA] = 1;
+
+[BrO3(-)] = 0.012; [H] = 1.05; [HOBr] = 1; [P] = 0;
+
+[HBrO2](0) = 2.40592e-08;
+[Br(-)](0)   = 1.35795e-07;
+[Ce(+4)](0)  = 8.71103e-08;
+ 
+
+
+

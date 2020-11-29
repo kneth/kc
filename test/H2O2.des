@@ -1,0 +1,40 @@
+/* P. Gray et al. in Complex chemical reaction systems, p. 150, Springer, 1987 */
+
+etime = 1.0;
+dtime = 0.01;
+prnmode = 1;
+
+T = 1000;
+
+k1 = 1.00e8*exp(-24200/T);
+k2 = 1.95e7*exp(-2850/T);
+k3 = 1.15e8*exp(-7919/T);
+k4 = 6.56e7*exp(-5337/T);
+k5 = 6.00e3*exp(605/T);
+k6 = 3.00e8*exp(-2000/T);
+k7 = 1.50e8*exp(-506/T);
+k8 = 1.03e3;
+k9 = 3.38e4;
+
+k10= 3.10e7*exp(-28700/T);
+k11= 6.50e5*exp(-9440/T);
+
+1: H2  + O2      -> 2 OH;     k>=k1;
+2: OH + H2       -> H2O + H;  k>=k2;
+3: H + O2        -> OH + O;   k>=k3;
+4: O + H2        -> OH + H;   k>=k4;
+5: H + O2 + Ar   -> HO2 + Ar; k>=k5;
+6: HO2 + H       -> H2O + O;  k>=k6;
+7: HO2 + H       -> 2OH;      k>=k7;
+8: 2H + Ar       -> H2 + Ar;  k>=k8;
+9: H + OH + Ar   -> H2O + Ar; k>=k9;
+
+/*
+10: H2 + O2      -> HO2 + H;  k>=k10;
+11: HO2 + H2     -> H2O + OH; k>=k11;
+*/
+
+[Ar](0) = 0.1;
+[O2](0) = 5.0e-3;
+[H2](0) = 0.01;
+[H](0)  = 1.0e-10;

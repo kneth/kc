@@ -1,0 +1,39 @@
+/* This example is due to Gray and Scott, "Chemical Oscillations and
+   Instabilities. Nonlinear Chemical Kinetics", Oxford University Press (1990).
+   See section 4.1-4.3.
+*/
+
+/* Simulation parameters */
+method = 1;
+etime = 35;
+dtime = 0.01;
+epsa = 1.0e-20;
+epsr = 1.0e-15;
+htimemin = 1.0e-20;
+
+
+/* Natural constant - according to Rubber Bible, 1988 */
+R    = 8.3144126;
+
+/* Reactor */
+V    = 1.0;
+S    = 5;
+Ta   = 400;
+c    = 0.150;
+Xi   = 0.30;
+Q    = 400.0e+3;
+
+/* Parameters for the second reaction */
+k1   = 0.5;
+Ea   = 166.0e+3;
+Arr  = k1*exp(Ea/(R*Ta));
+
+
+1: P -> A; k>=0.1;
+2: A -> B; v>=Arr*exp(-Ea/(R*(Ta+dT)))*[A];
+dT' = (Q*V*Arr*exp(-Ea/(R*(Ta+dT)))*[A]-S*Xi*dT)/(V*c);
+
+[B] = 0.0;    /* for simplicity */
+
+[P](0) = 3.0e-3;
+dT(0)  = 0.0;

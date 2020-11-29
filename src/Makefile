@@ -1,0 +1,55 @@
+OBJECTS = main.o tableman.o symbmath.o codegen.o misc.o codecall.o
+NUMLIBS = eigen.o complex.o matrix.o quench.o
+NUMDIR  = ../Solvers
+YACC    = bison
+LEX     = flex
+CC      = gcc
+CFLAGS  = -O2 -D_PLATFORM_GCC_
+LIBS    = -lm -ll
+YFLAGS  = -y
+GENS    = waves.o kncont.o kgode.o conis.o mixed.o
+DIST    = $(PREFIX)/bin
+
+kc:  $(OBJECTS) $(GENS) $(NUMLIBS)
+	$(CC) $(CFLAGS) $(OBJECTS) $(GENS) $(NUMLIBS) $(LIBS) -o kc
+	strip kc
+	mv kc $(DIST)
+main.o: config.h parser.c lex.c main.c
+	$(CC) $(CFLAGS) -c main.c
+tableman.o: config.h tableman.c tableman.h
+	$(CC) $(CFLAGS) -c tableman.c
+parser.c: config.h kc.y lex.c
+	$(YACC) $(YFLAGS) kc.y
+	mv y.tab.c parser.c
+lex.c: kc.l 
+	$(LEX) kc.l
+	mv lex.yy.c lex.c
+symbmath.o: config.h symbmath.h symbmath.c
+	$(CC) $(CFLAGS) -c symbmath.c
+codegen.o: config.h codegen.h codegen.c
+	$(CC) $(CFLAGS) -c codegen.c
+waves.o: config.h waves.c waves.h
+	$(CC) $(CFLAGS) -c waves.c
+kncont.o: config.h kncont.h kncont.c
+	$(CC) $(CFLAGS) -c kncont.c
+kgode.o: config.h kgode.c kgode.h
+	$(CC) $(CFLAGS) -c kgode.c
+mixed.o: config.h mixed.c mixed.h
+	$(CC) $(CFLAGS) -I$(NUMDIR) -c mixed.c
+misc.o: misc.c config.h misc.h
+	$(CC) $(CFLAGS) -c misc.c
+codecall.o: config.h codecall.c codecall.h 
+	$(CC) $(CFLAGS) -c codecall.c
+conis.o: config.h conis.c conis.h
+	$(CC) $(CFLAGS) -I$(NUMDIR) -c conis.c
+eigen.o: $(NUMDIR)/eigen.c $(NUMDIR)/eigen.h
+	$(CC) $(CFLAGS) -c -I$(NUMDIR) $(NUMDIR)/eigen.c
+complex.o: $(NUMDIR)/complex.c $(NUMDIR)/complex.h
+	$(CC) $(CFLAGS) -c -I$(NUMDIR) $(NUMDIR)/complex.c
+matrix.o: $(NUMDIR)/matrix.c $(NUMDIR)/matrix.h
+	$(CC) $(CFLAGS) -c -I$(NUMDIR) $(NUMDIR)/matrix.c
+quench.o: $(NUMDIR)/quench.c $(NUMDIR)/quench.h
+	$(CC) $(CFLAGS) -c -I$(NUMDIR) $(NUMDIR)/quench.c
+
+clean:
+	rm -f core *.o parser.c lex.c a.out kc *~ Makefile

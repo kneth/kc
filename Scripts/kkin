@@ -1,0 +1,40 @@
+
+NAME=`awk '\
+   BEGIN { s= "kinwrk.dat.t" }\
+   /^name| name|;name/\
+      {\
+         i= 1;\
+         while(i<=NF) {if(index($(i),"\"")>0) break; i++};\
+         split($(i),x,"\"");\
+         if (length(x[2])>0) s= x[2]".t";\
+      }\
+   END { print s }' $1`
+DATE=`date '+%y%m%d'`
+CLCK=`date '+%H%M%S'`
+echo "/*     RUN IDENTIFICATION:     $DATE  $CLCK      */\n" > $NAME
+cat $1 >> $NAME
+/users/kneth/bin/kc -m4 < $1
+if [ $? = 2 ]
+then
+   cat kintmp 
+   exit 0
+fi
+sed -n -e '1,/FILE LIMIT/w kingconst.p' kintmp
+sed -n -e '/derivsinit/,$w kingproc.p' kintmp
+rm kintmp
+
+case $TERM in
+   ansi | at386) pc -O /osc/kin/kingprog.p /osc/kin/arrh.o \
+	/osc/kin/kinansi.o -lcurses;;
+   adm2) pc -O /osc/kin/kingprog.p /osc/kin/arrh.o \
+	/osc/kin/kinadm2.o -lcurses;;
+   hp98731) pc -O /osc/kin/kingprog.p /osc/kin/arrh.o \
+	/osc/kin/kinhp.o -lcurses;;
+   hp) pc -O /osc/kin/kingprog.p /osc/kin/arrh.o \
+	/osc/kin/kinhp.o -lcurses;;
+   *) pc -O /osc/kin/kingprog.p /osc/kin/arrh.o \
+	/osc/kin/kinunknown.o -lcurses;;
+esac
+
+mv a.out "x"$1$2 
+"x"$1$2 -p 

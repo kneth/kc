@@ -1,0 +1,53 @@
+
+/* Belousov- Zhabotinsky reaction */
+/* Model: the Oscillatory Bromate Oxidation of Cerium in open systems */
+
+mode= 1;
+
+kf1 = 4.55;
+kf2 = 3.0e7;
+kf3 = 6.82e3;
+kf4 = 42;
+kf5 = 30;
+kf6 = 0.09;
+kf7 = 0.00031;
+
+j0 = 0.000069;
+stime = 0; 
+dtime=0.10; 
+etime = 500.0; epsr = 1.0e-06; epsa = 1.0e-14;
+epse= 1.0E-14;
+debug= 0;
+prnmode=0;
+datafile = "open1";
+
+
+ptime= 5.00;
+dptime= 20.0;
+
+#print [Ce(+4)], [BrMA];
+
+
+12:  Br(-)                      -> P                        ; k> =j0;
+13:  BrMA                     -> P                        ; k> =j0;
+14:  Ce(+4)                     -> P                        ; k> =j0;
+15:  HBrO2                    -> P                        ; k> =j0;
+
+
+1:  BrO3(-) + Br(-) + 2H + MA      -> HBrO2 + BrMA            ; k> =kf1;
+2:  HBrO2 + Br(-) + H  + 2MA     -> 2BrMA                   ; k> =kf2;
+3:  2HBrO2   + MA              -> BrO3(-) + BrMA + H        ; k> =kf3;
+4:  BrO3(-) + HBrO2              -> 2HBrO2 + 2Ce(+4)          ; k> =kf4;
+5:  Ce(+4) + BrMA                -> Br(-)                     ; k> =kf5;
+6:  Ce(+4)                       -> P                       ; k> =kf6;
+7:  BrMA     + H               -> P                       ; k> =kf7;
+
+[P] = 0; [H] = 1; [MA] = 0.4; [BrO3(-)] = 0.045; 
+
+[Ce(+4)](0) = 4.32066e-7;
+[Br(-)](0) = 4.73693e-7;
+[HBrO2](0) = 6.35904e-8;
+[BrMA](0) = 1.10522e-2;
+
+pert(Br(-)) = 1.0E-7;
+pert(HBrO2) = 1.0E-7;

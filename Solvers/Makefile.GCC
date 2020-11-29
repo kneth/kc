@@ -1,0 +1,43 @@
+OBJECTS = eigen.o complex.o matrix.o integr.o odeserv.o odesolv.o quench.o
+YACC    = bison
+LEX     = flex
+CC      = gcc
+CFLAGS  = -O2 -D_PLATFORM_GCC_
+LIBS    = 
+YFLAGS  = -y
+DIST    = $(PREFIX)/num
+
+all: $(OBJECTS) kksolver.c
+	cp eigen.o $(DIST)
+	cp eigen.h $(DIST)
+	cp matrix.o $(DIST)
+	cp matrix.h $(DIST)
+	cp complex.o $(DIST)
+	cp complex.h $(DIST)
+	cp integr.o $(DIST)
+	cp integr.h $(DIST)
+	cp odeserv.o $(DIST)
+	cp odeserv.h $(DIST)
+	cp odesolv.o $(DIST)
+	cp odesolv.h $(DIST)
+	cp quench.o $(DIST)
+	cp quench.h $(DIST)
+	cp kksolver.c $(DIST)
+
+eigen.o: eigen.c eigen.h
+	$(CC) $(CFLAGS) -c eigen.c
+complex.o: complex.c complex.h
+	$(CC) $(CFLAGS) -c complex.c
+matrix.o: matrix.c matrix.h
+	$(CC) $(CFLAGS) -c matrix.c
+integr.o: integr.c integr.h
+	$(CC) $(CFLAGS) -c integr.c
+odeserv.o: odeserv.h odeserv.c
+	$(CC) $(CFLAGS) -c odeserv.c
+odesolv.o: odesolv.c odesolv.h
+	$(CC) $(CFLAGS) -c odesolv.c
+quench.o: quench.c quench.h
+	$(CC) $(CFLAGS) -c quench.c
+
+clean:
+	rm -f core *.o a.out *~ Makefile

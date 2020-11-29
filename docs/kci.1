@@ -1,0 +1,78 @@
+.TH KCI 1l "2 October 1994"
+.UC 4
+.SH NAME
+kci - Kinetic Compiler and Integrator
+.SH Synopsis
+.B kci 
+.I file
+.br
+.SH DESCRIPTION
+.I Kci
+is a front-end to the
+.I Kinetic Compiler
+ .
+.PP
+.I Kci
+transforms a set of chemical reactions and ordinary differential equations
+into a program which calculates the concentrations and values of the 
+dependent variables. Different options and parameters to the program is
+given as constants in the input file.
+.PP
+The parameters avaiable are shown below. The default value is wriiten
+in parenthesis. 
+.PP
+
+.B stime
+Start time (0).
+
+.B etime
+End time (200).
+
+.B dtime
+Interval between printouts (2).
+
+.B epsa
+Absolute precision (1.0e-10).
+
+.B epsr
+Relative precision (1.0e-5).
+
+.PP
+The 
+.B method
+parameter decides which numerical integration to be used. In the
+present version the following can be used.
+
+1.
+.I Calahan 
+
+2.
+.I 4th order Rosenbrock 
+
+3. 
+.I 4th order Runge-Kutta 
+
+4.
+.I 5th order generalised Runge-Kutta 
+
+5.
+.I As 2 with implicit time
+
+7. 
+.I As 4 with implicit time
+
+
+
+.SH FILES
+.B
+kc/docs/kc-man.tex
+The user's manual to the system.
+.B
+kc/test/*
+A lot of examples.
+
+.SH SEE ALSO
+There exists a user's manual which should come together with this file. 
+
+.SH AUTHOR
+Keld Nielsen (kn@kiku.dk) and Kenneth Geisshirt (kneth@osc.kiku.dk)

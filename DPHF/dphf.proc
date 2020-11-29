@@ -1,0 +1,1009 @@
+(* New HP435 Pascal Version of Derpar and Hopf continuation
+   program. Version containing both the derpar-algorithm
+   and the Hopf-bifurcation calculation. Version 25/10 1994 *)
+
+ PROCEDURE init; EXTERNAL C;
+
+ FUNCTION signal(SignalNum: INTEGER; ProcAddress: INTEGER): INTEGER; EXTERNAL;
+
+ PROCEDURE inthandler(SignalNum: INTEGER);
+  BEGIN
+   WRITELN('Inthandler  ',prog_stop);
+   prog_stop:= TRUE;
+   WRITELN('Inthandler  ',prog_stop);
+   oaddr:= signal(sigint, Baddress(inthandler));
+  END; (* inthandler *)
+
+PROCEDURE disp(n:INTEGER; t,h,q: LONGREAL; x,xmax,xmin: glnarray);EXTERNAL C;
+
+
+PROCEDURE close_datafile(mode: INTEGER);
+
+ BEGIN
+  IF mode=0 THEN BEGIN
+   CLOSE(datafile);
+   APPEND(textfile,name_textfile);
+   WRITELN(textfile,'/* Dimension : ',n:4,'*/');
+   WRITELN(textfile,'/* No of datapoints : ',noofpoints:10:0,' */');
+   CLOSE(textfile); END
+  ELSE BEGIN END;
+ END; (* close_datafile *)
+
+PROCEDURE alarm(level: INTEGER; failure_strg: strg250);
+ (* level: 0=program exit, 1=warning *)
+
+ BEGIN
+  WRITELN(failure_strg);
+  IF level=0 THEN BEGIN
+    IF (print_on_file=1) THEN BEGIN
+      WRITELN(name_datafile); close_datafile(0);
+     END ELSE close_datafile(1);
+    HALT; END;
+ END; (* alarm *)
+
+
+ PROCEDURE fctn(bj_,tp_: BOOLEAN; xx_: glnarray; 
+                VAR fv_:glnarray; VAR gg_:glnpbynp);
+
+  BEGIN
+   gg_:= jacobi; fv_:= fxzero;
+   IF (numparam=1) THEN sp_dalfa(bj_,xx_,gg_)
+   ELSE hf_dalfa(bj_,tp_,xx_,gg_);
+   derivs(bj_,xx_,t,fv_,gg_);
+  END; (* fctn *)
+
+$include 'complex.proc'$
+$include 'heigvqr.proc'$
+$include 'lu.proc'$
+$include 'gause.proc'$
+$include 'quenchcal.proc'$
+$include 'dphfcalc.proc'$
+
+PROCEDURE parainit(level: INTEGER);
+ VAR
+  i,j,k,l,nofarg: INTEGER;
+
+ BEGIN
+  CASE level OF
+   1: BEGIN
+       print_on_screen:= 1; print_on_file:= 1;
+       failure_print:= 0; para_regu:= 1;
+       qc_calc:= 0; hf_calc:= 1;
+       df_calc:= 0; hass_calc:= 1;
+       kura_calc:= 0;
+       eigvec_prn:= 0;
+       name_datafile:= 'kinwrk.dat';
+       name_textfile:= 'kinwrk.dat.t';
+       t:=0; kar:=1;
+       FOR i:=1 TO n2 DO BEGIN
+	fxzero[i]:= 0.0; dif[i]:= 0.0; 
+	FOR j:=1 TO n2 DO jacobi[i,j]:=0.0; END;
+       FOR i:=1 TO 4 DO 
+	FOR j:=1 TO n2 DO der[i,j]:= 0.0;
+       FOR i:=1 TO n DO FOR j:=1 TO n DO
+        FOR k:=1 TO n DO derivsjacobian[i,j,k]:= 0.0;
+       FOR i:=1 TO n DO FOR j:=1 TO n DO
+        FOR k:=1 TO n DO FOR l:=1 TO n DO derivsdjacobian[i,j,k,l]:= 0.0;
+       maxoutn1:= 30; maxoutn2:= 2;
+       cfout:= 10;
+       ref:=1; hopfbftp:= -1; ps:= -1; rr:= 1; 
+       re1:= 0.5; im1:= 0.5;
+       maxnoofp:= 10; maxithqr2:= 30; maxitbisec:= 30;
+       maxitintpol:= 30; maxititera:= 30; maxitcorrec:= 30;
+       corrhreg:= 10; hh:= 1.0; epsfx:=1.0E-15; epsblk:=1E-15;
+       epshqr2:= 1E-20; epsbisecr:= 1E-10; epsmach:= 1E-15;
+       epsdigit:= 1E-14;
+       FOR i:=1 TO n2 DO BEGIN
+        xx[i]:= 0.0; initxlow[i]:= 0.0; initxupp[i]:= 1.0L6;
+        inithmax[i]:= 1.0; initpref[i]:= 1.0; initndir[i]:= 1.0; END;
+       paraold:= xx[n2];
+      END; (* level=1 *)
+   2: BEGIN
+       nofarg:= ARGC-1; i:= 1;
+       WHILE i<=nofarg DO
+        BEGIN
+         IF (ARGN(i)='-fp') OR (ARGN(i)='-FP') 
+           THEN failure_print:= 1;
+         IF (ARGN(i)='-file') OR (ARGN(i)='-f') OR 
+           (ARGN(i)='-FILE') OR (ARGN(i)='-F') 
+           THEN print_on_file:= 0;
+         IF (ARGN(i)='-print') OR (ARGN(i)='-p') OR 
+           (ARGN(i)='-PRINT') OR (ARGN(i)='-P') 
+           THEN print_on_screen:= 0;
+         IF (ARGN(i)='-pr') OR (ARGN(i)='-PR')
+           THEN para_regu:= 1;
+         IF (ARGN(i)='-qc') OR (ARGN(i)='-QC') 
+           THEN qc_calc:= 1;
+         IF (ARGN(i)='-hf') OR (ARGN(i)='-HF') 
+           THEN hf_calc:= 0;
+         IF (ARGN(i)='-df') OR (ARGN(i)='-DF') 
+           THEN df_calc:= 1;
+         IF (ARGN(i)='-hass') OR (ARGN(i)='-HASS') 
+           THEN hass_calc:= 0;
+         IF (ARGN(i)='-kura') OR (ARGN(i)='-KURA') 
+           THEN kura_calc:= 1;
+         IF (ARGN(i)='-evp') OR (ARGN(i)='-EVP') 
+           THEN eigvec_prn:= 1;
+         IF (ARGN(i)='-n') OR (ARGN(i)='-N') THEN BEGIN
+	  name_textfile:= ARGN(i+1); i:= i+1;
+	  END;
+         i:= i+1;
+       END;
+       IF (print_on_file=1) THEN REWRITE(datafile,name_datafile); 
+       IF hopfbftp=1 THEN BEGIN
+	ps:= -1; rr:= -1; END
+       ELSE BEGIN
+	ps:= -1; rr:= 1; END;
+       IF (failure_print=1) THEN BEGIN
+	IF (numparam=1) THEN WRITELN('Continuation of a stationary point.')
+	ELSE WRITELN('Continuation of Hopf bifurcation point.');
+	WRITELN('Initial values');
+        WRITELN('maxoutn1,maxoutn2,hh,ref,cfout: ',maxoutn1,maxoutn2,hh,ref,cfout);
+	WRITELN('xx,initxlow,initxupp,inithmax,initpref,initndir');
+        FOR i:=1 TO n2 DO
+         WRITELN(xx[i],initxlow[i],initxupp[i],
+                         inithmax[i.),initpref[i],initndir[i]);
+         WRITELN('hopfbftp',hopfbftp);
+         WRITELN('re1,im1',re1,im1);
+	 WRITELN('epsfx,epsmach: ',epsfx,epsmach);
+	 WRITELN('maxititera,maxitcorrec,maxithqr2: ',maxititera,maxitcorrec,maxithqr2);
+         WRITELN;
+       END;
+      END; (* level=2 *)
+    END; (* case *)
+ END; (* parainit *)
+
+PROCEDURE direc(m,ps,rr,nps: INTEGER; VAR nd: glnarray);
+
+ BEGIN
+  IF ((ps=-1) AND (rr=1)) OR ((ps=1) AND (rr=-1)) THEN BEGIN
+    IF nps=-1 THEN nd[m]:=1 ELSE nd[m]:=-1; END;
+  IF ((ps=-1) AND (rr=-1)) OR ((ps=1) AND (rr=1)) THEN BEGIN
+    IF nps=-1 THEN nd[m]:=-1 ELSE nd[m]:=1; END;
+ END; (* direc *)
+
+PROCEDURE hreg(nar: glnarray; hjx: LONGREAL; VAR har: glnarray);
+
+ BEGIN
+  CASE numparam OF
+   1: BEGIN
+       IF ((nar[n1]<0) AND (har[n1]>(hjx/corrhreg))) OR
+          ((nar[n1]>0) AND (har[n1]<(hjx/corrhreg)))
+       THEN har[n1]:=hjx/corrhreg;
+      END;
+   2: BEGIN
+       IF ((nar[n2]<0) AND (nar[n1]<0) AND (har[n1]>(hjx/corrhreg))) OR
+          ((nar[n2]<0) AND (nar[n1]>0) AND (har[n1]<(hjx/corrhreg))) OR
+          ((nar[n2]>0) AND (nar[n1]>0) AND (har[n1]<(hjx/corrhreg))) OR
+          ((nar[n2]>0) AND (nar[n1]<0) AND (har[n1]>(hjx/corrhreg)))
+       THEN har[n1]:=hjx/corrhreg;
+      END;
+  END; (* case *)
+ END;  (* hreg *)
+
+ PROCEDURE printout(xx: glnarray; pnr,ref: INTEGER);
+ CONST
+  c = ' '; d ='    ';
+  VAR
+   i,j: INTEGER;
+   q: LONGREAL;
+   blok,unstb: BOOLEAN;
+   wr,wi: glnarray;
+
+  BEGIN
+   noofpoints:= pnr;
+   CASE numparam OF
+    1: BEGIN
+	i:=1; unstb:= FALSE;
+	REPEAT
+	 IF (eigval[i,1]>0.0) THEN unstb:= TRUE;
+	 i:=i+1;
+	UNTIL unstb OR (i>n);
+	IF unstb THEN kar:=1 ELSE kar:=-1;
+        IF (print_on_screen=1) THEN BEGIN
+	 FOR i:=1 To n DO BEGIN
+	  wr[i]:= eigval[i,1];
+	  wi[i]:= eigval[i,2];
+	 END;
+	 disp(n,xx[n1],kar,0.0,xx,wr,wi);
+	END; (* print_on_screen *)
+        IF (print_on_file=1) THEN BEGIN
+         WRITE(datafile,xx[n1]:cfout,kar:6);
+         FOR i:=1 TO n DO WRITE(datafile,xx[i]:cfout,' ');
+         FOR i:=1 TO n-1 DO WRITE(datafile,wr[i]:cfout,' ',wi[i]:cfout,' ');
+         WRITELN(datafile,wr[n]:cfout,wi[n]:cfout);
+	END; (* print_on_file *)
+       END; (* case=1 *)
+    2: BEGIN
+        IF (print_on_screen=1) THEN BEGIN
+         WRITELN('Point no: ',pnr:2);
+         WRITELN;
+         WRITELN('Fst. parameter: ',xx[n1]);
+         WRITELN('Snd. parameter: ',xx[n2]);
+         WRITELN;
+         FOR i:=1 TO n DO WRITELN(species[i],' : ',xx[i]);
+         WRITELN;
+         WRITELN('Ref:    ',ref:2,d,d,d,d,d,'Omega:   ',omega);
+         WRITELN('d_alfa: ',d_alfa,'  d_omega: ',d_omega);
+         WRITELN;
+         IF (hass_calc=1) THEN BEGIN
+          WRITELN('************************  Hassard *************************');
+          WRITELN('c1.re:  ',c1.re,'  c1.im:   ',c1.im);
+          WRITELN('my2:    ',my2,'  beta2:   ',beta2);
+          WRITELN('tau2:   ',tau2);
+          WRITELN;
+         END;
+         IF (kura_calc=1) THEN BEGIN
+          WRITELN('************************  Kuramoto *************************');
+          WRITELN('g.re:   ',g_prime,'  g.im:    ',g_dbprime);
+          WRITELN('c0:     ',c0kuramoto,'  c2:      ',c2kuramoto);
+          WRITELN;
+         END;
+         IF (df_calc=1) THEN BEGIN
+          WRITELN('************************ Diffusion ************************');
+          WRITELN('d.re:   ',d_prime,'  d.im:    ',d_dbprime);
+          WRITELN('c1 :    ',c1kuramoto);
+          WRITELN;
+         END;
+         WRITELN('************************ Eigenvalues ************************');
+         q:=0.0;
+         WRITELN(d,d,d,d,d,'Re',d,d,d,d,d,d,'Im');
+         i:=1;
+         REPEAT
+          blokcheck(eigval,n,i,blok);
+          IF blok THEN BEGIN
+           WRITELN(c,d,d,eigval[i,i],d,c,c,eigval[i,i+1]);
+           WRITELN(c,d,d,eigval[i+1,i+1],d,c,c,eigval[i+1,i]);
+           i:=i+2; END
+          ELSE BEGIN
+           WRITELN(c,d,d,eigval[i,i],d,c,c,q);
+           i:=i+1; END;
+         UNTIL i=n+1;
+         WRITELN;
+         IF (eigvec_prn=1) THEN BEGIN
+          WRITELN('************************ Eigenvectors ************************');
+          WRITELN(d,d,d,d,d,'Re',d,d,d,d,d,c,'Im');
+          i:=1;
+          REPEAT
+           blokcheck(eigval,n,i,blok);
+           IF blok THEN BEGIN
+            FOR j:=1 TO n DO 
+             WRITELN(c,d,d,eigvec[j,i],d,c,c,eigvec[j,i+1]);
+            WRITELN;
+            FOR j:=1 TO n DO
+             WRITELN(c,d,d,eigvec[j,i],d,c,c,-eigvec[j,i+1]);
+            WRITELN;
+            i:=i+2; END
+           ELSE BEGIN
+            FOR j:=1 TO n DO WRITELN(c,d,d,eigvec[j,i],d,c,c,q);
+            WRITELN;
+            i:=i+1; END;
+          UNTIL i=n+1;
+          WRITELN; 
+         END;
+         IF (qc_calc=1) THEN BEGIN
+          WRITELN('*********************** Quenching Data ***********************');;
+          WRITELN(d,d,d,d,c,'Reconstruction',d,d,d,d,c,'Stopdata');
+          WRITELN(d,d,d,d,'Amount',d,d,'Phase',d,d,'Amount',d,d,'Phase');
+          FOR i:=1 TO n DO 
+           WRITELN(species[i],d,d,d,ampvec[i]:10,c,phasevec[i]:10:2,d,d,qvec[i]:10,c,fivec[i]:10:2);
+           WRITELN(d,d,d,d,d,d,d,d,d,d,c,c,qd:10,c,fid:10:2);
+          WRITELN;
+          END;
+          WRITELN('**************************************************************');
+         END; (* print_on_screen *)
+         IF (print_on_file=1) THEN BEGIN
+          WRITELN(datafile,'Point no: ',pnr:2);
+         WRITELN(datafile);
+         WRITELN(datafile,'Fst. parameter: ',xx[n1]);
+         WRITELN(datafile,'Snd. parameter: ',xx[n2]);
+         WRITELN(datafile);
+         FOR i:=1 TO n DO WRITELN(datafile,species[i],' : ',xx[i]);
+         WRITELN(datafile);
+         WRITELN(datafile,'Ref:    ',ref:2,d,d,d,d,d,'Omega:   ',omega);
+         WRITELN(datafile,'d_alfa: ',d_alfa,'  d_omega: ',d_omega);
+         WRITELN(datafile);
+         IF (hass_calc=1) THEN BEGIN
+          WRITELN(datafile,'************************  Hassard *************************');
+          WRITELN(datafile,'c1.re:  ',c1.re,'  c1.im:   ',c1.im);
+          WRITELN(datafile,'my2:    ',my2,'  beta2:   ',beta2);
+          WRITELN(datafile,'tau2:   ',tau2);
+          WRITELN(datafile);
+         END;
+         IF (kura_calc=1) THEN BEGIN
+          WRITELN(datafile,'************************  Kuramoto *************************');
+          WRITELN(datafile,'g.re:   ',g_prime,'  g.im:    ',g_dbprime);
+          WRITELN(datafile,'c0:     ',c0kuramoto,'  c2:      ',c2kuramoto);
+          WRITELN(datafile);
+         END;
+         IF (df_calc=1) THEN BEGIN
+          WRITELN(datafile,'************************ Diffusion ************************');
+          WRITELN(datafile,'d.re:   ',d_prime,'  d.im:    ',d_dbprime);
+          WRITELN(datafile,'c1 :    ',c1kuramoto);
+          WRITELN(datafile);
+         END;
+         WRITELN(datafile,'************************ Eigenvalues ************************');
+         q:=0.0;
+         WRITELN(datafile,d,d,d,d,d,'Re',d,d,d,d,d,d,'Im');
+         i:=1;
+         REPEAT
+          blokcheck(eigval,n,i,blok);
+          IF blok THEN BEGIN
+           WRITELN(datafile,c,d,d,eigval[i,i],d,c,c,eigval[i,i+1]);
+           WRITELN(datafile,c,d,d,eigval[i+1,i+1],d,c,c,eigval[i+1,i]);
+           i:=i+2; END
+          ELSE BEGIN
+           WRITELN(datafile,c,d,d,eigval[i,i],d,c,c,q);
+           i:=i+1; END;
+         UNTIL i=n+1;
+         WRITELN(datafile);
+         IF (eigvec_prn=1) THEN BEGIN
+          WRITELN(datafile,'************************ Eigenvectors ************************');
+          WRITELN(datafile,d,d,d,d,d,'Re',d,d,d,d,d,c,'Im');
+          i:=1;
+          REPEAT
+           blokcheck(eigval,n,i,blok);
+           IF blok THEN BEGIN
+            FOR j:=1 TO n DO 
+             WRITELN(datafile,c,d,d,eigvec[j,i],d,c,c,eigvec[j,i+1]);
+            WRITELN(datafile);
+            FOR j:=1 TO n DO
+             WRITELN(datafile,c,d,d,eigvec[j,i],d,c,c,-eigvec[j,i+1]);
+            WRITELN(datafile);
+            i:=i+2; END
+           ELSE BEGIN
+            FOR j:=1 TO n DO WRITELN(datafile,c,d,d,eigvec[j,i],d,c,c,q);
+            WRITELN(datafile);
+            i:=i+1; END;
+          UNTIL i=n+1;
+          WRITELN(datafile); 
+         END;
+         IF (qc_calc=1) THEN BEGIN
+          WRITELN(datafile,'*********************** Quenching Data ***********************');;
+          WRITELN(datafile,d,d,d,d,c,'Reconstruction',d,d,d,d,c,'Stopdata');
+          WRITELN(datafile,d,d,d,d,'Amount',d,d,'Phase',d,d,'Amount',d,d,'Phase');
+          FOR i:=1 TO n DO 
+           WRITELN(datafile,species[i],d,d,d,ampvec[i]:10,c,phasevec[i]:10:2,d,d,qvec[i]:10,c,fivec[i]:10:2);
+          WRITELN(datafile,d,d,d,d,d,d,d,d,d,d,c,c,qd:10,c,fid:10:2);
+          WRITELN(datafile);
+         END;
+          WRITELN(datafile,'**************************************************************');
+        END; (* print_on_file *)
+       END; (* case=2 *)
+   END; (* numparam *)
+ END; (* printout *)
+
+PROCEDURE stability(tp: BOOLEAN; xx: glnarray; VAR re,im: LONGREAL);
+
+ CONST
+  reeps = 5E-2;
+
+ VAR
+  fv: glnarray; 
+  tt,gg: glnpbynp; 
+  blk: BOOLEAN;
+  i,j,k,tmx: INTEGER;
+  maxre,maxim: LONGREAL;
+
+ BEGIN
+  tt:= jacobi; tmx:=maxithqr2;
+  fctn(TRUE,tp,xx,fv,gg);
+  hqr2alg(n,ref,gg,tt,tmx,epshqr2,TRUE,FALSE,TRUE);
+  IF (failure_print=1) THEN BEGIN
+    WRITELN; WRITELN('Eigenvalues');
+    FOR i:=1 TO n DO WRITELN(i,' eigv: ',gg[i,1],gg[i,2]);
+    WRITELN; END;
+  IF (ABS(re)<reeps) AND (ABS(im)<>0.0) THEN BEGIN
+   i:=1;
+   REPEAT
+    blk:= (gg[i,2]<>0.0);
+    i:=i+1;
+   UNTIL blk OR (i>n);
+   IF blk THEN BEGIN
+    i:=i-1;
+    maxim:=ABS(1.0-ABS(im/gg[i,2])); j:=i;
+    FOR k:=i TO n DO BEGIN
+     IF gg[k,2]<>0.0 THEN 
+      IF (ABS(1.0-ABS(im/gg[k,2]))<maxim) THEN 
+       BEGIN
+        maxim:= ABS(1.0-ABS(im/gg[k,2])); j:=k;
+       END;
+     IF (failure_print=1) THEN BEGIN
+      WRITELN; WRITELN('Eigenvalues');
+      WRITELN('2.maxim ',im,gg[k,2],maxim,k); WRITELN; END;
+    END;
+   END ELSE BEGIN
+     maxre:= ABS(1.0-ABS(re/gg[1,1])); j:=1;
+     IF (failure_print=1) THEN BEGIN
+       WRITELN; WRITELN('Eigenvalues');
+       WRITELN('maxre ',re,gg[1,1],maxre,1);
+     END;
+     FOR i:=2 TO n DO BEGIN
+       IF (ABS(1.0-ABS(re/gg[i,1]))<maxre) THEN BEGIN
+        maxre:= ABS(1.0-ABS(re/gg[i,1])); j:=i; 
+      END;
+     END;
+    END;
+   END
+   ELSE BEGIN
+    maxim:= ABS(ABS(im)-ABS(gg[1,2]));
+    maxre:= ABS(1.0-ABS(re/gg[1,1])); j:=1;
+    FOR i:=2 TO n DO
+     IF (ABS(1.0-ABS(re/gg[i,1]))<maxre) AND 
+        (ABS(ABS(im)-ABS(gg[i,2]))<=maxim) THEN BEGIN
+      maxim:= ABS(ABS(im)-ABS(gg[i,2]));
+      maxre:= ABS(1.0-ABS(re/gg[i,1])); j:=i; 
+    IF (failure_print=1) THEN BEGIN
+      WRITELN; WRITELN('Eigenvalues');
+      WRITELN('maxre ',re,gg[i,1],maxre,i);
+      WRITELN('maxim ',im,gg[i,2],maxim,i); WRITELN; END;
+     END;
+    END;
+    re:=gg[j,1]; im:=gg[j,2];
+ END; (* stability *)
+
+PROCEDURE interpol_dif(n: INTEGER; VAR xmin,xmax: glnarray; 
+	       VAR re1,im1,re2,im2: LONGREAL);
+
+ VAR
+  fv,q,xm,xmid,xp: glnarray;
+  gg,tt: glnpbynp;
+  OK:BOOLEAN;
+  difim,difre,dny,hv1,hv2,im12,imm,imp,re12,rem,rep: LONGREAL;
+  i,sigmin,sigmax,sign,tmx:INTEGER;
+
+  BEGIN
+   tmx:= 0;
+   IF (re1*re2)>0 THEN alarm(0,'Interpol_dif: re1*re2>0');
+   IF re1>0.0 THEN sigmin:=1 ELSE sigmin:=-1;
+   IF re2>0.0 THEN sigmax:=1 ELSE sigmax:=-1;
+   IF im1<>0.0 THEN BEGIN re12:=re1; im12:=im1; END
+   ELSE IF im2<>0.0 THEN BEGIN re12:= re2; im12:=im2; END
+    ELSE BEGIN re12:= re1; im12:=0; END;
+   IF (failure_print=1) THEN WRITELN('Interpol_dif');
+   REPEAT
+    FOR i:=1 TO n2 DO xmid[i]:=(xmin[i]+xmax[i])*0.5;
+    tt:= jacobi; tmx:= maxithqr2;  
+    fctn(TRUE,TRUE,xmid,fv,gg);
+    hqr2alg(n,ref,gg,tt,tmx,epshqr2,TRUE,FALSE,TRUE);
+    re12:= gg[1,1]; im12:= gg[1,2];
+    IF re12>0.0 THEN sign:=1 ELSE sign:=-1;
+    IF sign=sigmin THEN BEGIN
+      xmin:=xmid; re1:=re12; im1:=im12; END
+    ELSE BEGIN
+      xmax:=xmid; re2:=re12; im2:=im12; END;
+    tmx:= tmx +1;
+    OK:=((im1<>0) AND (im2<>0)) OR (tmx> maxitintpol);
+   UNTIL OK; 
+
+   IF tmx>maxitintpol THEN BEGIN
+    WRITELN('Min: P1= ',xmin[n1]);
+    WRITELN('     re1= ',re1,'  im1= ',im1);
+    WRITELN;
+    WRITELN('Max: P1= ',xmax[n1]);
+    WRITELN('     re2= ',re2,'  im2= ',im2);
+    alarm(0,'Interpol_dif: tmx> maxitintpol. Too many iteration.');
+   END;
+   IF re1>0 THEN FOR i:=1 TO n2 DO q[i]:= (xmax[i]-xmin[i])*0.5
+          ELSE FOR i:=1 TO n2 DO q[i]:= (xmin[i]-xmax[i])*0.5;
+   FOR i:=1 TO n2 DO xmid[i]:= (xmin[i]+xmax[i])*0.5;
+   tmx:= 0;
+   REPEAT 
+    FOR i:=1 TO n2 DO q[i]:= q[i]*0.5;
+    tt:= jacobi; tmx:= maxithqr2;  
+    fctn(TRUE,TRUE,xmid,fv,gg);
+    hqr2alg(n,ref,gg,tt,tmx,epshqr2,TRUE,FALSE,TRUE);
+    re12:= gg[1,1]; im12:= gg[1,2];
+
+    OK:= ((ABS(q[n1])>epsmach) AND (ABS(re12)>epsbisecr));
+    IF (failure_print=1) THEN BEGIN
+     WRITELN; FOR i:=1 TO n2 DO WRITELN(xmid[i]);
+     WRITELN; WRITELN('re: ',re12,'  im: ',im12); END;
+     tmx:= tmx+1;
+    IF OK THEN 
+     IF (re12>0.0) THEN FOR i:=1 TO n2 DO xmid[i]:= xmid[i]+q[i]
+       ELSE FOR i:=1 TO n2 DO xmid[i]:= xmid[i]-q[i];
+    UNTIL NOT(OK) OR (tmx>maxitbisec); 
+    IF (tmx>maxitbisec) THEN alarm(1,'Interpol_dif: (tmx>maxitbisec)'); 
+
+    hv1:= (xmax[n1])-(xmid[n1]);
+    hv2:= (xmid[n1])-(xmin[n1]);
+    dny:= (xmid[n1]*(EXP(LN(epsmach)/3.0))); 
+
+    IF (hv1<dny) OR (hv2<dny) THEN 
+     IF (hv1<hv2) THEN BEGIN
+      dny:= hv1; FOR i:=1 TO n2 DO q[i]:= (xmax[i]-xmid[i]);
+      END
+     ELSE BEGIN
+      dny:= hv2; FOR i:=1 TO n2 DO q[i]:= (xmid[i]-xmin[i]);
+      END
+    ELSE 
+     IF (hv1<hv2) THEN 
+      FOR i:=1 TO n2 DO q[i]:= (xmax[i]-xmid[i])/hv1*dny
+     ELSE
+      FOR i:=1 TO n2 DO q[i]:= (xmid[i]-xmin[i])/hv2*dny;
+
+    FOR i:=1 TO n2 DO BEGIN
+     xp[i]:= xmid[i]+q[i]; xm[i]:= xmid[i]-q[i]; END;
+    tt:= jacobi; tmx:= maxithqr2;  
+    fctn(TRUE,TRUE,xp,fv,gg);
+    hqr2alg(n,ref,gg,tt,tmx,epshqr2,TRUE,FALSE,TRUE);
+    rep:= gg[1,1]; imp:= -gg[1,2];
+    tt:= jacobi; tmx:= maxithqr2;  
+    fctn(TRUE,TRUE,xm,fv,gg);
+    hqr2alg(n,ref,gg,tt,tmx,epshqr2,TRUE,FALSE,TRUE);
+    rem:= gg[1,1]; imm:= -gg[1,2];
+    difre:= (rep-rem)/(2*dny);
+    difim:= (imp-imm)/(2*dny);
+    re1:= re12; im1:= im12;
+    xmin:= xmid; re2:= difre; im2:= difim;
+  END; (* interpol_dif *)
+
+ PROCEDURE xcorr(nn: INTEGER; VAR xvec: glnarray; funk: glnarray);
+
+  VAR
+   i: INTEGER;
+
+  BEGIN
+   FOR i:=1 TO nn DO BEGIN
+     xvec[i]:= xvec[i]-funk[i];
+   (*  IF xvec[i]<0 THEN xvec[i]:=0; *)
+   END;
+  END; (* xcorr *)
+
+ PROCEDURE correc(VAR nn: INTEGER; VAR xvec, funk: glnarray);
+
+  VAR
+   i: INTEGER;
+
+  BEGIN
+   IF nn<maxitcorrec THEN BEGIN
+     xcorr(n,xvec,funk); nn:=nn+1; END
+   ELSE BEGIN
+     IF (failure_print=1) THEN BEGIN
+       alarm(1,'Correc: Variable:x                   rate(x)');
+       FOR i:=1 TO n2 DO WRITELN(xvec[i],'   ',funk[i]); WRITELN; END;
+     alarm(0,'DERPAR: nn> maxitcorrec. Not enough iterations'); END;
+  END; (* correc *)
+
+ PROCEDURE newx(bt,hm,xvec,fpkt: glnarray; hh: LONGREAL;
+                k,nout: INTEGER; VAR dxdt,nd: glnarray; 
+                VAR madms,kout: INTEGER; VAR h: LONGREAL);
+
+  LABEL
+   10;
+
+  VAR
+   i: INTEGER;
+   dxk2: LONGREAL;
+
+  BEGIN
+   dxk2:=1; FOR i:=1 TO n1 DO dxk2:=dxk2+sqr(bt[i]);
+   dxdt[k]:=1/(sqrt(dxk2)*nd[k]); h:=hh;
+   FOR i:=1 TO n1 DO BEGIN
+     IF i<>k THEN dxdt[i]:=bt[i]*dxdt[k];
+     IF i<>n1 THEN IF dxdt[i]<0 THEN nd[i]:=-1 ELSE nd[i]:=1;
+     IF (h*ABS(dxdt[i])>hm[i]) THEN BEGIN
+       madms:=0; h:=hm[i]/ABS(dxdt[i]); END;
+     END;
+   IF nout<=(kout+3) THEN GOTO 10;
+   IF (h*ABS(dxdt[k]) <= 0.8*ABS(xvec[k]-fpkt[k])) THEN GOTO 10;
+   IF ((fpkt[k]-xvec[k])*nd[k])<=0 THEN GOTO 10; madms:=0;
+   IF (h*ABS(dxdt[k])<= ABS(xvec[k]-fpkt[k])) THEN GOTO 10;
+   h:=ABS(xvec[k]-fpkt[k])/ABS(dxdt[k]); kout:=nout;
+  10:END; (* newx *)
+
+ PROCEDURE adam(d: glnarray; VAR madms: INTEGER; h:LONGREAL;
+                VAR x:glnarray; VAR der:glnpbynp);
+
+  CONST
+   mxadms = 4;
+
+  VAR
+   i,j:integer;
+
+  BEGIN
+   FOR i:=3 DOWNTO 1 DO BEGIN
+     FOR j:=1 TO n1 DO der[i+1,j]:=der[i,j]; END;
+   madms:=madms+1;
+   IF madms>mxadms THEN madms:=mxadms;
+   IF madms>4 THEN madms:=4;
+   FOR i:=1 TO n1 DO BEGIN
+     der[1,i]:=d[i];
+     CASE madms OF
+      1:x[i]:=x[i]+h*der[1,i];
+      2:x[i]:=x[i]+0.5*h*(3*der[1,i]-der[2,i]);
+      3:x[i]:=x[i]+h*(23*der[1,i]-16*der[2,i]
+                +5*der[3,i])/12;
+      4:x[i]:=x[i]+h*(55*der[1,i]-59*der[2,i]+37*der[3,i]
+                -9*der[4,i])/24;
+     END;
+    END;
+  END; (* adam *)
+
+ PROCEDURE itera(tp: BOOLEAN; VAR xvec: glnarray);
+
+  VAR
+   i,j,nn: INTEGER;
+   cont: BOOLEAN;
+   dx,x,xdx,x2dx,fx,fxdx,fx2dx: glnarray;
+   Jac: glnpbynp;
+   int: glindx;
+   det,pp0,pp1,pp2,tmin: LONGREAL;
+
+  PROCEDURE sqrtlength(fv: glnarray; VAR len: LONGREAL);
+   VAR
+    sum: LONGREAL;
+    i: INTEGER;
+   BEGIN
+    sum:= 0.0;
+    FOR i:=1 TO n DO sum:= sum+ fv[i]*fv[i];
+    len:= SQRT(sum);
+   END; (* sqrtlength *)
+
+  BEGIN
+   x:= xvec; xdx:= xvec; x2dx:= xvec; dx:= xvec; 
+   i:=0; cont:= TRUE;
+   fctn(TRUE,tp,x,fx,Jac);
+   nn:= 0;
+   FOR j:=1 TO n DO IF ABS(fx[j])<epsfx THEN nn:=nn+1;
+   IF nn=n THEN BEGIN
+    xvec:= x;
+   END
+   ELSE BEGIN
+     REPEAT
+      IF (failure_print=1) THEN BEGIN
+       alarm(1,'Itera0: x                   F(x)');
+       FOR j:=1 TO n1 DO WRITELN(x[j],'  ',fx[j]);
+       WRITELN; END;
+      FOR j:=1 TO n DO dx[j]:= -fx[j];
+      ludcmp(Jac,n,n,int,det);
+      lubksb(Jac,n,n,int,dx);
+      FOR j:=1 TO n DO BEGIN
+       xdx[j]:= x[j]+dx[j]; x2dx[j]:= x[j]+2*dx[j]; END;
+      fctn(FALSE,tp,xdx,fxdx,Jac);
+      fctn(FALSE,tp,x2dx,fx2dx,Jac);
+      sqrtlength(fx,pp0);
+      sqrtlength(fxdx,pp1);
+      sqrtlength(fx2dx,pp2);
+      tmin:= 0.5*(3*pp0-4*pp1+pp2)/(pp0-2*pp1+pp2);
+      IF tmin>1.0 THEN tmin:= 1.0;
+      FOR j:=1 TO n DO x[j]:= x[j]+tmin*dx[j];
+      fctn(TRUE,tp,x,fx,Jac);
+      nn:= 0; i:= i+1;
+      FOR j:=1 TO n DO IF ABS(fx[j])<epsfx THEN nn:=nn+1;
+      IF (failure_print=1) THEN BEGIN
+        alarm(1,'Itera1: x                   F(x)');
+        FOR j:=1 TO n1 DO WRITELN(x[j],'  ',fx[j]);
+        WRITELN('Iteration: ',i,'  tmin: ',tmin,'   No. of f(x)<epsfx): ',nn);
+        WRITELN; END;
+     UNTIL (i=maxititera) OR (nn=n);
+    xvec:= x;
+    IF i=maxititera THEN BEGIN
+      IF (failure_print=1) THEN BEGIN
+        alarm(1,'Itera4: x                   F(x)');
+        FOR i:=1 TO n DO WRITELN(xvec[i],'  ',fx[i]);
+        WRITELN; END;
+      alarm(0,'DERPAR: ii>maxititera. Not enough iterations'); END;
+   END; 
+  END; (* itera *)
+
+
+PROCEDURE hf_derpar(xx: glnarray; VAR initndir,inithmax,xmin,xmax: glnarray;
+                 VAR re1,re2,im1,im2: LONGREAL; bifpar: INTEGER); 
+ LABEL
+  10;
+
+ VAR
+  first_pkt,pref,ndir,beta,xlow,xupp,hmax,fu,xxx,dxdt:glnarray;
+  sign,inhj,i,j,l,m,k,nc,kout,madms,nout,k11: INTEGER;
+  gg: glnpbynp;
+  h,hjx,re12,im12:LONGREAL;
+  fail,typpar,notback,newd: BOOLEAN;
+
+
+ PROCEDURE initderpar(xivec,ind,ixl,ixu,ipf,ihm: glnarray; bf: INTEGER;
+                      VAR de: glnpbynp; VAR xvec,nd,xl,xu,pf,hm: glnarray;
+                      VAR tp: BOOLEAN; VAR re1,re2,im1,im2: LONGREAL;
+                      VAR sigmin,sigmax,kout,nout,madms,
+                          nc,k11: INTEGER);
+
+  VAR
+   i,j: INTEGER;
+
+  BEGIN
+   re1:=0; re2:=0; im1:=0; im2:=0; sigmin:=0; sigmax:=0;
+   kout:=0; nout:=0; madms:=0; nc:=1; k11:=0;
+   FOR i:=1 TO 4 DO FOR j:=1 TO n1 DO de[i,j]:=0;
+   FOR i:=1 TO n DO BEGIN
+     xvec[i]:=xivec[i]; nd[i]:=ind[i]; xl[i]:=ixl[i];
+     xu[i]:=ixu[i]; pf[i]:=ipf[i];
+     hm[i]:=ihm[i]; END;
+   xvec[n1]:=xivec[bf]; nd[n1]:=ind[bf];
+   xl[n1]:=ixl[bf]; xu[n1]:=ixu[bf];
+   pf[n1]:=ipf[bf]; hm[n1]:=ihm[bf];
+   IF bf=n1 THEN BEGIN
+     xvec[n2]:=xivec[n2]; nd[n2]:=ind[n2];
+     tp:=TRUE END
+   ELSE IF bf=n2 THEN BEGIN
+     xvec[n2]:=xivec[n1];
+     tp:=FALSE; END;
+  END; (* initderpar *)
+
+ PROCEDURE newderp(typpar: BOOLEAN; sign: INTEGER; re12,im12: LONGREAL;
+                  VAR inithmax,first_pkt,xmin,xmax,hmax,xxx: glnarray;
+                  VAR nout,sigmin,sigmax: INTEGER;
+                  VAR re1,im1,re2,im2: LONGREAL; VAR nde: BOOLEAN);
+
+
+  BEGIN
+   IF typpar THEN BEGIN
+     IF nout=1 THEN BEGIN
+       first_pkt:=xxx; xmin:=xxx;
+       sigmin:=sign; re1:=re12; im1:=im12;
+       nde:=FALSE; END
+     ELSE
+      IF sign=sigmin THEN BEGIN
+        xmin:=xxx; re1:=re12; im1:=im12; nde:=FALSE; END
+      ELSE BEGIN
+        xmax:=xxx; re2:=re12; im2:=im12; sigmax:=sign; nde:=TRUE; END;
+    END
+   ELSE BEGIN
+     IF nout=1 THEN BEGIN
+       first_pkt:=xxx; xmin:=xxx;
+       sigmin:=sign; re1:=re12; im1:=im12;
+       nde:=FALSE; END
+     ELSE BEGIN
+       xmax:=xxx; re2:=re12; im2:=im12; sigmax:=sign;
+       IF nout>=maxoutn2 THEN nde:=TRUE ELSE nde:=FALSE; END;
+    END;
+ END; (* newderp *)
+
+
+ PROCEDURE parareg(pold: LONGREAL; xmax: glnarray;
+		   VAR xx: glnarray; VAR fail: BOOLEAN);
+  VAR
+   pnew: LONGREAL;
+
+  BEGIN
+   fail:= FALSE; pnew:= xx[n2];
+   xx:= xmax; xx[n2]:= (pold+pnew)*0.5;
+   fail:= (ABS(ABS(pold)-ABS(pnew)) <epsdigit);
+  END; (* parareg *)
+
+ BEGIN
+  re12:=re1; im12:=im1;
+  10:initderpar(xx,initndir,initxlow,initxupp,initpref,inithmax,bifpar,
+             der,xxx,ndir,xlow,xupp,pref,hmax,typpar,re1,re2,im1,im2,
+             sigmin,sigmax,kout,nout,madms,nc,k11);
+  itera(typpar,xxx);
+
+  IF (failure_print=1) THEN BEGIN
+    alarm(1,'Variables after iteration');
+    FOR i:=1 TO n2 DO WRITELN(xxx[i]); WRITELN; END;
+  REPEAT
+   REPEAT
+    fctn(true,typpar,xxx,fu,gg);
+    gause(n,gg,pref,m,k,beta,fu);
+    IF m=0 THEN alarm(0,'DERPAR: m=0');
+    inhj:=0;
+    FOR i:=1 TO n DO IF ABS(fu[i])<epsfx THEN inhj:=inhj+1;
+    IF inhj=n THEN BEGIN
+      notback:=TRUE; nc:=1; nout:=nout+1; END
+    ELSE BEGIN
+      notback:=FALSE; correc(nc,xxx,fu); END;
+   UNTIL notback;
+   IF (bifpar=n1) AND (nout>maxoutn1) THEN BEGIN
+    IF NOT (para_regu=1) THEN alarm(0,'DERPAR: nout>maxoutn1');
+    parareg(paraold, xmax, xx, fail);
+    IF (failure_print=1) THEN WRITELN('Old, new parameter: ',paraold,xx[n2]);
+    IF fail THEN alarm(0,'DERPAR: nout>maxoutn1 and ABS(ABS(pold)-ABS(pnew))<epsdigit');
+    hjx:= xx[n1]; hreg(initndir, hjx, inithmax);
+    GOTO 10;
+   END;
+
+   FOR i:=1 TO n1 DO
+    IF (xxx[i]<xlow[i]) OR (xxx[i]>xupp[i]) THEN BEGIN
+      IF (failure_print=1) THEN BEGIN
+        alarm(1,'DERPAR: max/min values have been reached');
+        alarm(1,'x             xmin            xmax');
+        WRITELN(i,' ',xxx[i],' ',xlow[i],' ',xupp[i]); END;
+      alarm(0,'DERPAR: max/min');
+     END;
+
+      stability(typpar,xxx,re12,im12);
+      IF (failure_print=1) THEN BEGIN
+        alarm(1,'DERPAR: New x');
+	WRITELN('No. in iteration: ',nout);
+        FOR i:=1 TO n2 DO WRITELN(xxx[i]);
+        WRITELN;
+        WRITELN('re: ',re12,'  im: ',im12); END;
+      IF re12>0.0 THEN sign:= 1 ELSE sign:=-1; 
+      newderp(typpar,sign,re12,im12,inithmax,first_pkt,xmin,xmax,
+              hmax,xxx,nout,sigmin,sigmax,re1,im1,re2,im2,newd);
+
+    IF NOT(newd) THEN BEGIN
+      fctn(TRUE,typpar,xxx,fu,gg);
+      gause(n,gg,pref,m,k,beta,fu);
+      IF m=0 THEN alarm(0,'DERPAR: m=0');
+        IF k11<>k THEN BEGIN
+          madms:=0; k11:=k; END;
+        IF typpar THEN BEGIN
+          hjx:=xxx[n1];hreg(ndir,hjx,hmax); END;
+        newx(beta,hmax,xxx,first_pkt,hh,k,nout,dxdt,ndir,madms,kout,h);
+        adam(dxdt,madms,h,xxx,der);
+     END; 
+  UNTIL newd;
+
+  IF typpar THEN
+   BEGIN
+    xmin[n2]:=xx[n2]; xmax[n2]:=xx[n2];
+    hjx:=xxx[n1];
+    hreg(initndir,hjx,inithmax);
+   END
+  ELSE
+   BEGIN
+    xmin[n2]:=xmin[n1]; xmin[n1]:=xx[n1];
+    xmax[n2]:=xmax[n1]; xmax[n1]:=xx[n1];
+   END;
+ END; (* hf_derpar *)
+
+PROCEDURE quenchvec(ref: INTEGER; xconc: glnarray; P,IP: glnpbynp);
+ BEGIN
+  compamppha(n,P,ampvec,phasevec); 
+  stopdata(n,ref,xconc,IP,qvec,fivec,qd,fid);
+ END; (* quenchvec *)
+
+PROCEDURE hf_derpar_driver;
+
+ VAR
+  i,j,tmx: INTEGER;
+  norm: LONGREAL;
+  w,w1,z: fcomplex;
+  fv: glnarray;
+  P,Q,D,E,Jac: glnpbynp;
+
+ BEGIN 
+  init; oaddr:= signal(sigint,Baddress(inthandler));
+  parainit(1); hopfinit; derivsinit; parainit(2);
+  i:= 0;
+  REPEAT 
+   i:=i+1;
+   hf_derpar(xx,initndir,inithmax,xmin,xmax,
+            re1,re2,im1,im2,n1);
+   interpol_dif(n,xmin,xmax,re1,im1,re2,im2);
+   d_alfa:= re2; d_omega:= im2;
+   fctn(TRUE,TRUE,xmin,fv,Jac);
+   D:=Jac;
+   tmx:=maxithqr2;
+   hqr2alg(n,ref,D,P,tmx,epshqr2,FALSE,TRUE,TRUE);
+   eigval:= D; eigvec:=P;
+   z.re:= P[ref,1]; z.im:= -P[ref,2];
+   Cnorm(z,norm);
+   FOR j:=1 TO n DO BEGIN
+     w.re:= P[j,1]; w.im:= P[j,2];
+     Cmul(w,z,w1);
+     RCmul(w1,1/norm,w);
+     P[j,1]:=w.re; P[j,2]:=w.im;
+    END;
+   transponer(n,E,Jac);
+   tmx:=maxithqr2;
+   hqr2alg(n,ref,E,Q,tmx,epshqr2,FALSE,TRUE,TRUE);
+   adjeigvec:=Q;
+   inversmatrix(n,P,Q);
+   inverseigvec:= Q;
+
+   IF (hf_calc=1) THEN BEGIN
+    hopf(xmin,eigval,E,eigvec,inverseigvec,c1,omega);
+    IF (hass_calc=1) THEN hassard;
+    IF (kura_calc=1) THEN kuramoto;
+    IF (df_calc=1) THEN ginzlandif;
+   END;
+   IF (qc_calc=1) THEN BEGIN
+    compamppha(n,eigvec,ampvec,phasevec); 
+    stopdata(n,ref,xmin,inverseigvec,qvec,fivec,qd,fid);
+   END;
+   paraold:= xmax[n2];
+   printout(xmin,i,ref);
+   hreg(initndir,xmin[n1],inithmax);
+   IF (xmax[n2]-maxoutn2*inithmax[n2])<0
+      THEN inithmax[n2]:=inithmax[n2]/10;
+   xx:=xmax;
+   hf_derpar(xx,initndir,inithmax,xmin,xmax,
+          re1,re2,im1,im2,n2);
+   IF re2>0.0 THEN sigmax:=1 ELSE sigmax:= -1;  
+   direc(n1,ps,rr,sigmax,initndir);
+   xx:=xmax;
+  UNTIL (i>=maxnoofp);
+  IF (print_on_file=1) THEN close_datafile(0)
+   ELSE close_datafile(1);
+  alarm(1,'HOPF_DRIVER: PROGRAM END');
+ END; (* hopfderp_driver *)
+
+
+ PROCEDURE sp_derpar(xx,xlow,xupp,hmax,pref,ndir: glnarray);
+
+  VAR
+   i,inhj,k,kout,k11,m,madms,nc,nout,tmx: INTEGER;
+   h,hjx: LONGREAL;
+   gg: glnpbynp;
+   beta,dxdt,fpkt,fu: glnarray;
+   notback,stop: BOOLEAN;
+
+
+ BEGIN
+  IF (failure_print=1) THEN BEGIN
+   alarm(1,'Variables before iteration');
+   FOR i:=1 TO n1 DO WRITELN(xx[i]); WRITELN; END;
+  kout:=0; nout:=0; madms:=0; nc:=1; k11:=0; 
+  itera(TRUE,xx);
+  IF (failure_print=1) THEN BEGIN
+   alarm(1,'Variables after iteration');
+   FOR i:=1 TO n1 DO WRITELN(xx[i]); WRITELN; END;
+
+  WHILE nout<maxnoofp DO BEGIN
+   REPEAT
+    fctn(TRUE,TRUE,xx,fu,gg);
+    gause(n,gg,pref,m,k,beta,fu);
+    IF (failure_print=1) THEN BEGIN
+     WRITELN('1. From Gause proc: m,k: ',m,' ',k);
+     WRITELN;
+    END;
+    IF m=0 THEN alarm(0,'SP_DERPAR: m=0');
+    inhj:=0;
+    FOR i:=1 TO n DO IF ABS(fu[i])<epsfx THEN inhj:=inhj+1;
+    IF inhj=n THEN BEGIN
+     notback:=TRUE; nc:=1; nout:=nout+1; END
+    ELSE BEGIN
+     notback:=FALSE; correc(nc,xx,fu); END;
+   UNTIL notback;
+   FOR i:=1 TO n1 DO 
+    IF ((xx[i]<xlow[i]) OR (xx[i]>xupp[i])) THEN
+    BEGIN
+     IF (failure_print=1) THEN
+     BEGIN
+      alarm(1,'SP_DERPAR: max/min values have been reached');
+      alarm(1,'x             xmin            xmax');
+      WRITELN(i,' ',xx[i],' ',xlow[i],' ',xupp[i]);
+     END;
+     alarm(0,'Sp_Derpar: max/min');
+    END;
+     
+   IF nout=1 THEN fpkt:=xx;
+   eigvec:= jacobi; tmx:= maxithqr2;
+   fctn(TRUE,TRUE,xx,fu,eigval);
+   hqr2alg(n,ref,eigval,eigvec,tmx,epshqr2,TRUE,FALSE,TRUE);
+   printout(xx,nout,ref);
+
+   fctn(TRUE,TRUE,xx,fu,gg);
+   gause(n,gg,pref,m,k,beta,fu);
+   IF (failure_print=1) THEN BEGIN
+    WRITELN('2. From Gause proc: m,k: ',m,' ',k);
+    WRITELN;
+   END;
+   IF m=0 THEN alarm(0,'SP_DERPAR: m=0');
+   IF k11<>k THEN BEGIN
+    madms:=0; k11:=k; END;
+   IF (para_regu=1) THEN BEGIN
+    hjx:= xx[n1]; 
+    hreg(ndir,hjx,hmax);
+   END;
+   newx(beta,hmax,xx,fpkt,hh,k,nout,dxdt,ndir,madms,kout,h);
+   adam(dxdt,madms,h,xx,der);
+  END; (* while *)
+  IF nout>=maxnoofp THEN alarm(1,'SP_DERPAR: nout>maxnoofp');
+ END; (* sp_derpar *)
+
+PROCEDURE sp_derpar_driver;
+
+ VAR 
+  i,j: INTEGER;
+
+ BEGIN
+  init; oaddr:= signal(sigint,Baddress(inthandler));
+  parainit(1); derivsinit; derpinit; parainit(2);
+  sp_derpar(xx,initxlow,initxupp,inithmax,initpref,initndir);
+  IF (print_on_file=1) THEN close_datafile(0)
+   ELSE close_datafile(1);
+  alarm(1,'DERPAR_DRIVER: PROGRAM END');
+ END; (* sp_derpar_driver *)

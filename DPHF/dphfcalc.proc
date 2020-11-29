@@ -1,0 +1,174 @@
+PROCEDURE hopf(conc: glnarray; D,E,P,Q:glnpbynp;
+	       VAR c1: fcomplex; VAR omega:LONGREAL);
+
+
+ VAR
+  fv,h11,w11: glnarray;
+  dJ,S:gldjacobian;
+  ddJ,dS: glddjacobian;
+  a,b,c,det,g11norm,g02norm,hjx,wnorm:LONGREAL;
+  ch1,ch2,ch3,g11,g02,g20,g21,g20_g11,gg21,
+  w,w1,w2,z1,z2:fcomplex;
+  G101,G110,h20,w20: ARRAY [1..n] of fcomplex;
+  i1,i2,i3,k,tmx,dyno:INTEGER;
+  Jac:glnpbynp;
+  blok:BOOLEAN;
+
+ PROCEDURE smat(i1,i2,i3: INTEGER; VAR Q,P: glnpbynp;SU: gldjacobian;VAR sum: LONGREAL);
+
+  VAR
+   j1,j2,j3: INTEGER;
+
+  BEGIN
+   sum:=0;
+   FOR j1:=1 TO n DO FOR j2:=1 TO n DO FOR j3:=1 TO n DO
+    sum:= sum+Q[i1,j1]*(SU[j1,j2,j3]*(P[j2,i2]*P[j3,i3]));
+  END; (* smat *)
+
+
+ PROCEDURE dsmat(i1,i2,i3,i4: INTEGER; Q,P: glnpbynp;dSU: glddjacobian;VAR sum: LONGREAL);
+
+  VAR
+   j1,j2,j3,j4: INTEGER;
+
+  BEGIN
+   sum:=0;
+   FOR j1:=1 TO n DO 
+    FOR j2:=1 TO n DO 
+     FOR j3:=1 TO n DO
+      FOR j4:=1 TO n DO 
+       sum:= sum+Q[i1,j1]*(dSU[j1,j2,j3,j4]*(P[j2,i1]*(P[j3,i3]*P[j4,i4])));
+  END; (* dsmat *)
+
+ BEGIN
+  Complex(0.0,0.0,g21);
+  Complex(0.0,0.0,gg21);
+  dJ:= derivsjacobian;
+  IF NeedDDJac THEN ddJ:= derivsdjacobian;
+  fctn(TRUE,TRUE,conc,fv,Jac);
+  djacobian(conc,dJ);
+  IF NeedDDJac THEN ddjacobian(conc,ddJ);
+
+  omega:=D[2,1];
+  FOR i1:=1 TO n DO FOR i2:=1 TO n DO FOR i3:=1 TO n DO
+   BEGIN
+    smat(i1,i2,i3,Q,P,dJ,hjx);
+    S[i1,i2,i3]:=hjx; END;
+
+  g11.re:=(S[1,1,1]+S[1,2,2])/4;
+  g11.im:=(S[2,1,1]+S[2,2,2])/4;
+  g02.re:=(S[1,1,1]-S[1,2,2]-2*S[2,1,2])/4;
+  g02.im:=(S[2,1,1]-S[2,2,2]+2*S[1,1,2])/4;
+  g20.re:=(S[1,1,1]-S[1,2,2]+2*S[2,1,2])/4;
+  g20.im:=(S[2,1,1]-S[2,2,2]-2*S[1,1,2])/4;
+ 
+ 
+  IF NeedDDJac THEN BEGIN
+   dsmat(1,1,1,1,Q,P,ddJ,dS[1,1,1,1]);
+   dsmat(1,1,2,2,Q,P,ddJ,dS[1,1,2,2]);
+   dsmat(2,1,1,2,Q,P,ddJ,dS[2,1,1,2]);
+   dsmat(2,2,2,2,Q,P,ddJ,dS[2,2,2,2]);
+   dsmat(2,1,1,1,Q,P,ddJ,dS[2,1,1,1]);
+   dsmat(2,1,2,2,Q,P,ddJ,dS[2,1,2,2]);
+   dsmat(1,1,1,2,Q,P,ddJ,dS[1,1,1,2]);
+   dsmat(1,2,2,2,Q,P,ddJ,dS[1,2,2,2]);
+ 
+   gg21.re:= (dS[1,1,1,1]+dS[1,1,2,2]+dS[2,1,1,2]+dS[2,2,2,2])/8;
+   gg21.im:= (dS[2,1,1,1]+dS[2,1,2,2]-dS[1,1,1,2]-dS[1,2,2,2])/8;
+  END; 
+
+  dyno:= n;
+  IF (dyno>2) THEN BEGIN
+   FOR k:=3 TO n DO BEGIN
+     h11[k]:=(S[k,1,1]+S[k,2,2])/4;
+     h20[k].re:=(S[k,1,1]-S[k,2,2])/4;
+     h20[k].im:=-S[k,1,2]/2;
+  
+     G110[k].re:=(S[1,1,k]+S[2,2,k])/2;
+     G110[k].im:=(S[2,1,k]-S[1,2,k])/2;
+     G101[k].re:=(S[1,1,k]-S[2,2,k])/2;
+     G101[k].im:=(S[1,2,k]+S[2,1,k])/2;
+    END;
+   k:=3;
+   WHILE k<=n DO
+    BEGIN 
+     a:=D[k,k]; c:=-2*omega; blok:=FALSE;
+     IF k<n THEN BEGIN
+       b:=D[k+1,k];
+       blokcheck(D,n,k,blok); END;
+     IF blok THEN
+      BEGIN
+       det:=a*a+b*b;
+       Complex(a,-b,ch1);
+       Complex(-h11[k],-h11[k+1],ch2);
+       Cmul(ch1,ch2,ch3);
+       RCmul(ch3,1/det,ch1);
+       w11[k]:= ch1.re; w11[k+1]:= ch1.im;
+       Complex(-a*a-b*b+c*c,2*a*c,w); 
+       Cnorm(w,wnorm);
+       Cmul(w,h20[k],ch1);
+       RCmul(ch1,1/wnorm,z1);
+       Cmul(w,h20[k+1],ch1);
+       RCmul(ch1,1/wnorm,z2);
+       Complex(a,c,w);
+       Cmul(w,z1,w1);
+       RCmul(z2,b,w2);
+       Cadd(w1,w2,w20[k]);
+       RCmul(z1,-b,w1);
+       Cmul(w,z2,w2);
+       Cadd(w1,w2,w20[k+1]);
+       k:=k+2;
+     END ELSE
+      BEGIN  (* ikke blok *)
+       w11[k]:=-h11[k]/a;  (* Hopf : a<0 *)
+       Complex(a,-c,w);
+       RCmul(h20[k],-1,h20[k]);
+       Cnorm(w,wnorm);
+       Cmul(w,h20[k],ch1);
+       RCmul(ch1,1/wnorm,w20[k]);
+       k:=k+1;
+      END;  (* of IF *)
+    END;  (* of WHILE *)
+   FOR k:=3 TO n DO
+    BEGIN
+     RCmul(G110[k],2*w11[k],w1);
+     Cmul(w20[k],G101[k],w2);
+     Cadd(g21,w1,g21);
+     Cadd(g21,w2,g21);
+    END;
+  END; (* n>2 *)
+
+  IF NeedDDJac THEN Cadd(g21,gg21,g21);
+
+  Cmul(g20,g11,g20_g11);
+  c1.re:=(-g20_g11.im/omega+g21.re)/2;
+  Cnorm(g11,g11norm); Cnorm(g02,g02norm);
+  c1.im:=((g20_g11.re-2*g11norm-g02norm/3)/omega+g21.im)/2;
+END;  (* Hopf *)
+
+PROCEDURE hassard;
+ BEGIN
+  my2:=-c1.re/d_alfa;
+  tau2:=-(c1.im+my2*d_omega)/omega;
+  beta2:=2*c1.re;
+ END; (* hassard *)
+
+PROCEDURE kuramoto;
+ BEGIN
+  g_prime:= -4*c1.re; g_dbprime:= -4*c1.im;
+  c0kuramoto:= d_omega/d_alfa;
+  c2kuramoto:= g_dbprime/g_prime;
+ END; (* kuramoto *)
+
+PROCEDURE ginzlandif;
+ VAR
+  i: INTEGER;
+ BEGIN
+  d_prime:= 0.0; d_dbprime:= 0.0;
+  FOR i:=1 TO n DO BEGIN
+   d_prime:=   d_prime+dif[i]/2*(inverseigvec[1,i]*eigvec[i,1]+inverseigvec[2,i]*eigvec[i,2]); 
+   d_dbprime:= d_dbprime+dif[i]/2*(inverseigvec[2,i]*eigvec[i,1]-inverseigvec[1,i]*eigvec[i,2]); 
+  END;
+  c1kuramoto:= d_dbprime/d_prime;
+ END; (* ginzlandif *)
+

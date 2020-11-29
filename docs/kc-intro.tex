@@ -1,0 +1,343 @@
+\hyphenation{che-mi-cal dif-fe-ren-tia-ting}
+\documentstyle{article}
+\author{Kenneth Geisshirt \\ \small (e-mail: kneth@\{vscht.cs, kiku.dk\}) \normalsize}
+\title{Yet Another Kinetic Compiler}
+\date{20 August 1992}
+\begin{document}
+\bibliographystyle{plain}
+\maketitle
+\begin{abstract}
+  Yet another kinetic (pre-)compiler called {\tt kc} has been implemented. The development serves
+  two goals; easy to use and easy to extend. The current version (0.~00) generates
+  code to CONT, \cite{marek} and to an integrator developed at University of Copenhagen.
+\end{abstract}
+\section{Introduction}
+A kinetic (pre-)compiler's task can be defined very simple. It transforms a chemical
+kinetic model into a runnable program. In this case the runnable program is only
+a subroutine to existing programs like CONT and not a complete program.
+
+The two goals of the program development have been: 
+\begin{itemize}
+  \item Easy to use, i.~e.~the input is much like the 'paper model'.
+  \item Easy to extend, i.~e.~new features can easily be created.
+\end{itemize}
+
+The second goal is achieved by structuring the code and by intensive use of
+concrete data types, which hides the details of implementation. Heavy documentation
+is also considered as a important factor in achieved the goal, because future
+programmers can find how different parts are interacting.
+
+The status of the program can be summerised to:
+\begin{itemize}
+  \item The precompiler is at the moment running on a HP 9000s720 under HP-UX 8.~05. 
+  \item Semantic checks are not fully implemented, which means that a some 'logic' 
+        errors are not detected.
+  \item Code generation by the use of mass-action law and power law is working.
+  \item Parameters and initial concentrations may be specified. 
+\end{itemize}
+
+In the following sections, all optional parts in grammars are placed between brackets ([ and ]).
+
+\section{Precompilers}
+There exist already quite a lot chemical precompilers 'on the market'. They are often a ad hoc solution
+of a problem and not general-purpose compilers. A few of these can be mentioned.
+\begin{description}
+  \item[Kin.] Kin is developed at University of Copenhagen. The system generates HP-Pascal code and the 
+       integrator finds the concentrations as a function of time, i.~e.~a dynamical simulation. The 
+       program is able to take care of linear constraints and calls of external functions (like Arrhenuis).
+       The syntax is very easy, because it looks like ordinary chemical equations. But even through it is easy
+       to use, the code generator is hard to extend.
+  \item[Ionic.] This is a preprocessor developed at Prague Institute of Chemical Technology. The syntax has
+       to very much like Fortran-77, and the program is also generating subroutines in Fortran. The program 
+       is meant to be used in one application area; diffusion controlled reactions.
+  \item[CONEX.] CONEX, \cite{conex}, is a specialised front-end to CONT. It is an expert system, which assists the user in 
+       making the right decision about input to CONT. It is also capable of generating the subroutine used
+       by CONT. It is not flexible in the sense, that is is a front-end to one particular program.
+\end{description}
+
+The three programs above all lack of flexibility. They are hard to extend to be used to generate input to 
+other programs. 
+
+The approach in {\tt kc} is a bit different. A flexible front-end (lexical analyser, parser and symbol tables)
+is developed, and back-ends (code generators) can be created when needed without changing the front-end. 
+This approach has the advantage that the user will have a consistent user-interface. The future back-end
+programmer is not to write new front-end. This will properly save a lot of time in the process of 
+development. 
+
+\section{Main features}
+The following features are present in this version of {\tt kc}. 
+\begin{itemize}
+  \item Relative easy and general syntax.
+  \item Code generating to CONT and Kin by the use of mass-action law and power law.
+  \item Symbolic differentiating of expressions.
+  \item Portability (written in ANSI-C, {\em yacc} and {\em lex}, \cite{ctools}, \cite{KR}).
+\end{itemize}
+
+The symbolic library is capable of doing ordinary algebraic manipulations like
+addition and multiplication. To make the library more usable, a simplification routine
+is implemented, because it is well-known that differentiating by computer often leads
+to rather large expressions.
+
+The differentiating could have been done by using automatic differentiating techniques, \cite{autodiff}. This will 
+in many cases had let to more efficient subroutines, especially for very large models. 
+
+\section{Running {\tt kc}}
+To run {\tt kc} is in fact simple. The following is to be typed on the command
+line.
+\begin{verbatim}
+kc [options] < file
+\end{verbatim}
+where {\tt file} is the name of the file, which contains the model. The precompiler
+will respond by writing the line:
+\begin{verbatim}
+kc v0.00, CopyWrong by Kenneth Geisshirt, 1992.
+\end{verbatim}
+If there are no other messages, the compilation has been without errors and the output is written
+to a file, which name depends on which code generator there is used. 
+
+The options are in general a minus (-) and a letter. In this version three options are valid. They are 
+{\em m}, {\em d} and {\em h}. Option {\em h} writes a short help text on the screen. The {\em d}
+options enable the debugging mode, i.~e.~the parser will write some debug information on
+the screen (to understand the output, the user have to know the theory of LALR-grammars
+and their parsers). The last option ({\em m}) determines the mode. In this moment, there
+are two modes available. It is the mode 1, which is using symbolic differentiating 
+code generator to CONT,
+and mode 4, which generates code to Kin.
+The mode is written as a number after the {\em m} without
+any white-spaces.
+
+Syntax errors are only reported as {\tt syntax error}, and no indication in which line. Only a 
+few other errors are detected, like defining a equilibrium constant when the reaction is a one-way
+reaction.
+When one syntax error has been encountered, the compiler will not continue. In finding the line
+with the syntax error, the debug mode can be of great help.
+
+\section{Syntax of input}
+The input syntax is very important to every program. The input to {\tt kc} can be divided
+into three parts. These three parts are {\em parameters}, {\em equations} and {\em 
+constants}.
+In three subsections I will examine each part, but first let's consider some
+general principles.
+
+\subsection{Numbers}
+Numbers are of course of great importance for {\tt kc}. But there exists only one
+form of numbers, namely floating-point numbers. The general number in other word the form
+\begin{verbatim}
+ xxx[.yyy[Ezzz]]
+\end{verbatim}
+In short, the numbers of {\tt kc} are like floating-point numbers in normal programming
+languages. The main difference is, that the exponent has to have a sign ({\tt +} or {\tt -}).
+
+\subsection{Names}
+Names used in {\tt kc} follow also the common conventions of programming languages. But
+there is one difference. Only letters and digits are allowed, i.\ e.\ underscore (\_),
+etc.\ can not be used. And capital letters are not the same as non-capital letters, e.~g.~ 
+{\tt Water} is not the same as {\tt water}. 
+
+\subsection{Species}
+Species are written the same way all through the source file. A specie consists 
+in this context of a name and a charge. The charge is written in parentheses. The
+syntax for a specie is:
+\begin{verbatim}
+  name [( charge )]
+\end{verbatim}
+Since radicals have to be represented this way also, the charge can either
+be a number or a dot (.~). The last indicates a radical. 
+
+The charge can of course either be positive or negative. If no charge is
+given, it is assumed that the specie is neutral. Charges can be given
+as floating-point numbers if it is needed.
+
+\subsection{Parameters and inclusions}
+This part of the input is optional, i.~e.~it does not have to be there. 
+The part contains definitions of parameters. A parameter can be used 'later' in the
+source file. An example could be the temperature. Each definition has the form
+\begin{verbatim}
+  name = expr
+\end{verbatim}
+where {\tt expr} is an expression, which can be evaluated at that point in the source
+file. 
+
+An other feature in this part is inclusion of other files. This feature is not yet 
+supported.
+
+\subsection{Equations}
+The equations determined the concrete system, which is been modelled. There are two
+kinds of equations; chemical and mathematical equations. The mathematical equations
+have not yet been implemented, but the chemical ones are.
+
+Every equation begins with a number. The number has to be a integer and unique for be 
+equation. After the number there has to be a colon (:). 
+
+The chemical equation has the form:
+\begin{verbatim}
+  number : [number] specie + ... arrow 
+  [number] specie + ... ; constants ;
+\end{verbatim}
+
+The optional number before a specie is the stoichiometric coefficient. The arrow
+shows which kind of reaction it is. There are three kinds of reactions. They are:
+one-way, two-way and equilibrium. The notation for these are {\tt ->}, {\tt <->}
+and {\tt =}. The constant-section of the equation gives the rate constants and
+the possible constants for the power law. 
+
+Rate constants and equilibrium constants are denoted by the following symbols:
+{\tt k>}, {\tt k<} and {\tt K}. The first two is for reactions, resp.~left to right
+and right to left. The last one is a equilibrium constant. Constants used in the power
+law is denoted by {\tt c} followed by the specie in parentheses. 
+
+The assignment for all these constants have the form:
+\begin{verbatim}
+  const = expr
+\end{verbatim}
+
+\subsection{Constraints, constants and initial conditions}
+This part of the source file is meant to define various constants and constraints. The constants
+in this part is specie-specific, i.~e.~they are associated with a specie (could be molar mass).
+
+Only one feature is at the moment implemented; it is initial concentrations. A initial concentration
+has the form:
+\begin{verbatim}
+[specie](0) = expr
+\end{verbatim}
+
+Not that the brackets don't mean a optional part. They show that it is a concentration. The
+specie has the form already discussed. 
+
+\section{Limits}
+The program can not handle infinite large models. But the size of the 
+model can be rather large. The table below shows various limits of the
+current version.
+
+\vspace{.2cm}
+\begin{tabular}{|l|r|}
+\hline 
+ Description           &  Limit  \\ \hline \hline 
+ Reactions/equations   &    250  \\ \hline
+ Species + paramters   &   200   \\ \hline
+ Constraints           &    50   \\ 
+\hline 
+\end{tabular}
+\vspace{.2cm}
+
+These values can easily be changed; they are found as macros in the
+file {\tt tableman.h}.
+
+\section{Examples}
+In this section I will give some examples of input to the program.  
+All the examples have the last line in common ($10 = 10$). The line has
+no meaning, but every source file must contain some definitions of constants 
+at the end of the file. But this part has not yet been fully implemented (only
+initial concentrations).
+
+In all examples, the rate constants are set 'randomly' i.~e.~they
+have no chemical interpretation.
+
+The first examples is a first order reaction. A compound ($A$) is transformed
+into a product ($P$). The rate constant is set to $1.0$ for simplicity. The source
+file is:
+\begin{verbatim}
+1: A -> P; k> = 1.0;
+10=10;
+\end{verbatim}
+
+The next examples is more complicated. 
+\begin{verbatim}
+1: A -> X; k> = 1.0;
+2: B + X -> Y + D; k> = 2.0;
+3: 2 X + Y -> 3 X; k> = 3.0;
+4: X -> E; k> = 4.0;
+10=10;
+\end{verbatim}
+
+Ions are, as already mentioned, also supported in this version. An examples
+of this, let's have the following red-ox reaction:
+\begin{verbatim}
+1: 2 Fe(+3) -> 3 Fe(+2); k> = 10.0;
+10=10;
+\end{verbatim}
+
+Initial concentrations and parameters are allowed. The next example shows this.
+\begin{verbatim}
+T = 1000
+1: A + B -> P; c(A)=1.2; c(B)=2.1; c(P)=5.0; k>=5*T;
+[A](0)=0.1;
+[B](0)=0.2;
+\end{verbatim}
+
+\section{Code generators}
+There are at the moment two code generators implemented. The first one generates
+the subroutine to CONT, while the second one generates to Kin.
+
+In the subroutine used by both integrators have to have two quantities evaluated. They are the vector
+$F$ and the matrix $G$. In this case $F$ is the rate of the reactions, while $G$ is 
+the Jacobian matrix defined as $\frac{\partial F_i}{\partial x_j}$, where $\underline{x}$ is the 
+concentration vector. 
+
+The vector $F$ is generated by the mass-action law and the power-law. The code generator
+is fooled, becaused the parser inserts the constants in power-expression as coefficients.
+This gives a more compact code generator. For the reaction (number $i$)
+\[ a A + b B + \cdots \rightarrow x X + y Y + \cdots \]
+$F_i$ becomes:
+\[ F_i = k [A]^a [B]^b \cdots \]
+where $k$ is the rate constant. If the reaction is a two-ways reaction, $F_i$ becomes
+\[ F_i = k_1 [A]^a [B]^b \cdots - k_2 [X]^x [Y]^y \cdots \]
+
+The matrix $G$ is now 'easy' to evaluate, if all elements of $F$ is stored. 
+This is the case in these two code generators, and a pseudo-code for them is:
+\begin{verbatim}
+for all reactions, i
+  case one-way:
+    F(i) = rate constant for reaction i 
+    for all species, j, in reaction i
+      F(i) = F(i) * [j]**S(i, j)
+   case two-ways:
+     F(i) = rate constant (left to right) for reaction i
+     for all species, j, on left side of reaction i
+       F(i) = F(i) * [j]**S(i, j)
+     temp = rate constant (right to left) for reaction i
+     for all species, j, on right side of reaction i
+       temp = temp * [j]**(-S(i, j))
+     F(i) = F(i) - temp
+for all reactions, i 
+  for all species in system, j
+    G(i, j) = dF(i)/d[j]
+\end{verbatim}
+
+The notation {\tt S(i, j)} is the coefficient (or constant for power-law) in reaction $i$, specie $j$, {\tt [j]} is
+the concentration of $j$ and {\tt **} is the exponent operator (like Fortran-77).
+
+This is the code, which implements both code generators on a non-concrete level. The code is of course using
+various library functions, which retrieve information from the data types.
+
+
+\section{Future development}
+In this section I will briefly discuss the future developments 
+of the program could be. In the near future a few points must be considered
+as natural extension of the program.
+\begin{description}
+ \item[Error handling.] In the current version there are only
+       a few error messages. Proper error handling is important
+       in the sense of user-friendliness.
+ \item[Constants.] The use of specie-specific constants will, in some applications,
+       be very important. The constants have to general, and not only diffusion constants.
+\end{description}
+
+As a medium-term project general expression must have 
+high priority. I am thinking on general expression defining
+the model, and not only by using chemical equations. There is at least two problems, which
+have to be solved,
+in this project. Firstly, there have to some kind of data type to handle the
+expressions. Secondly, a proper code generator has to be written - maybe existing
+generators can be extended in some way.
+
+The feature of including other files must be explored more intensively. 
+Questions like 'What are the files' contents?' must be answered. 
+
+Other code generators must be added, but these extensions will
+come naturally when they are needed. As mentioned in the introduction, none of the
+code generators are using automatic differentiating. it could be interesting to implement
+a generator using it, and then compare it with the existing ones. 
+
+\bibliography{chaos}
+\end{document}

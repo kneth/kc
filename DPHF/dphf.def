@@ -1,0 +1,55 @@
+(* New HP435 Pascal Version of Derpar and Hopf continuation
+   program. Version containing both the derpar-algorithm
+   and the Hopf-bifurcation calculation. Version 25/10 1994 *)
+
+ CONST
+  sigint = 2;
+  n1 = n+1; n2 = n+2;
+
+ TYPE
+  glnarray     = ARRAY [1..n2] OF LONGREAL;
+  glnpbynp     = ARRAY [1..n2,1..n2] OF LONGREAL;
+  glindx       = ARRAY [1..n2] OF INTEGER;
+  glbln        = ARRAY [0..n2] OF BOOLEAN;
+  strg250      = STRING[250];
+  gldjacobian  = ARRAY [1..n2,1..n2,1..n2] of LONGREAL;
+  glddjacobian = ARRAY [1..n2,1..n2,1..n2,1..n2] of LONGREAL;
+  fcomplex     = RECORD
+	          re,im: LONGREAL;
+                 END;
+
+ VAR
+  beta2,c0kuramoto,c1kuramoto,c2kuramoto,clck,
+  date,d_alfa,d_dbprime,d_omega,d_prime,dt, 
+  epsa,epsblk,epsbisecr,epsdigit,epsfx,epshqr2,epsmach,epsr,
+  fid,g_dbprime,g_prime,h,hb,hh,im1,im2,my2,
+  noofpoints,omega,paraold,
+  qd,re1,re2,t,tau2,tb,te: LONGREAL;
+
+  corrhreg,cfout,hopfbftp,i,j,kar,maxout,oaddr,
+  maxitbisec,maxitcorrec,maxithqr2,maxitintpol,
+  maxititera,maxnoofp,maxoutn1,maxoutn2,
+  numparam,ps,ref,rr,sigmax,sigmin,
+  print_on_file,df_calc,eigvec_prn,hass_calc,hf_calc,
+  kura_calc,print_on_screen,failure_print,para_regu,qc_calc: INTEGER;
+
+  NeedDDJac,notback,need_dd_jac,prog_stop: BOOLEAN;
+
+  datafile,textfile: TEXT;
+
+  adjeigvec,der,eigval,eigvec,inverseigvec,jacobi: glnpbynp;
+
+  ampvec,dif,fivec,fxzero,inithmax,initndir,initpref,initxlow,initxupp,
+  phasevec,qvec,xmax,xmin,xx: glnarray;
+
+
+  name_datafile,name_textfile: strg250;
+
+  nsg,osg: glindx;
+
+  prntindx: glbln;
+
+  derivsjacobian:gldjacobian;
+  derivsdjacobian:glddjacobian;
+
+  c1: fcomplex;

@@ -1,0 +1,29 @@
+/* Atmospheric model.                         */
+/* Dansk Kemi 6/7, pp. 18-21, 1994            */
+
+/* Rate constants */
+
+k4 = 5.0e-11;
+k8 = 1.68e-11;
+
+
+
+/* The reactions */
+
+1:  F + CF3H         -> CF3 + HF;         k>=1.3e-13;
+2:  O2 + M           -> FO2 + M;          k>=2.0e-13;
+3:  F + NO + M       -> FNO + M;          k>=6.0e-12;
+4:  CF3 + O2 + M     -> CF3O2 + M;        k>=8.5e-12;
+5:  CF3 + NO + M     -> CF3NO + M;        k>=1.8e-11;
+6:  CF3 + NO2 + M    -> Prod;             k>=2.5e-11;
+7:  CF3O2 + NO       -> CF3O + NO2;       k>=k4;
+8:  CF3O2 + NO2      -> CF3O2NO2;         k>=8.0e-12;
+9:  2 CF3O2          -> 2 CF3O + O2;      k>=1.8e-12;
+10: CF3O + NO2       -> CF3ONO2;          k>=9.0e-12;
+11: CF3O + CF3O2     -> CF3O3CF3;         k>=2.5e-11;
+12: 2 CF3O           -> CF3O2CF3;         k>=2.5e-11;
+13: CF3O + NO        -> CF2O + FNO;       k>=k8;
+ 
+
+[NO](0)  = 2.5e+8;
+[NO2](0) = 2.5e+8;

@@ -1,0 +1,45 @@
+
+# line 1 "kc.y"
+ 
+/********************************************************* 
+  Parser to kc.
+  CopyWrong 1992-1995 by 
+  Kenneth Geisshirt (kneth@fatou.ruc.dk)
+  Department of Life Sciences and Chemistry
+  Roskilde University
+  P.O. Box 260
+  4000 Roskilde
+  Denmark
+
+
+  See kc.tex for details.
+
+  Last updated: 17 February 1994
+**********************************************************/
+
+#include "config.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include "symbmath.h"
+#include "tableman.h"
+#include "codecall.h"
+
+typedef enum {no, ini, ord} Conc; 
+
+typedef struct compound {
+  char   name[STRING_LENGTH];
+  double charge;
+  Conc   concs;
+} compound;
+
+typedef struct Strnum {
+  int    flag;
+  char   name[STRING_LENGTH];
+  double numb;
+} Strnum;
+
+double     coeff, charge, value, temp, temp1, temp2;
+char       flag, name[STRING_LENGTH], string[STRING_LENGTH];
+int        i, j, side, lineno=1;
+Tree       tmp;

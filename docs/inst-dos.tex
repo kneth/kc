@@ -1,0 +1,72 @@
+% Last updated: 6 July 1994
+\documentstyle[12pt]{article}
+\author{Kenneth Geisshirt\thanks{Email:{\tt kneth@osc.kiku.dk}}}
+\title{Installation of \\ Kinetic Compiler and Integrator \\ for
+  MS-DOS.}
+\date{6 July 1994}
+\begin{document}
+\maketitle
+In this brief note, I will describe how to install the MS-DOS version
+of {\tt kc}. The compiler system comes with an integrator of ordinary
+differential equations, and therefore it is required to have installed
+a C-compiler. I recommend djgpp which is a DOS version of gcc. In the
+following discussion, I will assume that djgpp is installed in a
+directory called {\tt c:$\backslash$djgpp}.
+
+Begin with making two new diectories, one for the kinetic compiler
+(let us call it {\tt c:$\backslash$kci}) and one for temporary files
+({\tt c:$\backslash$temp}). 
+
+It is vital to expand the memory space used by enviroment variables,
+and is done by inserting the line 
+
+\begin{verbatim}
+shell=c:\command.com /p /e:1024
+\end{verbatim}
+
+\noindent
+into the file {\tt config.sys}. The enviroment space is now 1024
+bytes. In the file {\tt autoexec.bat} you have to insert the line
+
+\begin{verbatim}
+call c:\djgpp\bin\setdjgpp c:/djgpp c:\djgpp
+\end{verbatim}
+
+The batch file called {\tt setdjgpp.bat} is setting up the C-compiler.
+It might be a good idea to edit the lines which set the variables
+GO32DIR and TMPDIR so they reflects the directory for temporary files.
+Remember to expand the path, so both {\tt c:$\backslash$kci} and {\tt
+  c:$\backslash$djgpp$\backslash$bin} are included.
+
+Now copy all the files on the {\tt kc} disk into the directory called
+{\tt c:$\backslash$kci}. There are a number of files; they are:
+
+\begin{description}
+\item[kci.bat] This is the main ``program''. It runs the kinetic
+  compiler, the C-compiler and the simulation program. You should edit
+  the directories so they reflect your own setup. If the model is in
+  file {\tt foo.des}, then a simulation is done by typing {\tt kci
+    foo.des}. The batch file also does some cleaning up after the
+  simulation, so only the output file is left.
+\item[kc] It is just the kinetic compiler.
+\item[kksolver.c] Here we have the integration routines.
+\end{description}
+
+The installation of the C-compiler should be fairly simple. The files
+are compressed with arj, and you begin by going to the directory where
+you want to compiler ({\tt c:$\backslash$djgpp}). Now you type
+
+\begin{verbatim}
+arj x a:djgpp
+\end{verbatim}
+
+It will ask you a few questions, but just give Y as answer. The next
+disks are installed with the command:
+
+\begin{verbatim}
+arj x a:djgpp.a01
+\end{verbatim}
+
+The number (a01) is increased for each disk.
+\end{document}
+

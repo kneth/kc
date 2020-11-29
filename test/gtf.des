@@ -1,0 +1,223 @@
+/* Belousov- Zhabotinsky reaction                     */
+/* Model: GTF , open system                           */
+/* Rate constants: FF+rate constants from article     */
+/* J.Phys.Chem., 1990,94,7162                         */
+
+/* Outflow of the dynamical species */
+
+/* stime = 0; dtime = 1; etime = 500; epsr = 1L-3;  epsa = 1L-20; */ 
+CeIIIin = 1.66e-4;
+j0   = 3.06E-4; 
+kf1 = 2.3E+9;    kr1 = 2.0/55.5;
+kf2 = 2.0E+6;    kr2 = 2.0E-5;
+kf3 = 2.0;      kr3 = 3.3;
+kf4 = 3.0E+3;    kr4 = 7.5E-9;
+kf5 = 33.0;     kr5 = 2200/55.5;
+kf6 = 7.4E+4;    kr6 = 1.4E+9;
+kf7 = 6.2E+4;    kr7 = 7.0E+3;
+kf8 = 3.0E-3;   kr8 = 200.0;
+kf9 = 1.91E+6;
+kf10 = 8.2;
+kf11 = 0.1;
+kf12 = 5.0;
+kf13 = 1.0/55.5;
+kf14 = 1.0;
+kf15 = 1.0;
+kf16 = 1.0;
+kf17 = 0.09;
+kf18 = 0.23;    kr18 = 1.7E+4;
+kf19 = 0.66;    kr19 = 1.7E+4;
+kf20 = 140.0;
+kf21 = 10.0/55.5;
+kf22 = 140.0;
+kf23 = 10.0;
+kf24 = 1.6E-5;
+kf25 = 1.0E+8;
+kf26 = 1.0E+9;
+kf27 = 1.0E+8/55.5;
+kf28 = 1.0E+9/55.5;
+kf29 = 1.0E+9/55.5;
+kf30 = 1.0E+7/55.5;
+kf31 = 5.0E+9/55.5;
+kf32 = 5.0E+8;
+kf33 = 3.2E+9/55.5;
+kf34 = 1.0E+9/55.5;
+kf35 = 2.0E+9;
+kf36 = 1.0E+9;
+kf37 = 5.0E+9;
+kf38 = 1.0E+9;
+kf39 = 2.0E+9;
+kf40 = 1.0E+9;
+kf41 = 5.0E+9;
+kf42 = 1.2E+9;
+kf43 = 1.0E+7;
+kf44 = 1.0E+9;
+kf45 = 5.0E+9;
+kf46 = 1.5E+8;
+kf47 = 1.0E+7;
+kf48 = 40.0;
+kf49 = 1.0E+5;   kr49 = 1.0E+5;
+kf50 = 1.0E+5;   kr50 = 5.0E+2;
+kf51 = 2.0E+5;   kr51 = 5.0E+3;
+kf52 = 1.0E+8;
+kf53 = 1.0E+7;
+kf54 = 40.0;
+kf55 = 1.0E+6;
+kf56 = 1.0E+5;
+kf57 = 40.0;
+kf58 = 1.0E+7;
+kf59 = 1.5E+8;
+kf60 = 2.0E+7;
+kf61 = 2.1E+3;
+kf62 = 1.0E+5;
+kf63 = 1.0E+6;
+kf64 = 5.0E+6;
+kf65 = 2.0E+3/55.5;
+kf66 = 2.0E+3;
+kf67 = 1.0E+2;
+
+101:  HBrO2                ->  OP                  ; k> = j0;
+102:  Br(-)                  ->  OP                  ; k> = j0;
+103:  HOBr                 ->  OP                  ; k> = j0;
+104:  Br2                  ->  OP                  ; k> = j0;
+105:  BrO3(-)                ->  OP                  ; k> = j0;
+106:  Br2O4                ->  OP                  ; k> = j0;
+107:  BrO2                 ->  OP                  ; k> = j0;
+108:  Br                   ->  OP                  ; k> = j0;
+109:  CeIV                 ->  OP                  ; k> = j0;
+110: MA                   ->  OP                  ; k> = j0;
+111: ENOL                 ->  OP                  ; k> = j0;
+112: MAR                  ->  OP                  ; k> = j0;
+113: BrMA                 ->  OP                  ; k> = j0;
+114: BrMAR                ->  OP                  ; k> = j0;
+115: BrO2MA               ->  OP                  ; k> = j0;
+116: TTA                  ->  OP                  ; k> = j0;
+117: TTAR                 ->  OP                  ; k> = j0;
+118: BrTTA                ->  OP                  ; k> = j0;
+119: BrO2TTA              ->  OP                  ; k> = j0;
+120: MOA                  ->  OP                  ; k> = j0;
+121: OA                   ->  OP                  ; k> = j0;
+122: FAR                  ->  OP                  ; k> = j0;
+123: CO2                  ->  OP                  ; k> = j0;
+
+
+              /* Flow from burettes */
+
+201: Bromatin            ->  BrO3(-)                 ; k> = j0;
+202: MAin                ->  MA                    ; k> = j0;
+
+              /* 1. Inorganic subset  */        
+
+1:  Br(-) + HOBr + H(+)    <=> Br2 + H2O              ; k> = kf1;  k< = kr1;
+2:  HBrO2 + Br(-) + H(+)   <=> 2HOBr                  ; k> = kf2;  k< = kr2;
+3:  BrO3(-) + Br(-) + 2H(+)  <=> HBrO2 + HOBr           ; k> = kf3;  k< = kr3;
+4:  2HBrO2             <=> HOBr + BrO3(-) + H(+)      ; k> = kf4;  k< = kr4;
+5:  BrO3(-) + HBrO2 + H(+) <=> Br2O4 + H2O            ; k> = kf5;  k< = kr5;
+6:  Br2O4              <=> 2BrO2                  ; k> = kf6;  k< = kr6;
+7:  BrO2  + CeIII + H(+) <=> HBrO2 + CeIV           ; k> = kf7;  k< = kr7;
+
+
+        /* 2. Reactions involving organic species */
+
+/* a. Reactions not consuming or producing radicals */      
+
+8:  MA                 <=> ENOL                   ; k> = kf8;  k< = kr8;
+9:  ENOL + Br2          -> BrMA + Br(-) + H(+)        ; k> = kf9;
+10: MA + HOBr           -> BrMA + H2O             ; k> = kf10;
+11: BrMA + HOBr         -> Br2MA + H2O            ; k> = kf11;
+12: TTA + HOBr          -> BrTTA + H2O            ; k> = kf12;
+13: BrO2MA + H2O        -> HBrO2 + TTA            ; k> = kf13;
+14: BrO2MA              -> HOBr + MOA             ; k> = kf14;
+15: BrO2TTA             -> HBrO2 + MOA            ; k> = kf15;
+16: BrTTA               -> Br(-) + MOA + H(+)         ; k> = kf16;
+ 
+/* b. Reactions producing radicals */      
+
+17: CeIV + BrMA         -> CeIII + BrMAR + H(+)     ; k> = kf17;
+18: CeIV + MA          <=> CeIII + MAR + H(+)      ; k> = kf18; k< = kr18;
+19: CeIV + TTA         <=> CeIII + TTAR + H(+)     ; k> = kf19; k< = kr19;
+20: HOBr + MOA          -> Br + OA + FAR          ; k> = kf20;
+21: CeIV + MOA + H2O    -> CeIII + OA + FAR + H(+)  ; k> = kf21;
+22: HOBr + OA           -> Br + FAR + CO2 + H2O   ; k> = kf22;
+23: CeIV + OA           -> CeIII + FAR + CO2 + H(+) ; k> = kf23;
+24: BrO3(-) + OA + H(+)     -> BrO2 + FAR + CO2 + H2O ; k> = kf24;
+ 
+/* c. Reactions consuming radicals */      
+
+25: 2Br                 -> Br2                    ; k> = kf25;
+26: Br + BrMAR          -> Br2MA                  ; k> = kf26;
+27: 2BrMAR + H2O        -> BrMA + BrTTA           ; k> = kf27;
+28: BrMAR + MAR + H2O   -> MA + BrTTA             ; k> = kf28;
+29: BrMAR + TTAR + H2O  -> TTA + BrTTA            ; k> = kf29;
+30: BrMAR + CeIV + H2O  -> CeIII + BrTTA + H(+)     ; k> = kf30;
+31: BrMAR + BrO2 + H2O  -> HBrO2 + BrTTA          ; k> = kf31;
+32: BrMAR + FAR         -> BrMA + CO2             ; k> = kf32;
+33: 2MAR + H2O          -> MA + TTA               ; k> = kf33;
+34: MAR + TTAR + H2O    -> 2TTA                   ; k> = kf34;
+35: MAR + FAR           -> MA + CO2               ; k> = kf35;
+36: MAR + Br            -> BrMA                   ; k> = kf36;
+37: MAR + BrO2          -> BrO2MA                 ; k> = kf37;
+38: 2TTAR               -> TTA + MOA              ; k> = kf38;
+39: TTAR + FAR          -> TTA + CO2              ; k> = kf39;
+40: TTAR + Br           -> BrTTA                  ; k> = kf40;
+41: TTAR + BrO2         -> BrO2TTA                ; k> = kf41;
+42: 2FAR                -> OA                     ; k> = kf42;
+43: FAR + CeIV          -> CeIII + CO2 + H(+)       ; k> = kf43;
+44: FAR + Br            -> Br(-) + CO2 + H(+)         ; k> = kf44;
+45: FAR + BrO2          -> HBrO2 + CO2            ; k> = kf45;
+
+/* d. Reactions preserving radicals */      
+
+46: MAR + Br2           -> BrMA + Br              ; k> = kf46;
+47: MAR + HOBr          -> TTA + Br               ; k> = kf47;
+48: MAR + BrO3(-) + H(+)    -> TTA + BrO2             ; k> = kf48;
+49: MAR + TTA          <=> MA + TTAR             ; k> = kf49; k< = kr49;
+50: MAR + BrMA         <=> MA + BrMAR            ; k> = kf50; k< = kr50;
+51: TTAR + BrMA        <=> TTA + BrMAR           ; k> = kf51; k< = kr51;
+52: TTAR + Br2          -> BrTTA + Br             ; k> = kf52;
+53: TTAR + HOBr         -> MOA + Br + H2O         ; k> = kf53;
+54: TTAR + BrO3(-) + H(+)   -> MOA + BrO2 + H2O       ; k> = kf54;
+55: BrMAR + Br2         -> Br2MA + Br             ; k> = kf55;
+56: BrMAR + HOBr        -> BrTTA + Br             ; k> = kf56;
+57: BrMAR + BrO3(-) + H(+)  -> BrO2 + BrTTA           ; k> = kf57;
+58: FAR + BrMA          -> Br(-) + MAR + CO2 + H(+)   ; k> = kf58;
+59: FAR + Br2           -> Br(-) + Br + CO2 + H(+)    ; k> = kf59;
+60: FAR + HOBr          -> Br + CO2 + H2O         ; k> = kf60;
+61: FAR + BrO3(-) + H(+)    -> BrO2 + CO2 + H2O       ; k> = kf61;
+62: Br + MA             -> Br(-) + MAR + H(+)         ; k> = kf62;
+63: Br + TTA            -> Br(-) + TTAR + H(+)        ; k> = kf63;
+64: Br + BrMA           -> Br(-) + BrMAR + H(+)       ; k> = kf64;
+65: Br + MOA + H2O      -> Br(-) + OA + FAR + H(+)    ; k> = kf65;
+66: Br + OA             -> Br(-) + FAR + CO2 + H(+)   ; k> = kf66;
+67: BrO2 + OA           -> HBrO2 + FAR + CO2      ; k> = kf67;
+ 
+[H(+)] = 1.29; [OP] = 0.0; [H2O] = 55.5; 
+[Br2MA] = 0.0;
+[MAin] = 0.167; [Bromatin] = 1.2E-2;
+
+[HBrO2](0) = 2.56536E-06;
+[Br(-)](0)   = 5.46714E-08;
+[HOBr](0)  = 2.40102E-08;
+[Br2](0)   = 1.57731E-07;
+[BrO3(-)](0) = 1.04997E-02;
+[Br2O4](0) = 2.41967E-10;
+[BrO2](0)  = 1.11106E-07;
+[Br](0)    = 1.57731E-07;
+[CeIV](0)  = 1.65733E-05;
+[MA](0)    = 1.63783E-01;
+[ENOL](0)  = 1.63783E-05;
+[MAR](0)   = 4.77952E-10;
+[BrMA](0)  = 1.89178E-03;
+[BrMAR](0) = 4.57378E-12;
+[BrO2MA](0) = 4.57378E-12;
+[TTA](0)    = 3.45924E-03;
+[TTAR](0)   = 7.42671E-07;
+[BrTTA](0)  = 3.45924E-03;
+[BrO2TTA](0) = 4.57378E-12;
+[MOA](0)  = 1.63783E-05;
+[OA](0)  = 1.63783E-05;
+[FAR](0)  = 1.63783E-05;
+[CO2](0)  = 1.63783E-05;
+
+[CeIII] = CeIIIin - [CeIV]; 
+

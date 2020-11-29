@@ -1,0 +1,21 @@
+Release Message: kinetic compiler v0.10 (beta).
+
+Features:
+- Easy-to-learn grammar
+  1) Kinetics using mass-action law, power law or general expressions
+  2) Constrained compounds by general expressions
+  3) 'compound specific' constants  
+- Code generator to:
+  1) CONT
+  2) Auto86
+  3) Dalimil Snita's Chemical Meta Language
+  4) Kin
+
+Documentation:
+  1) Programmer's manual to kc v0.10
+  2) User's manual
+
+A special version to IBM PC is availaible. Please e-mail about
+configuration.
+
+The version is a beta version because of lack of test.

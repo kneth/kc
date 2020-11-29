@@ -1,0 +1,363 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<!-- (C) Kenneth Geisshirt (kneth@fatou.ruc.dk) -->
+<!-- 18 July 1996                               -->
+<!-- Users' Manual to KCI                       -->
+<HEAD>
+<TITLE>Users' Manual to KCI</TITLE>
+</HEAD><BODY>
+<H1>Users' Manual to KCI</H1>
+
+<P>Welcome to the KCI program. KCI is an abbriviation of Kinetic Compiler
+and Integration and the main purpose of of the program is to simulate
+chemical reactions and make that task easy for chemists so they do not
+have to use to much time with computers.</P>
+
+<P>The program is a joint project between several people. The two
+major programmers are <A HREF="email:kn@kin.kiku.dk"> Keld Nilsen</A>
+at <A HREF="http://www.kiku.dk"> Department of Chemistry, University
+of Copenhagen</A> and <A HREF="http://virgil.ruc.dk/~kneth/index.html">
+Kenneth Geisshirt</A> at <A HREF="http://virgil.ruc.dk"> Department of
+Life Sciences and Chemistry, Roskilde University</A>. A number of
+people has donated code or accepted that their code is distributed
+together with KCI.</P>
+
+<P>The main features of KCI are listed below:</P>
+
+<UL>
+<LI> Chemical reactions written in a "natural" fashion.
+<LI> Couple reactions and ordinary differential equations.
+<LI> Do dynamical simulations.
+<LI> Do continuatoins.
+<LI> Do sensitivity analysis.
+<LI> Calculating various quantities from the mechanism.
+<LI> Use stoichiometric constains.
+<LI> Output is readable by GNUplot.
+<LI> Ported to many platforms including DOS, <A HREF="http://www.linux.org">
+Linux</A>, <A HREF="http://www.hp.com">HP-UX</A>, 
+<A HREF="http://www.sgi.com">IRIX</A>, Ultrix, AIX.
+<LI> Has been used both in research and teaching undergraduate students.
+</UL>
+
+<HR>
+<H1>Table of Contents</H1>
+
+<P>The first thing you have to do is to install KCI. There are two different
+ways, depending on whether you are using <A HREF="#DOSsect">DOS</A> or
+a <A HREF="#UNIXsect">Unix</A> variant.</P>  
+
+<P>The basic things are reviewed the these first sections:</P>
+<UL>
+<LI> <A HREF="#COMMsect">Comments.</A>
+<LI> <A HREF="#NNSCsect">Numbers, names, species and concentrations</A>.
+<LI> <A HREF="#EXPRsect">Expressions</A>.
+</UL>
+
+<P>An input file to KCI consists of five sections. They are described
+more closely in the next sections.</P>
+<UL>
+<LI> <A HREF="#CONSTsect">Constants</A>.
+<LI> <A HREF="#CTRLsect">Control statements</A>.
+<LI> <A HREF="#REACTsect">Reactions and ODEs</A>.
+<LI> <A HREF="#STOICHsect">Stoichiometric constraints</A>.
+<LI> <A HREF="#INITsect">Initial concentrations</A> and 
+     <A HREF="#SPECsect">species-related constants</A>.
+</UL>
+
+<P>To KCI there comes a number of "code generators". Each "code generator" 
+does some numerical analysis. At the moment there are the following 
+"code generators":</P>
+<UL> 
+<LI> Dynamical simulation using KKsolver.
+<LI> Dynamical simulation using CVode.
+<LI> Continuation using mcont.
+<LI> Calculating various quantities.
+<LI> Perform sensitivity analysis.
+</UL>
+
+<P>If you are in a hurry and just what to see how an input file looks
+like, we have included one for you. You find it at 
+<A HREF="#INFILEsect">the end</A> of this manual.</P>
+
+
+<HR>
+<H2><A NAME=t;A NAME="DOSsect">Installation under DOS.</H2>
+
+
+<HR>
+<H2><A NAME=t;A NAME="UNIXsect">Installation under a Unix variant.</H2>
+<P>Installation under Unix variants are simple. You should do as follows.</P>
+
+<UL>
+<LI>Download the file <CODE>kc.tar.Z</CODE>.
+<LI>Change to a temporary directory and move the file to it.
+<LI>Unpack the file, i.e.<BR>
+<CODE>
+uncompress kc.tar.Z<BR>
+tar xvf kc.tar<BR>
+</CODE>
+<LI>Change to the <CODE>kc</CODE> directory which has just been created.
+<LI>Decide where you want KCI to be installed (let us call it 
+<CODE>prefix</CODE>. On many systems, <CODE>/usr/local</CODE> would be a 
+good place. 
+<LI>Make now two directories - if they do not exists already - namely the
+two direactories <CODE>prefix/bin</CODE> and <CODE>prefix/num</CODE>.
+<LI>Run now the compilation script <CODE>kc-inst</CODE> with two
+arguments: <CODE>kc-inst prefix PLATFORM</CODE>. The argument 
+<CODE>PLATFORM</CODE> is the name of your system. If you run 
+<CODE>kc-inst</CODE> without arguments, it will list the supported platforms.
+</UL>
+
+<HR>
+<H2><A NAME=t;A NAME="COMMsect">Comments</H2>
+<P>The input file to KCI may contain comments which are not used by
+other than the user.</P> 
+
+
+<HR>
+<H2><A NAME=t;A NAME="NNSCsect">Names, numbers, species, and 
+concentrations</H2>
+
+<P>The four above quantities are essential for the KCI program. We will 
+briefly explained them here, and you will find examples of their use in
+other sections.</P>
+
+<DL>
+<DT>Names<DD> Names are a letters followed by a sequency of letters and/or
+digits. Examples of valid names are:<BR><BR>
+<CODE>
+X<BR>
+y653X<BR>
+HelloWorld<BR>
+</CODE><BR>
+Note that capital letters and non-capital letters are disticted.
+
+<DT>Numbers<DD> Numbers are written as you are used to when you are working
+with computers. Examples of valid numbers are:<BR><BR>
+<CODE>
+42<BR>
+-3.1415926535<BR>
+1.0e-4<BR>
+3.00e6<BR>
+</CODE><BR>
+Note that when you are typing in numbers in scientific notation, you have
+to write it with a decimal-point, i.e. <CODE>5e8</CODE> is <B>not</B> a
+valid number.
+
+<DT>Species</DD> A species is almost the same as a name, i.e. a valid
+name is also a valid species. But chemical compounds may have charges (i.e.
+being an ion) or it can be a radical. For ions and radical the "charge" 
+comes after the name in parentheses. The charge for a radical is period
+(<CODE>.</CODE>). Examples of valid species are:<BR><BR>
+<CODE>
+H2O<BR>
+SO4(-2)<BR>
+H(+)<BR>
+Cl(.)<BR>
+</CODE><BR>
+Please note that the charge of <CODE>-1</CODE> and <CODE>+1</CODE> is written
+as <CODE>-</CODE> and <CODE>+</CODE>, respectively. Notice that 
+<CODE>H(+)</CODE> and <CODE>H(.)</CODE> are two different species.
+
+<DT>Concentrations</DD> Concentrations are written the way many chemists do,
+i.e. the species surrounded by brackets. Examples of valid concentrations are:
+<BR><BR>
+<CODE>
+[H2O]<BR>
+[SO4(-2)]<BR>
+[H(+)]<BR>
+[Cl(.)]<BR>
+</CODE><BR>
+
+</DL>
+<HR>
+
+
+<H2><A NAME=t;A NAME="EXPRsect">Expressions</A>.</H2>
+<P>Expressions are used all over the input file for KCI. For people used
+to computers, expressions are easy. In this section we review how to use
+them.</P>
+
+<P>Let <CODE>expr<SUB>1</SUB></CODE> and <CODE>expr<SUB>2</SUB></CODE> be two
+expressions. From these two expressions we can form a new expression 
+<CODE>expr</CODE> as (the <CODE>-></CODE> should be read as "can be"):</P>
+
+<P>
+<CODE>expr -> expr<SUB>1</SUB> oper expr<SUB>1</SUB> </CODE><BR>
+<CODE>expr -> func ( expr<SUB>1</SUB> )</CODE><BR>
+<CODE>expr -> - expr<SUB>1</SUB> </CODE><BR>
+<CODE>expr -> ( expr<SUB>1<?SUB> )</CODE><BR>
+<CODE>expr -> name</CODE><BR>
+<CODE>expr -> concentration</CODE><BR>
+<CODE>expr -> number</CODE> 
+</P>
+
+<P>The <CODE> oper </CODE> is a binary operator, and it can be one of
+the following: <CODE>**</CODE> and <CODE>^</CODE> (power-raising), 
+<CODE>*</CODE> (multiplication), <CODE>/</CODE> (division), <CODE>+</CODE>
+(addition) or <CODE>-</CODE> (subtraction).</P>
+
+<P>The <CODE> func </CODE> is a function application, i.e. a unary operator. 
+It can be one of the following: <CODE>exp</CODE>, <CODE>log</CODE>, 
+<CODE>ln</CODE>, <CODE>sin</CODE>, <CODE>cos</CODE>, <CODE>tan</CODE>, 
+<CODE>asin</CODE>, <CODE>acos</CODE>, <CODE>atan</CODE>, <CODE>sinh</CODE>,  
+<CODE>cosh</CODE>, <CODE>tanh</CODE>, <CODE>asinh</CODE>, <CODE>acosh</CODE>, 
+or <CODE>atanh</CODE>. Please notice that there is no square root; it can be
+obtained by using the power-raising operator.</P>
+
+<P>A word of guidance: use more parenthesis that you otherwise would do
+on a piece of paper. The expression like <CODE>1/x+1</CODE> is interpreted
+as 1 plus 1 divided by x.</P>
+
+<P>A few valid expressions follow:</P><BR><BR>
+<CODE>
+5*x<BR>
+log([H(+)])+2<BR>
+exp(log(sin(x)))<BR>
+-(x+1)<BR>
+x**2+y^3<BR>
+</CODE>
+
+<HR>
+<H2><A NAME=t;A NAME="CONSTsect">Constants</A><H2>
+<P>Constants has two purposes in KCI. First, they set up how the computations
+are going to be performed, and second, they are can be used to write more
+clear and easily read input file. The first group of constants depend
+on the code generator so they are explained together with each code
+generator.</P>
+
+<P>To define a constant is very simple. The syntax is <CODE>name = expr;</CODE>
+- it is very important to remember the semicolon. <A HREF="#NNSCsect"> Names
+</A> and <A HREF="#EXPRsect"> expressions</A> are explained elsewhere. If
+the expression on the right hand side contains constants, they must be 
+defined previously. Below you see some examples of definitions of constants:
+</P>
+
+<BR><BR>
+<CODE>
+pi = 3.1415926535;<BR>
+everything = 42;<BR>
+R = 8.31415;<BR>
+T = 300;<BR>
+A = 1.1e8;<BR>
+Ea = 2000.1<BR>
+k = A*exp(-Ea/(R*T));<BR>
+</CODE> 
+<HR>
+
+
+<H2><A NAME=t;A NAME="CTRLsect">Control statements</A>.</H2>
+<P>Control statements are used to control different parts of the 
+KCI system. A control statement always begins with a hash mark 
+(<CODE>#</CODET>). The control statements are listed below.</P>
+
+<DL>
+<DT>PRINT<DD> The <CODE>#print</CODE> control statement controls what
+is written as output. After the <CODE>#print</CODE> comes a comma sepatated
+list of <A HREF="#NNSCsect">concentrations</A> and/or 
+<A HREF="#REACTsect">dynamical variables</A>. For example, the statement below
+will make KCI only printout the values of <CODE>x</CODE> and <CODE>y</CODE>.
+<BR><BR>
+<CODE>
+#print x, y;<BR>
+</CODE>
+
+<DT>PARAMETER<DD>
+</DL>
+
+<H2><A NAME=t;A NAME="REACTsect">Reactions and ODEs</A>.</H2>
+<P>The reactions are of course the most interesting part of the input
+file for KCI. In this section we will discuss two things: reactions and
+ordinary differential equations (ODEs). As you may know, chemical reactions
+are mathematically described as ordinary differential equations of first 
+order, and the simulation of reactions is the same as solving differential
+equations.</P>
+
+<P>You can as user of KCI use chemical reactions or ODEs to desribe your
+problem. And you can even mix reactions and ODEs. This is in some cases
+a very good idea, e.g. if you want to include the temperature as a 
+variable in your model.</P>
+
+<P>We will refer to a dynamical variable as a variable given by an ODE.
+Dynamical variables have to follow the rules of <A HREF="#NNSCsect">names</A>.
+</P>
+
+<P>Below you will find an example of a reaction. First, there is a number 
+(<CODE>23</CODE>) which is the reaction number. Reaction numbers are integer
+<A HREF="#NNSCsect">number</A> and must be unique. The reaction number is
+followed by a colon (<CODE>:</CODE>). Then we have a list of the reactants.
+Reactants are <A HREF="#NNSCsect">species</A> and there may be a stoichiometric
+coefficient before them. The symbol <CODE>-></CODE> is KCI's symbol for a 
+reaction arrow. Reaction arrows may be either <CODE>-></CODE> (forward
+reaction) or <CODE><-></CODE> (forward and backward reactions). After the
+reaction arrow there comes a list of products and the reaction is ended by
+a semicolon (<CODE>;</CODE>). The next symbol is <CODE>k></CODE> which 
+means the rate constant for the forward reaction. The symbol for the 
+backward reaction is <CODE>k<</CODE>. The values of the rate constants is
+an <A HREF="#EXPRsect">expression</A>.
+<BR><BR>
+<CODE>
+23: 2 Na(+) + SO4(-2) -> NaSO42;   k> = 1.0e-7;
+</CODE><BR>
+
+
+
+<HR>
+<H2><A NAME=t;A NAME="INFILEsect">A complete input file</A>.</H2>
+<P>Below you find a complete input file. The file can be used to
+do a dynamical simulation of bromate oxidation of cerium in an
+open system.</P>
+<BR><BR>
+<CODE>
+/* Belousov-Zhabotinsky reaction */<BR> 
+/* Model: the Oscillatory Bromate Oxidation of Cerium in open systems */<BR>
+/* Hynne, Sorensen, Nielsen, 1990 */<BR>
+<BR>
+mixed=2;<BR>
+<BR>
+kf1 = 2.0;<BR>
+kf2 = 3.0e6;<BR>
+kf3 = 42.0;<BR>
+kf4 = 3.0E3;<BR>
+kf5 = 0.104;<BR>
+kf6 = 0.08;<BR>
+kf7 = 0.14;<BR>
+<BR>
+j0 = 4.7096E-5;<BR>
+<BR>
+stime = 0; dtime=1; etime = 16000; epsr = 1.0e-04; epsa = 1.0e-14;<BR>
+<BR>
+ref= 3;<BR>
+<BR>
+#print [Ce(+4)];<BR>
+<BR> 
+11:  HBrO2                     -> P                        ; k> =j0;<BR>
+12:  Br(-)                     -> P                        ; k> =j0;<BR>
+13:  Ce(+4)                    -> P                        ; k> =j0;<BR>
+14:  HBrO                      -> P                        ; k> =j0;<BR>
+<BR>
+<BR>
+1:  BrO3(-) + Br(-) + 2H       -> HBrO2 + HBrO           ; k> =kf1;<BR>
+2:  HBrO2 + Br(-) + H          -> 2HBrO                  ; k> =kf2;<BR>
+3:  BrO3(-) + HBrO2 + H        -> 2HBrO2 + 2Ce(+4)       ; k> =kf3;<BR>
+4:  2HBrO2                     -> HBrO + BrO3(-) + H     ; k> =kf4;<BR> 
+5:  Ce(+4)                     -> 0.25Br(-)              ; k> =kf5;<BR>
+6:  HBrO                       -> Br(-)                  ; k> =kf6;<BR>
+7:  HBrO                       -> P                      ; k> =kf7;<BR>
+<BR>
+[P] = 0; [H] = 0.7; [BrO3(-)] = 0.012;<BR>
+<BR>
+[HBrO2](0)  = 2.810E-8;<BR>
+[Br(-)](0)  = 0.20968E-6;<BR>
+[Ce(+4)](0) = 0.19058E-6;<BR>
+[HBrO](0)   = 0.12369E-6;<BR>
+</CODE> 
+
+
+
+
+<HR>
+This manual was last updated 18 July 1996 by 
+<A HREF="http://virgil.ruc.dl/~kneth/index.html"> Kenneth Geisshirt</A>.
+</BODY>
+</HTML>

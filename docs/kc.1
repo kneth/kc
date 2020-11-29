@@ -1,0 +1,33 @@
+.TH 
+kc 1m 
+
+.SH 
+NAME 
+kc - kinetic compiler v0.25
+
+.SH 
+SYNOPSIS
+kc [options] < file
+
+.SH 
+DESCRIPTION
+kc transform a chemical/kinetic model into one or more subroutines
+used by an integrator. The integrator can be a continuation program
+or a dynamical simulator. 
+
+.SS 
+Options
+There are four options. Help (h), mode (m), debug (d), and quiet (q). The
+mode option determined which integrator, which is used. Run the
+program with the help option to get the newest information. Mode 2 is 
+used together with a simulation program for reaction-diffusion systems,
+written by Ole Jensen et al.
+Mode 4 is a
+dynamical simulator for chemical reaction and a solver of ordinary
+differential equations. Mode 5 is a front-end to Keld Nielsen's continuation
+program, and mode 6 calculates various properties of the given model: the 
+jacobian matrix, its eigenvectors and -values. 
+
+.SH 
+AUTHOR
+Kenneth Geisshirt, kneth@kiku.dk

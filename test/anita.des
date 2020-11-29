@@ -1,0 +1,38 @@
+/* ODE from Anita Kildebaek Nielsen. */
+
+
+method = 3;       /* which integration scheme */
+prnmode = 2;
+
+am = 4.6263e5;
+ZETA = 1.0;
+
+etime=15000.0;    /* end time */
+dtime=1;          /* interval between output */
+
+epsa = 1.0e-10;   /* absolute tolerence */
+epsr = 1.0e-8;    /* relative tolerence */
+
+datafile = "anitaout";  /* output file */
+
+a1' = a2/am;
+b1' = b2/am;
+
+a2' = ZETA*(exp(-ZETA*a1)*cos(ZETA*b1));
+b2' = -ZETA*exp(-ZETA*a1)*sin(ZETA*b1);
+
+a3' = (-2/am)*(a3^2-b3^2) - 0.5*ZETA^2*exp(-ZETA*a1)*cos(ZETA*b1);
+b3' = (-4/am)*a3*b3 + 0.5*ZETA^2*exp(-ZETA*a1)*sin(ZETA*b1);
+
+a4' = -b3/am + (a2^2-b2^2)/(2*am) - exp(-ZETA*a1)*cos(ZETA*b1);
+b4' = a3/am + a2*b2/am + exp(-ZETA*a1)*sin(ZETA*b1);
+
+
+a1(0)=5.02646;
+b1(0)=0.0;
+a2(0)=1000;
+b2(0)=0.0;
+a3(0)=0.01;
+b3(0)=0.01;
+a4(0)=0.0;
+b4(0)=1.17754482525;

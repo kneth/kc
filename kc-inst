@@ -1,0 +1,100 @@
+#!/bin/sh
+
+###########################################################################
+# Installation script for the Kinetic Compiler.                           #
+#                                                                         #
+# Copyright 1994-1995 by Kenneth Geisshirt and Keld Nielsen               #
+#                                                                         #
+# Please see README.md for further information, and LICENSE for           #
+# legal matters.                                                          #
+###########################################################################
+
+VERSION="1.10"
+
+case $# in 
+0) 
+  echo "Installation script for Kinetic Compiler version $VERSION"
+  echo "Copyright 1994-1995 by Kenneth Geisshirt and Keld Nielsen"
+  echo "The correct usage is:"
+  echo "  kc-inst prefix platform"
+  echo "where prefix is a directory and platform is one of the following:"
+  echo " o LINUX  (Linux with gcc)"
+  echo " o GCC    (generic GCC)"
+  echo " o HPUX   (old HP-UX systems, version<=7)"
+  echo " o ULTRIX (Digital computers)"
+  echo " o CONVEX (Convex)"
+  echo " o SGI    (Silicon Graphics)"
+  echo " o AIX    (IBM)"
+  echo ""
+  echo "Remember that you should have write-access to the"
+  echo "directories that you specify."
+  exit 1;;
+2)
+  case $2 in
+    LINUX)  CC="gcc"
+	    CFLAGS="-O2 -m486 -D_PLATFORM_LINUX_"
+	    CLIBS="-lm"
+	    MAKEFILE="Makefile.LINUX";;
+    GC)     CC="gcc"
+            CFLAGS="-O2 -m486 -D_PLATFORM_GCC_ -D_USE_GARBAGE_COL_"
+            CLIBS="-lm"
+            MAKEFILE="Makefile.GC";;
+    GCC)    CC="gcc"
+            CFLAGS="-O2 -D_PLATFORM_GCC_"
+            CLIBS="-ll -lm"
+            MAKEFILE="Makefile.GCC";;
+    HPUX)   CC="cc"
+            CFLAGS="-Aa -O -D_PLATFORM_HPUX_"
+            CLIBS="-lm"
+            MAKEFILE="Makefile.HPUX";;
+    ULTRIX) CC="cc"
+            CFLAGS="-O2 -w -Olimit 1000 -D_PLATFORM_ULTRIX_"
+            CLIBS="-lm"
+            MAKEFILE="Makefile.ULTRI";;
+    CONVEX) CC="cc"
+            CFLAGS="-O -I/usr/include/sys -I. -w -D_PLATFORM_CONVEX_"
+            CLIBS="-lm"
+            MAKEFILE="Makefile.CVX";;
+    SGI)    CC="cc"
+            CFLAGS="-ansi -w -O -D_PLATFORM_SGI_"
+            CLIBS="-lm"
+            MAKEFILE="Makefile.SGI";;
+    AIX)    CC="xlc"
+            CFLAGS="-O3"
+            CLIBS="-lm"
+            MAKEFILE="Makefile.AIX";;
+  esac
+
+  echo "Installation of the Kinetic Compiler System v$VERSION."  
+  echo "Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1995."
+  echo
+  echo "Making the Kinetic Compiler."
+  cd src
+  cp $MAKEFILE Makefile
+  make -s PREFIX=$1 
+  cd ..
+
+  echo "Preparing the numerical routines."
+  cd Solvers
+  cp $MAKEFILE Makefile
+  make -s PREFIX=$1
+  cd ..
+
+  echo "Making the scripts."
+  echo "cp $1/num/kksolver.c ." > kci
+  echo "cp $1/num/matrix.o ." >> kci
+  echo "cp $1/num/odesolv.o ." >> kci
+  echo "cp $1/num/odeserv.o ." >> kci
+  echo "$1/bin/kc -m3 -v < \$1" >> kci
+  echo "$CC $CFLAGS -c -I. -I$1/num -I- kksolver.c" >> kci
+  echo "$CC $CFLAGS matrix.o kksolver.o odesolv.o odeserv.o $CLIBS" >> kci
+  echo "rm -f model.c model.h kksolver.c kksolver.o matrix.o odesolv.o odeserv.o" >> kci
+  echo "a.out" >> kci
+  echo "rm -f a.out" >> kci
+  chmod 777 kci
+  mv kci $1/bin
+  
+esac
+
+
+

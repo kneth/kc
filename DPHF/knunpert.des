@@ -1,0 +1,201 @@
+/* Glycolysis Reaction */
+/* Model: Richter and Beth    */
+/*  */
+
+stime = 0.0; 
+dtime = 0.5; 
+etime = 500.0; 
+epsr = 1.0E-6;  
+epsa = 1.0E-14;
+epsfx = 2.0E-5;  
+
+method = 3;
+datafile = "knunpdat6";
+debug = 0;
+
+
+vfac = 0.10;
+
+/* Parameters */
+#parameter j0  = 1.5E-02, 0.0, 1.0, 1.0E-8, 0.000001, 1.0;
+/*
+j0    = 2.5890E-2;
+*/
+
+V1m = 140.0*vfac;
+K1ATP = 0.2;
+K1GLC  = 0.1;
+
+
+V2m = 200.0*vfac;
+K2eq = 0.298;
+K2G6P = 0.03;
+K2F6P  = 0.01;
+
+V3m = 330.0*vfac;
+K3F6P = 0.03;
+L3 = 1.0E6;
+K3ATP = 0.05;
+K3AMP = 0.005;
+K3mATP = 0.01;
+
+V4m = 30.0*vfac;
+K4eq = 6.5;
+K4FBP = 0.3;
+K4XGAP = 2.0;
+
+V5m = 170.0*vfac;
+K5NAD = 0.013;
+K5XGAP = 0.09;
+
+V6m = 100.0*vfac;
+K6PEP = 0.19;
+L6 = 6.0E6;
+K6ATP = 9.3;
+K6FBP = 0.20;
+K6ADP = 0.30;
+
+V7m = 10000.0*vfac;
+K7PYR = 30.0;
+K7NADH  = 0.01;
+
+V8m = 100.0*vfac;
+K8eq = 0.058;
+K8G6P = 0.050;
+K8G1P  = 0.0085;
+
+V9m = 1.0*vfac;
+K9G1P = 0.050;
+K9UTP  = 0.20;
+
+V10mf = 1.0*vfac;
+K10ATP = 0.054;
+K10AMP = 0.058;
+V10mr = 2.0*vfac;
+K10ADP = 0.27;
+
+V11m = 0.01*vfac;
+K11ATP = 0.1;
+
+V12mf = 1.0*vfac;
+V12mr = 2.0*vfac;
+K12ATP = 0.054;
+K12ADP = 0.27;
+K12UTP = 0.058;
+K12UDP = 0.27;
+
+/* Out flow */
+101: ATP         -> P         ; k> = j0;
+102: ADP         -> P         ; k> = j0;
+103: AMP         -> P         ; k> = j0;
+104: NADH        -> P         ; k> = j0;
+105: NAD         -> P         ; k> = j0;
+106: GLC         -> P         ; k> = j0;
+107: G6P         -> P         ; k> = j0;
+108: F6P         -> P         ; k> = j0;
+109: FBP         -> P         ; k> = j0;
+110: XGAP        -> P         ; k> = j0;
+111: PEP         -> P         ; k> = j0;
+112: PYR         -> P         ; k> = j0;
+113: G1P         -> P         ; k> = j0;
+114: UTP         -> P         ; k> = j0;
+115: UDP         -> P         ; k> = j0;
+
+/* In flow */
+201: ATPo        -> ATP       ; k> = j0; 
+202: ADPo        -> ATP       ; k> = j0; 
+203: AMPo        -> ATP       ; k> = j0; 
+204: NADHo       -> NADH      ; k> = j0; 
+205: NADo        -> NAD       ; k> = j0; 
+206: GLCo        -> GLC       ; k> = j0;
+214: UTPo        -> UTP       ; k> = j0; 
+215: UDPo        -> UDP       ; k> = j0; 
+
+
+
+/* Reactions */
+1: GLC + ATP   -> G6P + ADP  ; v>= V1m*([ATP]/([ATP]+K1ATP))*([GLC]/([GLC]+K1GLC)); 
+
+2: G6P  -> F6P  ; v>= V2m*([G6P]-[F6P]/K2eq)/(K2G6P+[G6P]+(K2G6P/K2F6P)*[F6P]); 
+
+3:  ATP + F6P  -> FBP + ADP ; v>=V3m*(([F6P]/K3F6P)*([F6P]/K3F6P+1.0)^3)/((L3*(([ATP]/K3ATP+1.0)/([AMP]/K3AMP+1.0))^4)+([F6P]/K3F6P+1.0)^4)*([ATP]/(K3mATP+[ATP]));
+
+4:  FBP        -> 2XGAP  ; v>= V4m*([FBP]-[XGAP]/K4eq)/(K4FBP+[FBP]+[XGAP]*K4FBP/K4XGAP);
+
+5:  XGAP + NAD    -> PEP + NADH ; v>= V5m*([NAD]/([NAD]+K5NAD))*([XGAP]/([XGAP]+K5XGAP));
+
+6:  PEP + 2ADP  -> PYR + 2ATP ; v>=V6m*(([PEP]/K6PEP)*([PEP]/K6PEP+1.0)^3)/((L6*(([ATP]/K6ATP+1.0)/([FBP]/K6FBP+1.0))^4)+([PEP]/K6PEP+1.0)^4)*([ADP]/(K6ADP+[ADP]));
+
+/*
+6: PEP + 2ADP -> P + 2ATP; v>= V6m*([PEP]/(K6PEP+[PEP]))*([ADP]/([ADP]+K6ADP));
+*/
+
+7: PYR + NADH  -> P + NAD ; v>= V7m*[PYR]/(K7PYR+[PYR])*([NADH]/(K7NADH+[NADH])); 
+
+8: G6P  -> G1P  ; v>= V8m*([G6P]-[G1P]/K8eq)/(K8G6P+[G6P]+(K8G6P/K8G1P*[G1P])); 
+
+9: G1P + UTP   -> UDP + P  ; v>= V9m*[G1P]/(K9G1P+[G1P])*([UTP]/(K9UTP+[UTP])); 
+
+10:  AMP + ATP  <-> 2ADP  ; v>=V10mf*[ATP]/([ATP]+K10ATP)*[AMP]/([AMP]+K10AMP); v<=V10mr*([ADP]/([ADP]+K10ADP))^2;
+
+11:  ATP        -> ADP    ; v>=V11m*[ATP]/([ATP]+K11ATP);
+
+12:  UDP + ATP  <-> UTP + ADP  ; v>=V12mf*[ATP]/([ATP]+K12ATP)*[UDP]/([UDP]+K12UDP); v<=V12mr*([ADP]/([ADP]+K12ADP))*([UTP]/([UTP]+K12UTP));
+
+[ATPo] = 3.5;
+[ADPo] = 0.03;
+[AMPo] = 0.01;
+[GLCo] = 100.0;
+[UTPo] = 0.2;
+[UDPo] = 0.02;
+[NADHo] = 0.50; 
+[NADo] = 1.0;
+
+[P] = 0.0;
+/*
+[ATP](0)  = 1.75;
+[ADP](0)  = 0.15;
+[AMP](0)  = 0.05;
+[UTP](0)  = 0.1;
+[GLC](0) = 0.0; 
+[NADH](0)  = 0.25;
+[NAD](0)  = 0.5;
+*/
+
+/*
+[ADP](0) = 7.546134e-02;
+[AMP](0) = 2.263944e-02;
+
+[ATP](0) = 3.801461e+00;
+[ADP](0) = 0.546134e-02;
+[AMP](0) = 0.263944e-02;
+[NADH](0) = 1.498375e+00;
+[NAD](0) = 1.456075e-03;
+[GLC](0) = 2.201209e-02;
+[G6P](0) = 2.491330e+00;
+[F6P](0) = 6.595394e-01;
+[FBP](0) = 1.204481e+01;
+[XGAP](0) = 6.970166e+01;
+[PEP ](0) = 9.814520e-01;
+[PYR](0) = 1.697947e-02;
+[G1P](0) = 1.431899e-01;
+[UTP](0) = 1.214918e-02; 
+[UDP](0) = 1.214918e-03; 
+*/
+
+[ATP](0) = 3.471765e+00;
+[ADP](0) = 7.549341e-02;
+[AMP](0) = 6.162086e-03;
+[NADH](0) =1.499080e+00;
+[NAD](0) = 9.114976e-04;
+[GLC](0) = 1.277779e-02;
+[G6P](0) = 4.107067e+01;
+[F6P](0) = 1.130958e+01;
+[FBP](0) = 2.403232e+00;
+[XGAP](0) =9.930902e+00;
+[PEP ](0) =9.661628e-01;
+[PYR](0) = 3.292006e-02;
+[G1P](0) = 2.364712e+00;
+[UTP](0) = 4.855524e-02;
+[UDP](0) = 1.611570e-01; 
+

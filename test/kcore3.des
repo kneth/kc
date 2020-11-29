@@ -1,0 +1,42 @@
+/* Belousov- Zhabotinsky reaction */
+/* Model: Ore3 , open system     */
+/* Rate constants: FF             */
+
+stime = 10; 
+dtime = 0.5; 
+etime = 2000; 
+epsr = 1.0E-3;  
+epsa = 1.0E-15;
+
+/* j0 = 3.0E-5; */
+kf1 = 2.0; 
+kf2 = 3.0E+6;
+kf3 = 42;
+kf4 = 3.0E+3;
+kf5 = 0.1320;
+/* kf6 = 0.0350; */
+
+#parameter j0=<0.0,0.0,0.0,0.0,0.0>; 
+#parameter kf6=0.0,0.0,0.0,0.0,0.0; 
+
+101: HBrO2                  ->  P                    ; k> = j0;
+102: Br(-)                  ->  P                    ; k> = j0;
+103: Ce(+4)                 ->  P                    ; k> = j0;
+
+1:  BrO3(-) + Br(-) + 2H(+) -> HBrO2 + HOBr          ; k> = kf1; 
+2:  HBrO2 + Br(-) + H(+)    -> 2HOBr                 ; k> = kf2;
+3:  BrO3(-) + HBrO2 + H(+)  -> 2HBrO2 + 2Ce(+4)      ; k> = kf3; 
+4:  2HBrO2                  -> HOBr + BrO3(-) + H(+) ; k> = kf4;
+5:  Ce(+4)                  -> Br(-) + Ce(+3)        ; k> = kf5;
+6:  Ce(+4)                  -> P + Ce(+3)            ; k> = kf6;
+
+[H(+)] = 1.00;
+[P] = 0;
+[HOBr] = 0.0; 
+[Ce(+3)] = 0.0;
+[BrO3(-)] = 1.20E-2;
+
+[HBrO2](0) = 3.3E-8;
+[Br(-)](0) = 2.4E-7;
+[Ce(+)](0) = 1.8E-7;
+

@@ -1,0 +1,13 @@
+/* Selkov */
+
+gamma = 3.0; 
+alpha = 0.3;
+etime = 1000.0;
+
+
+x' = 1-x*y^gamma;
+y' = alpha*(x*y^gamma-y);
+
+
+x(0) = 3.0;
+y(0) = 1.1;

@@ -1,0 +1,1294 @@
+/***************************************************************************
+  This source file contains various numerical solvers for ordinary
+  differential equations.
+
+  The routines associated by each solver compute one and only one time
+  step.
+
+
+  CopyWrong 1994 by
+  Kenneth Geisshirt (kneth@osc.kiku.dk) and 
+  Keld Nielsen (kn@osc.kiku.dk)
+  Department of Theoretical Chemistry
+  H.C. Orsted Institute
+  Universitetsparken 5
+  2100 Copenhagen
+  Denmark
+
+  References:
+  [1]  W.H. Press, et al. Numerical Recipes in C, 2. edition.
+       Cambridge  University Press, 1992.
+  [2]  D.A. Calahan. (1968). Proc. IEEE, April 1968, p. 744.
+  [3]  P. Kaps, and P. Rentrop. (1979). Numer. Math, 33, pp. 55-68.
+  [4]  K. Geisshirt. Chemical Waves in Reaction-Diffusion Systems: A Numerical 
+       Study. (M.Sc. thesis, University of Copenhagen), 1994.
+  [5]  M. Kubicek, and M. Marek, Computational Methods In Bifucation Theory
+       And Dissipative Structures, Springer-Verlag, New York, 1983.
+  [6]  J.R. Cash, and A.H. Karp. (1990). ACM Trans. Math. Softw. 16, 
+       pp. 201-222.
+  [7]  P. Kaps, S.W.H. Poon, and T.D. Bui. (1985). Computing. 34, pp. 17-40.
+  [8]  P. Deuflhard, G. Bader, and U. Nowak. (1981). pp. 38-55.
+       In K.H. Ebert, P. Deuflhard, and W. Jager (eds.). Modelling of Chemical
+       Reaction Systems. Springer Series in Chemical Physics, Vol. 18.
+       Springer-Verlag, Berlin, 1981.
+  [9]  E. Hairer, and G. Wanner. Solving Ordinary Differential Equations II.
+       Springer Series In Computational Mathematics, Vol. 14. Springer-Verlag,
+       Berlin, 1991.
+  [10] D. Kincaid, and W. Cheney. Numerical Analysis. Brooks/Cole, 1991.
+
+  Last updated: 1 September 1994 by KG
+****************************************************************************/
+
+#define VERSION_ "0.99b"
+
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
+
+/***************************************************************************
+  The matrix manipulating routines like linear equation solvers are all
+  implemented in a small library. It is imported below. 
+  
+  Routines for integrating functions are also imported below.
+****************************************************************************/
+
+#include "matrix.h"
+#include "integr.h"
+
+/***************************************************************************
+  The program has a number of global variables. Each variable has an 
+  underscore as the last character in order to eliminate conflicts with 
+  names in the model. 
+
+  time_       The independent variable of the ODEs 
+  stime_      Initial value for the independent variable. Default: 0 
+  etime_      Final value for the independent variable. Default: 200 
+  dtime_      Output at equidistant points. Also functioning as the largest 
+              possible stepsize. Default: 2.0 
+  htime_      Stepsize 
+  epsr_       Relative error tolerance. Default: 1.0E-5
+  epsa_       Absolute error tolerance. Default: 1.0E-15 
+  epsmin_     Relative machine precision. Default: 1.0E-16 
+  timenew_    New value of the independent variable before a new step of 
+              integration is accepted. 
+  htimenew_   New value of the stepsize before a new step of integration is 
+              accepted. 
+  errlim_     The ratio between the estimate of the (scaled) local truncation 
+              error and the relative tolenrance. 
+	      If errlim_>1.0 the steplength (hstep_) is rejected otherwise 
+	      the step of integration is accepted. 
+  thtime_     The value of the independent variable for the next output.
+  step_adjustment_factor 
+              Safety factor in the calculation of a new stepsize. Default: 0.9 
+  order_of_method
+              The order of the integration method 
+  steplimit_increase
+              Upper bound for the ratio of two consecutive steps. Default: 1.5
+  steplimit_decrease
+              Lower bound for the ratio of two consecutive steps. Default: 0.5
+  step_increase_factor == -1/order_of_method. 
+	      Used in the calculation of the new steplength. 
+  errcon_     Smallest value of errlim_, [1] 
+  htimemin_   The minimal allowed stepsize. Default: Relative machine 
+              precision.
+
+  mainmode_   1==ODEs, 2==PDEs. Default: 1
+  solver_     Method of integration. Default: 1 
+  prnmode_    Mode of output. 0: Equidistant and extrema points. 
+                              1: Only equidistant points. 
+              Default: 0 
+  scaling_    Method of scaling. 0: Strict relative error [8], 
+                                 1: Scaling device in error estimate due 
+				 to Deuflhard et al., [8].
+
+  pert_        Keeps track of pertubation of the differential equations.
+  ptime_       Time for a perturbation 
+  outfile      Handler to output file.
+  i            Simple counter.
+  datafilename_Name of output file.
+
+  equa         Number of differential equations.
+  ns_ = equa-1 Number of dependent variables in a nonautonomous 
+               differential equations. 
+  xnew_        New values of the dependent variables.
+  xerr_        Estimate of the unscaled local truncation errors for the 
+               dependent variables. 
+ 
+  x_inte_min   Left limit of integrals.
+  x_inte_max   Right limit of integrals.
+
+  The file model.c contains the C-code that depends on a specific model. 
+  It is generated by kc, see [4].
+*****************************************************************************/
+
+static double time_, stime_, etime_, dtime_, htime_, epsr_, epsa_;
+static double epsmin_, timenew_, htimenew_, errlim_, thtime_, ptime_;
+static double step_adjustment_factor, order_of_method, steplimit_increase;
+static double steplimit_decrease, step_increase_factor, errcon_, htimemin_;
+static int    mainmode_, solver_, prnmode_, scaling_, pert_=1, i;
+static FILE   *outfile;
+static char   datafilename_[35];
+static double x_inte_min, x_inte_max;
+
+#include "model.c" 
+
+static const int       ns_ = equa-1;
+static double          xnew_[equa], xerr_[equa];
+
+
+/**************************************************************************
+  Routine kcerror print a failure that occuring in the calculation and
+  the program is terminated.
+***************************************************************************/
+
+void kcerror(char *str) {
+
+  fprintf(stderr, "Failure in numerical integration: %s.\n", str);
+  fprintf(stderr, "Aborting the program - sorry.\n");
+  exit(-1);
+} /* kcerror */
+
+
+/****************************************************************************
+  This section contains various service routines. They are:
+  
+  o Gaussian    - computes a special Gaussian function.
+  o FindMachEps - find the machine's precision
+  o MaxVec      - find the (abs) largest number in a vector
+  o MaxPair     - find the largest of two numbers
+  o MinPair     - find the smallest of two numbers
+  o PrintState  - print the independent variable (time_) and the dependent
+                  variables (x_). The data is written to the disk. The file
+                  handler is outfile. The output is in ASCII characters, and
+                  can be found in the following way:
+                    time_  x_[0] x_[1]  ...  x_[equa-1] x_[equa]
+                  Three modes of output. prnmode_=0: Equidistant and extrema
+                  points printed, and prnmode_=1: Only equidistant points.
+                  If prnmode_=2, it is used for quantum mech. computation.
+                  Default: 0.
+*****************************************************************************/
+
+double Gaussian(double x_, double *params_) {
+
+  return (exp(pow(x_-params_[0], 2.0)*2.0*params_[1]+2.0*params_[2]));
+} /* Gaussian */
+
+double FindMachEps(void) {
+
+  double temp=1.0;
+
+  while ((1.0+temp)!=1.0)
+    temp/=10.0;
+  return temp;
+} /* FindMachEps */
+
+
+double MaxVec(int nosp_, double x_[equa]) {
+
+  double temp1_=0.0, temp2_;
+  int    i_;
+
+  for(i_=0; i_<nosp_; i_++) {
+    temp2_=fabs(x_[i_]);
+    if (temp2_>temp1_)
+      temp1_=temp2_;
+  } /* for i_ */
+  return temp1_;
+} /* MaxVec */
+
+
+double MaxPair(double x_, double y_) {
+
+  if (x_>y_)
+    return x_;
+  else
+    return y_;
+} /* MaxPair */
+
+
+double MinPair(double x_, double y_) {
+
+  if (x_<y_)
+    return x_;
+  else
+    return y_;
+} /* MinPair */
+
+
+void PrintState(int prnmode_, int prnflag_, double time_, double x_[equa]) {
+
+  int    i_, j_, flag_;
+  static double c1_[equa], c2_[equa];
+  static int first_time = 1;
+  double params_[3];
+
+  switch (prnmode_) {
+  case 0:                            /* printing extrema */
+    if (first_time) {
+      first_time=0;
+      for(i_=0; i_<equa; i_++)
+	c1_[i_]=c2_[i_]=x_[i_];
+    } /* if */
+    switch (prnflag_) {
+    case 0:
+      fprintf(outfile, "%e ", time_);
+      for(i_=0; i_<equa; i_++)
+	fprintf(outfile, "%e ", x_[i_]);
+      fprintf(outfile, "\n");
+      break;
+    case 1:
+      flag_=0;
+      for(i_=0; i_<equa; i_++)
+	if (((c1_[i_]>c2_[i_]) && (c2_[i_]<x_[i_])) ||
+	    ((c1_[i_]<c2_[i_]) && (c2_[i_]>x_[i_])))
+	  flag_=1;
+      if (flag_) {
+	fprintf(outfile, "%e ", time_);
+	for(i_=0; i_<equa; i_++)
+	  fprintf(outfile, "%e ", x_[i_]);
+	fprintf(outfile, "\n");
+      } /* if */
+      for(i_=0; i_<equa; i_++) {
+	c1_[i_]=c2_[i_];
+	c2_[i_]=x_[i_];
+      } /* for */
+      break;
+    }                                    /* prnflag */
+    break;
+  case 1:
+    fprintf(outfile, "%e ", time_);
+    for(i_=0; i_<equa; i_++)
+      fprintf(outfile, "%e ", x_[i_]);
+    fprintf(outfile, "\n");
+    break;
+  case 2:
+    params_[0]=x_[0];
+    params_[1]=x_[5];
+    params_[2]=x_[7];
+    fprintf(outfile, "%e %e %e\n", x_[0], time_, 
+	    Simpson(1000.0, x_inte_min, x_inte_max, params_, &Gaussian));
+    break;
+  } /* switch prnmode */
+} /* PrintState */
+
+
+/****************************************************************************
+  Solver_ = 1:  For stiff autonomous systems.([2],[5])
+
+  Semi-implicit third order Rosenbrock method. The constants a1_, b1_, R1_,
+  and R2_ are due to Calahan (e. g. [2] and [5]).
+  Adaptive stepsize control: Step-doubling.
+  The routine CalahanOneStep take one step of the integration algorithm, and
+  the routine Calahan take care of the step-doubling.
+  The output from Calahan: xnew_ and xerr_ contain respectively the new values
+  and the estimate of the local error of the dependent variables.
+*****************************************************************************/
+
+void CalahanOneStep(double htime_, double x_[equa], double xnew_[equa]) {
+
+  static const double a1_ = 0.788675134594813; /* (3.0+sqrt(3.0))/6.0 */
+  static const double b1_ = -1.15470053837925; /* -2.0/sqrt(3.0) */
+  static const double R1_ = 0.75;
+  static const double R2_ = 0.25;
+
+  double **A_;
+  double *k1_, *k2_, *temp_;
+  double dummy_;
+  int i, j;
+  int *index_;
+
+  A_=MatrixAlloc(equa);
+  index_=IntVectorAlloc(equa);
+  temp_=VectorAlloc(equa);
+  k1_=VectorAlloc(equa);
+  k2_=VectorAlloc(equa);
+
+  dummy_=1.0/htime_;
+  reac(x_, k1_);
+  jacobi(x_);
+  for(i=0; i<equa; i++)
+    for(j=0; j<equa; j++)
+      A_[i][j]=-a1_*jacobi_matx[i][j];
+  for(i=0; i<equa; i++)
+    A_[i][i]=A_[i][i]+dummy_;
+  LUfact(equa, A_, index_);
+  LUsubst(equa, A_, index_, k1_);
+  for(i=0; i<equa; i++)
+    temp_[i]=x_[i]+b1_*k1_[i];
+  reac(temp_, k2_);
+  LUsubst(equa, A_, index_, k2_);
+  for(i=0; i<equa; i++)
+    xnew_[i]=x_[i]+R1_*k1_[i]+R2_*k2_[i];
+
+  MatrixFree(equa, A_);
+  IntVectorFree(equa, index_);
+  VectorFree(equa, temp_);
+  VectorFree(equa, k1_);
+  VectorFree(equa, k2_);
+} /* CalahanOneStep */
+
+void Calahan(double htime_, double x_[equa],
+	     double xnew_[equa], double xerr_[equa]) {
+
+  double xh_[equa], xh2_[equa], halfhtime_;
+  int    i;
+
+  halfhtime_=0.5*htime_;
+  CalahanOneStep(halfhtime_, x_, xh_);
+  CalahanOneStep(halfhtime_, xh_, xh2_);
+  CalahanOneStep(htime_, x_, xnew_);
+  for(i=0; i<equa; i++)
+    xerr_[i]=(xnew_[i]-xh2_[i]);
+} /* Calahan */
+
+
+/****************************************************************************
+  Solver_ = 2: (see also solver_ 5):  For non-stiff autonomous systems.
+  ([6] and [1, pp. 711-724])
+
+  A fixed-fifth order Runge-Kutta method. The constants are due to Cash
+  and Karp ([6] and [1, pp. 711-724]).
+  Adaptive stepsize control: Estimate of local error due to embedded fourth
+  order method.
+  The output from RKFNK: xnew_ and xerr_ contain respectively the new values
+  and the estimate of the local error of the dependent variables.
+*****************************************************************************/
+
+void RKFNC(double htime_, double x_[equa],
+	   double xnew_[equa], double xerr_[equa]) {
+
+  double k1_[equa], k2_[equa], k3_[equa], k4_[equa], k5_[equa], k6_[equa];
+
+  static const double   b21_ =      1.0/5.0;
+  static const double   b31_ =      3.0/40.0;
+  static const double   b32_ =      9.0/40.0;
+  static const double   b41_ =      3.0/10.0;
+  static const double   b42_ =     -9.0/10.0;
+  static const double   b43_ =      6.0/5.0;
+  static const double   b51_ =    -11.0/54.0;
+  static const double   b52_ =      5.0/2.0;
+  static const double   b53_ =    -70.0/27.0;
+  static const double   b54_ =     35.0/27.0;
+  static const double   b61_ =   1631.0/55296.0;
+  static const double   b62_ =    175.0/512.0;
+  static const double   b63_ =    575.0/13824.0;
+  static const double   b64_ =  44275.0/110592.0;
+  static const double   b65_ =    253.0/4096.0;
+  static const double   c1_  =     37.0/378.0;
+  static const double   dc1_ =     37.0/378.0 -  2825.0/27648.0;
+  static const double   c3_  =    250.0/621.0;
+  static const double   dc3_ =    250.0/621.0 - 18575.0/48384.0;
+  static const double   c4_  =    125.0/594.0;
+  static const double   dc4_ =    125.0/594.0 - 13525.0/55296.0;
+  static const double   dc5_ =      0.0 - 277.0/14336.0;
+  static const double   c6_  =    512.0/1771.0;
+  static const double   dc6_ =    512.0/1771.0 - 1.0/4.0;
+
+  double temp1_[equa];
+  int    i;
+
+  reac(x_, k1_);
+  for(i=0; i<equa; i++) {
+    k1_[i]*=htime_;
+    temp1_[i]=x_[i]+b21_*k1_[i];
+  } /* for i */
+  reac(temp1_, k2_);
+  for(i=0; i<equa; i++) {
+    k2_[i]*=htime_;
+    temp1_[i]=x_[i]+b31_*k1_[i]+b32_*k2_[i];
+  } /* for i */
+  reac(temp1_, k3_);
+  for(i=0; i<equa; i++) {
+    k3_[i]*=htime_;
+    temp1_[i]=x_[i]+b41_*k1_[i]+b42_*k2_[i]+b43_*k3_[i];
+  } /* for i */
+  reac(temp1_, k4_);
+  for(i=0; i<equa; i++) {
+    k4_[i]*=htime_;
+    temp1_[i]=x_[i]+b51_*k1_[i]+b52_*k2_[i]+b53_*k3_[i]+b54_*k4_[i];
+  } /* for i */
+  reac(temp1_, k5_);
+  for(i=0; i<equa; i++) {
+    k5_[i]*=htime_;
+    temp1_[i]=x_[i]+b61_*k1_[i]+b62_*k2_[i]+b63_*k3_[i]
+      +b64_*k4_[i]+b65_*k5_[i];
+  } /* for i */
+  reac(temp1_, k6_);
+  for(i=0; i<equa; i++) {
+    k6_[i]*=htime_;
+    xnew_[i]=x_[i]+c1_*k1_[i]+c3_*k3_[i]+c4_*k4_[i]+c6_*k6_[i];
+    xerr_[i]=dc1_*k1_[i]+dc3_*k3_[i]+dc4_*k4_[i]+dc5_*k5_[i]+dc6_*k6_[i];
+  } /* for i */
+} /* RKFNC */
+
+
+/****************************************************************************
+  Solver_ = 3: For non-stiff autonomous systems. (e.g. [1, 710-714])
+
+  A fixed-fourth order Runge-Kutta method.
+  Adaptive stepsize control: Step-doubling.
+  The routine RK4OneStep take one step of the integration algorithm, and
+  the routine RK4 take care of the step-doubling.
+  The output from RK4: xnew_ and xerr_ contain respectively the new values
+  and the estimate of the local error of the dependent variables.
+*****************************************************************************/
+
+void RK4OneStep(double htime_, double x_[equa], double xnew_[equa]) {
+
+  double k1_[equa], k2_[equa], k3_[equa], k4_[equa];
+  double temp1_[equa], temp2_[equa];
+  int    i;
+
+  reac(x_, temp1_);
+  for(i=0; i<equa; i++) {
+    k1_[i]=htime_*temp1_[i];
+    temp1_[i]=x_[i]+0.5*k1_[i];
+  } /* for i */
+  reac(temp1_, temp2_);
+  for(i=0; i<equa; i++) {
+    k2_[i]=htime_*temp2_[i];
+    temp1_[i]=x_[i]+0.5*k2_[i];
+  } /* for i */
+  reac(temp1_, temp2_);
+  for(i=0; i<equa; i++) {
+    k3_[i]=htime_*temp2_[i];
+    temp1_[i]=x_[i]+0.5*k3_[i];
+  } /* for i */
+  reac(temp1_, temp2_);
+  for(i=0; i<equa; i++) 
+    k4_[i]=htime_*temp2_[i];
+  for(i=0; i<equa; i++)
+    xnew_[i]=x_[i]+(1.0/6.0)*k1_[i]+(1.0/3.0)*k2_[i]
+      +(1.0/3.0)*k3_[i]+(1.0/6.0)*k4_[i];
+} /* RK4OneStep */
+
+void RK4(double htime_, double x_[equa],
+		 double xnew_[equa], double xerr_[equa]) {
+
+  double xh_[equa], xh2_[equa], halfhtime_;
+  int    i;
+
+  halfhtime_=0.5*htime_;
+  RK4OneStep(halfhtime_, x_, xh_);
+  RK4OneStep(halfhtime_, xh_, xh2_);
+  RK4OneStep(htime_, x_, xnew_);
+  for(i=0; i<equa; i++)
+    xerr_[i]=(xnew_[i]-xh2_[i]);
+} /* RK4 */
+
+
+/***************************************************************************
+  Solver_ = 4. (see also solver_ 7) : For stiff autonomous systems.
+  ([1],[3],[7], and [9]).
+
+  Semi-implicit fourth order Rosenbrock method. The constants are due to
+  Kaps and Rentrop (version GRK4T ,[3]), but have been transformed by the
+  the method outlined in [1, pp. 738-742],[7], and [9].
+  Adaptive stepsize control: Estimate of local error due to embedded third
+  order method.
+  The output from GRK4T: xnew_ and xerr_ contain respectively the new values
+  and the estimate of the local error of the dependent variables.
+****************************************************************************/
+
+void GRK4T(double htime_, double x_[equa],
+		 double xnew_[equa],double xerr_[equa]) {
+
+  static const double gamma_    =   0.23100000000;
+  static const double c21_      =  -5.07167544877;
+  static const double c31_      =   6.02015272865;
+  static const double c32_      =   0.159750684673;
+  static const double c41_      =  -1.856343618677;
+  static const double c42_      =  -8.50538085819;
+  static const double c43_      =  -2.08407513602;
+  static const double a21_      =   2.00000000000;
+  static const double a31_      =   4.52470820736;
+  static const double a32_      =   4.16352878860;
+  /* a41_ = a31_, a42_ = a32_, a43_ = 0.0 */
+  static const double m1_       =   3.95750374663;
+  static const double m2_       =   4.62489238836;
+  static const double m3_       =   0.617477263873;
+  static const double m4_       =   1.282612945268;
+  static const double dm1_      =  -2.30215540292;
+  static const double dm2_      =  -3.07363448539;
+  static const double dm3_      =   0.873280801802;
+  static const double dm4_      =   1.282612945268;
+ 
+  double **A_;
+  double *k1_, *k2_, *k3_, *k4_;
+  double temp1_[equa], temp2_[equa], dummy;
+  int    i, j;
+  int    *index_;
+
+  index_=IntVectorAlloc(equa);
+  A_=MatrixAlloc(equa);
+  k1_=VectorAlloc(equa);
+  k2_=VectorAlloc(equa);
+  k3_=VectorAlloc(equa);
+  k4_=VectorAlloc(equa);
+
+  dummy=1.0/(htime_*gamma_);
+  jacobi(x_);
+  for(i=0; i<equa; i++)
+    for(j=0; j<equa; j++)
+      A_[i][j]= -jacobi_matx[i][j];
+  for(i=0; i<equa; i++)
+    A_[i][i]+=dummy;
+  LUfact(equa, A_, index_);
+
+  reac(x_, k1_);
+  LUsubst(equa, A_, index_, k1_);
+
+  for(i=0; i<equa; i++) 
+    temp1_[i]=x_[i]+a21_*k1_[i];
+  reac(temp1_, k2_);
+  for(i=0; i<equa; i++)
+    k2_[i]+=((c21_*k1_[i])/htime_);
+  LUsubst(equa,A_, index_, k2_);
+
+  for(i=0; i<equa; i++) 
+    temp1_[i]=x_[i]+a31_*k1_[i]+a32_*k2_[i];
+  reac(temp1_, k3_);
+  for(i=0; i<equa; i++)  {
+    k4_[i] = k3_[i];
+    k3_[i]+=((c31_*k1_[i]+c32_*k2_[i])/htime_);
+  } /* for i */
+  LUsubst(equa,A_, index_, k3_);
+
+  for(i=0; i<equa; i++)
+    k4_[i]+=((c41_*k1_[i]+c42_*k2_[i]+c43_*k3_[i])/htime_);
+  LUsubst(equa,A_, index_, k4_);
+
+  for(i=0; i<equa; i++) {
+    xnew_[i]= x_[i]+m1_*k1_[i]+m2_*k2_[i]+m3_*k3_[i]+m4_*k4_[i];
+    xerr_[i]= dm1_*k1_[i]+dm2_*k2_[i]+dm3_*k3_[i]+dm4_*k4_[i];
+  } /* for i */
+
+  MatrixFree(equa, A_);
+  VectorFree(equa, k1_);
+  VectorFree(equa, k2_);
+  VectorFree(equa, k3_);
+  VectorFree(equa, k4_);
+} /* GRK4T */
+
+/****************************************************************************
+  Solver_ = 5 (see also solver_ 2): For non-stiff non-autonomous systems.
+  ([6] and [1, pp. 711-724])
+
+  A fixed-fifth order Runge-Kutta method. The constants are due to Cash
+  and Karp ([6] and [1, pp. 711-724]).
+  Adaptive stepsize control: Estimate of local error due to embedded fourth
+  order method.
+  The output from RKFNKTime: xnew_ and xerr_ contain respectively the new 
+  values and the estimate of the local error of the dependent variables.
+*****************************************************************************/
+
+void RKFNCTime(double time_, double htime_, double x_[equa],
+	       double xnew_[equa], double xerr_[equa]) {
+
+  double k1_[equa], k2_[equa], k3_[equa], k4_[equa], k5_[equa], k6_[equa];
+
+  /* The constants a2_, a3_, a4_, a5_, and a6_ are only relevant for    */
+  /* the Runge-Kutta-Cash-Karp integration methode when the system of   */
+  /* differential equations is nonautonomous. In our implementation of  */
+  /* the algorithm we do not use these constants, and they are only     */
+  /* included for the user that have an interest in changing the source */
+  /* code. If one have a nonautonomous system we prefere to transform   */
+  /* the system to a system of autonomous differential equations by     */
+  /* including a differential equation for the time (the dimension of   */
+  /* the system is increased by one): x(n+1) = time, x'(n+1) = 1.0      */
+
+  static const double   a2_  =  1.0/5.0; 
+  static const double   a3_  =  3.0/10.0;
+  static const double   a4_  =  3.0/5.0;
+  static const double   a5_  =  1.0;
+  static const double   a6_  =  7.0/8.0;
+
+  static const double   b21_ =      1.0/5.0;
+  static const double   b31_ =      3.0/40.0;
+  static const double   b32_ =      9.0/40.0;
+  static const double   b41_ =      3.0/10.0;
+  static const double   b42_ =     -9.0/10.0;
+  static const double   b43_ =      6.0/5.0;
+  static const double   b51_ =    -11.0/54.0;
+  static const double   b52_ =      5.0/2.0;
+  static const double   b53_ =    -70.0/27.0;
+  static const double   b54_ =     35.0/27.0;
+  static const double   b61_ =   1631.0/55296.0;
+  static const double   b62_ =    175.0/512.0;
+  static const double   b63_ =    575.0/13824.0;
+  static const double   b64_ =  44275.0/110592.0;
+  static const double   b65_ =    253.0/4096.0;
+  static const double   c1_  =     37.0/378.0;
+  static const double   dc1_ =     37.0/378.0 -  2825.0/27648.0;
+  static const double   c3_  =    250.0/621.0;
+  static const double   dc3_ =    250.0/621.0 - 18575.0/48384.0;
+  static const double   c4_  =    125.0/594.0;
+  static const double   dc4_ =    125.0/594.0 - 13525.0/55296.0;
+  static const double   dc5_ =      0.0 - 277.0/14336.0;
+  static const double   c6_  =    512.0/1771.0;
+  static const double   dc6_ =    512.0/1771.0 - 1.0/4.0;
+
+  double temp1_[equa];
+  int    i;
+
+  x_[ns_]=time_;
+  reac(x_, k1_);
+  for(i=0; i<ns_; i++) {
+    k1_[i]*=htime_;
+    temp1_[i]=x_[i]+b21_*k1_[i];
+  } /* for i */
+  temp1_[ns_]=time_+a2_*htime_;
+  reac(temp1_, k2_);
+  for(i=0; i<ns_; i++) {
+    k2_[i]*=htime_;
+    temp1_[i]=x_[i]+b31_*k1_[i]+b32_*k2_[i];
+  } /* for i */
+  temp1_[ns_]=time_+a3_*htime_;
+  reac(temp1_, k3_);
+  for(i=0; i<ns_; i++) {
+    k3_[i]*=htime_;
+    temp1_[i]=x_[i]+b41_*k1_[i]+b42_*k2_[i]+b43_*k3_[i];
+  } /* for i */
+  temp1_[ns_]=time_+a4_*htime_;
+  reac(temp1_, k4_);
+  for(i=0; i<ns_; i++) {
+    k4_[i]*=htime_;
+    temp1_[i]=x_[i]+b51_*k1_[i]+b52_*k2_[i]+b53_*k3_[i]+b54_*k4_[i];
+  } /* for i */
+  temp1_[ns_]=time_+a5_*htime_;
+  reac(temp1_, k5_);
+  for(i=0; i<ns_; i++) {
+    k5_[i]*=htime_;
+    temp1_[i]=x_[i]+b61_*k1_[i]+b62_*k2_[i]+b63_*k3_[i]
+      +b64_*k4_[i]+b65_*k5_[i];
+  } /* for i */
+  temp1_[ns_]=time_+a6_*htime_;
+  reac(temp1_, k6_);
+  for(i=0; i<ns_; i++) {
+    k6_[i]*=htime_;
+    xnew_[i]=x_[i]+c1_*k1_[i]+c3_*k3_[i]+c4_*k4_[i]+c6_*k6_[i];
+    xerr_[i]=dc1_*k1_[i]+dc3_*k3_[i]+dc4_*k4_[i]+dc5_*k5_[i]+dc6_*k6_[i];
+  } /* for i */
+} /* RKFNCTime */
+
+
+/****************************************************************************
+  Solver: 6   Variable Order RK. ([6]).
+
+  It should be noted that twiddle(n-1, i) is replaced by the variable 
+  twiddle(present, i), and similar with quit.
+
+  The solver has some kind of step controller embedded in the code.
+*****************************************************************************/
+
+void VRKF(double htime_, double x_[equa], double xnew_[equa], 
+	  double xerr_[equa], double twiddle_[2][2], double quit_[2][2]) {
+
+  double k1_[equa], k2_[equa], k3_[equa], k4_[equa], k5_[equa], k6_[equa];
+
+  static const double   b21_ =      1.0/5.0;
+  static const double   b31_ =      3.0/40.0;
+  static const double   b32_ =      9.0/40.0;
+  static const double   b41_ =      3.0/10.0;
+  static const double   b42_ =     -9.0/10.0;
+  static const double   b43_ =      6.0/5.0;
+  static const double   b51_ =    -11.0/54.0;
+  static const double   b52_ =      5.0/2.0;
+  static const double   b53_ =    -70.0/27.0;
+  static const double   b54_ =     35.0/27.0;
+  static const double   b61_ =   1631.0/55296.0;
+  static const double   b62_ =    175.0/512.0;
+  static const double   b63_ =    575.0/13824.0;
+  static const double   b64_ =  44275.0/110592.0;
+  static const double   b65_ =    253.0/4096.0;
+  static const double   c1_  =     37.0/378.0;
+  static const double   dc1_ =     37.0/378.0 -  2825.0/27648.0;
+  static const double   c3_  =    250.0/621.0;
+  static const double   dc3_ =    250.0/621.0 - 18575.0/48384.0;
+  static const double   c4_  =    125.0/594.0;
+  static const double   dc4_ =    125.0/594.0 - 13525.0/55296.0;
+  static const double   dc5_ =      0.0 - 277.0/14336.0;
+  static const double   c6_  =    512.0/1771.0;
+  static const double   dc6_ =    512.0/1771.0 - 1.0/4.0;
+
+  double      temp1_[equa], temp2_[equa]; /* temp. vectors           */
+  double      ERR_[4];                    /* both E and ERR          */
+  int         i_, j_;                     /* counters                */
+  double      esttol_;                    /* estimate of tolerence   */
+  double      htime_temp;                 /* step size               */
+  double      error_term;                 /* error estimate          */
+  double      Q_[2];
+  int         order_used;                 /* order of solution       */
+  static int  present_=0;
+
+  htime_temp=htime_;
+  for(;;) {                            /* infinite loop */
+    reac(x_, k1_);                     /* first order   */
+    for(i_=0; i_<equa; i_++) {
+      k1_[i_]*=htime_temp;
+      temp2_[i_]=x_[i_]+b21_*k1_[i_];       
+    } /* for i_ */
+    reac(temp2_, k2_);                 /* second order  */
+    for(i_=0; i_<equa; i_++) {
+      k2_[i_]*=htime_temp;
+      temp1_[i_]=x_[i_]+b31_*k1_[i_]+b32_*k2_[i_];
+    } /* for i_ */
+    
+    ERR_[0]=0.0;                       /* compute error estimate */
+    for(i_=0; i_<equa; i_++) 
+      ERR_[0]+=fabs(temp1_[i_]-temp2_[i_]);
+    ERR_[0]=pow(ERR_[0]/epsa_, 0.5);
+    if (ERR_[0]>(twiddle_[present_][0]*quit_[present_][0])) { /* abandon */
+      esttol_=ERR_[0]/quit_[present_][0];
+      htime_temp*=MaxPair(0.2, step_adjustment_factor/esttol_);
+      if (htime_temp<htimemin_)        /* too small      */
+	kcerror("htime < htimemin");
+      continue;                        /* try once more  */
+    } /* if */ 
+  
+    reac(temp1_, k3_);                 /* third order    */
+    for(i_=0; i_<equa; i_++) {
+      k3_[i_]*=htime_temp;
+      temp2_[i_]=x_[i_]+b41_*k1_[i_]+b42_*k2_[i_]+b43_*k3_[i_];
+    } /* for i_ */
+    reac(temp2_, k4_);                  /* fourth order   */
+    for(i_=0; i_<equa; i_++) {
+      k4_[i_]*=htime_temp;
+      temp1_[i_]=x_[i_]+b51_*k1_[i_]+b52_*k2_[i_]+b53_*k3_[i_]+b54_*k4_[i_];
+    } /* for i_ */
+
+    ERR_[1]=0.0;                        /* error estimate */
+    for(i_=0; i_<equa; i_++) 
+      ERR_[1]+=fabs(temp2_[i_]-temp1_[i_]);
+    ERR_[1]=pow(ERR_[1]/epsa_, 1.0/3.0);
+    if (ERR_[1]>(twiddle_[present_][1]*quit_[present_][1])) {
+      if (ERR_[0]<1.0) {
+	error_term=0.0;
+	for(i_=0; i_<equa; i_++)
+	  error_term+=fabs(k2_[i_]-k1_[i]);
+	error_term*=0.1*htime_temp;
+	if (error_term<epsa_) {         /* accept solution */
+	  present_=(present_+1) % 2;
+	  order_used=3;
+	  htime_temp*=0.2;
+	  break;
+	} else {                        /* abandon         */
+	  htime_temp*=0.2;
+	  if (htime_temp<htimemin_)
+	    kcerror("htime < htimemin");
+	  continue;                     /* try once more   */
+	}/* if else */
+      } else {                          /* abandon         */
+	esttol_=ERR_[1]/quit_[present_][1];
+	htime_temp*=MaxPair(0.2, step_adjustment_factor/esttol_);
+	if (htime_temp<htimemin_)
+	  kcerror("htime < htimemin");
+	continue;                       /* try once more */
+      } /* if else */
+    } /* if */
+  
+    reac(temp1_, k5_);                  /* fifth order   */
+    for(i_=0; i_<equa; i_++) {
+      k5_[i_]*=htime_temp;
+      temp2_[i_]=x_[i_]+b61_*k1_[i_]+b62_*k2_[i_]+b63_*k3_[i_]
+	+b64_*k4_[i_]+b65_*k5_[i_];
+    } /* for i_ */
+    reac(temp2_, k6_);                 
+    for(i_=0; i_<equa; i_++) {
+      k6_[i_]*=htime_temp;
+      xnew_[i_]=x_[i_]+c1_*k1_[i_]+c3_*k3_[i_]+c4_*k4_[i_]+c6_*k6_[i_];
+    } /* for i_ */
+    
+    ERR_[3]=0.0;
+    for(i_=0; i_<equa; i_++) 
+      ERR_[3]+=fabs(xnew_[i_]-temp2_[i_]);
+    ERR_[3]=pow(ERR_[3]/epsa_, 0.2);
+    if (ERR_[3]>1.0) {
+      for(i_=0; i_<=1; i_++) {
+	if (ERR_[i_]/quit_[present_][i_]<twiddle_[present_][i_]) 
+	  twiddle_[(present_+1)%2][i_]=
+	    MaxPair(1.1, ERR_[i_]/quit_[present_][i_]);
+	else
+	  twiddle_[(present_+1)%2][i_]=twiddle_[present_][i_];
+      } /* for i_ */
+      if (ERR_[1]<1.0) {
+	error_term=0.0;
+	for(i_=0; i_<equa; i_++)
+	  error_term+=fabs(k1_[i_]-2.0*k3_[i_]+k4_[i_]);
+	error_term*=0.1*htime_temp;
+	if (error_term<epsa_) {            /* accept solution */
+	  present_=(present_+1) % 2;
+	  order_used=3;
+	  htime_temp*=0.6;
+	  break;
+	} else {
+	  if (ERR_[0]<1.0) {
+	    error_term=0.0;
+	    for(i_=0; i_<equa; i_++)
+	      error_term+=fabs(k2_[i_]-k1_[i_]);
+	    error_term*=0.1*htime_temp;
+	    if (error_term<epsa_) {        /* accept solution */
+	      present_=(present_+1) % 2;
+	      htime_temp*=0.2;
+	      order_used=2;
+	      break;
+	    } /* if */
+	  } else {                        /* abandon */
+	    htime_temp*=0.2;
+	    if (htime_temp<htimemin_)
+	      kcerror("htime < htimemin");
+	    continue;
+	  } /* else */
+	} /* else */
+      } else {                            /* abandon */
+	esttol_=ERR_[3];
+	if (esttol_>epsmin_) {
+	  htime_temp*=MaxPair(0.2, step_adjustment_factor/esttol_);
+	  if (htime_temp<htimemin_)
+	    kcerror("htime < htimemin");
+	} /* if */
+	continue;
+      } /* if else */
+    } else {                             /* accept solution */
+      esttol_=ERR_[3];
+      if (esttol_>epsmin_) {
+	htime_temp*=MaxPair(0.2, step_adjustment_factor/esttol_);
+	for(j_=0; j_<=1; j_++) {
+	  Q_[j_]=ERR_[j_]/ERR_[3];
+	  if (Q_[j_]>quit_[present_][j_]) 
+	    Q_[j_]=MinPair(Q_[j_], 10.0*quit_[present_][j_]);
+	  else
+	    Q_[j_]=MaxPair(Q_[j_], 2.0/3.0*quit_[present_][j_]);
+	  quit_[(present_+1)%2][j_]=MaxPair(1.0, MinPair(10000.0, Q_[j_]));
+	  twiddle_[(present_+1)%2][j_]=twiddle_[present_][j_];
+	} /* for j_ */
+      } /* if */
+      order_used=5;
+      break;                     /* leave loop now! */
+    } /* if else */
+  } /* for (infinite loop) */
+
+  switch (order_used) {
+  case 2:
+    for(i_=0; i_<equa; i_++) {
+      xnew_[i_]=x_[i_]+0.1*htime_temp*(k1_[i_]+k2_[i_]);
+      xerr_[i]=0.1*htime_temp*(k2_[i_]-k1_[i_]);
+    } /* for i_ */
+    htime_=htime_temp*0.2;
+    break;
+  case 3:
+    for(i_=0; i_<equa; i_++) {
+      xnew_[i_]=x_[i_]+htime_temp*(0.1*k1_[i_]+0.4*k3_[i_]+0.1*k4_[i_]);
+      xerr_[i_]=0.1*htime_temp*(k1_[i_]-2.0*k3_[i_]+k4_[i_]);
+    } /* for i_ */
+    htime_=htime_temp*0.6;
+    break;
+  case 5:
+    for(i_=0; i_<equa; i_++)  {
+      xnew_[i_]=x_[i_]+c1_*k1_[i_]+c3_*k3_[i_]+c4_*k4_[i_]+c6_*k6_[i_];
+      xerr_[i_]=dc1_*k1_[i_]+dc3_*k3_[i_]+dc4_*k4_[i_]+dc5_*k5_[i_]
+	+dc6_*k6_[i_]; 
+    } /* for i_ */
+    htime_=htime_temp;
+    break;
+  } /* switch order_used */
+} /* VRKF */
+
+
+/***************************************************************************
+  Solver_ = 7. (see also solver_ 4) : For stiff non-autonomous
+  systems, [1, 3, 7, 9].
+
+  Semi-implicit fourth order Rosenbrock method. The constants are due to
+  Kaps and Rentrop (version GRK4T ,[3]), but have been transformed by the
+  the method outlined in [1, pp. 738-742],[7], and [9].
+  Adaptive stepsize control: Estimate of local error due to embedded third
+  order method.
+  The output from GRK4T: xnew_ and xerr_ contain respectively the new values
+  and the estimate of the local error of the dependent variables.
+****************************************************************************/
+
+void GRK4TTime(double time_, double htime_, double x_[equa],
+		 double xnew_[equa],double xerr_[equa]) {
+
+  static const double gamma_    =   0.23100000000;
+  static const double c21_      =  -5.07167544877;
+  static const double c31_      =   6.02015272865;
+  static const double c32_      =   0.159750684673;
+  static const double c41_      =  -1.856343618677;
+  static const double c42_      =  -8.50538085819;
+  static const double c43_      =  -2.08407513602;
+  static const double a21_      =   2.00000000000;
+  static const double a31_      =   4.52470820736;
+  static const double a32_      =   4.16352878860;
+  /* a41_ = a31_, a42_ = a32_, a43_ = 0.0 */
+  static const double m1_       =   3.95750374663;
+  static const double m2_       =   4.62489238836;
+  static const double m3_       =   0.617477263873;
+  static const double m4_       =   1.282612945268;
+  static const double dm1_      =  -2.30215540292;
+  static const double dm2_      =  -3.07363448539;
+  static const double dm3_      =   0.873280801802;
+  static const double dm4_      =   1.282612945268;
+
+  static const double AT2_      =   0.462000000000;
+  static const double AT3_      =   0.880208333333;
+  static const double BT1_      =   0.231000000000;
+  static const double BT2_      =  -0.039629667552;
+  static const double BT3_      =   0.550778939579;
+  static const double BT4_      =  -0.055350984570;
+ 
+  double **A_;
+  double *k1_, *k2_, *k3_, *k4_;
+  double temp1_[equa], temp2_[equa], jactime_[equa], dummy;
+  int    i, j;
+  int    *index_;
+
+  A_=MatrixAlloc(equa);
+  k1_=VectorAlloc(equa);
+  k2_=VectorAlloc(equa);
+  k3_=VectorAlloc(equa);
+  k4_=VectorAlloc(equa);
+  index_=IntVectorAlloc(equa);
+
+  x_[ns_]=time_;
+  dummy=1.0/(htime_*gamma_);
+  jacobi(x_);
+  for(i=0; i<ns_; i++)
+    jactime_[i]=htime_*jacobi_matx[i][ns_];
+  for(i=0; i<ns_; i++)
+    for(j=0; j<ns_; j++)
+      A_[i][j]= -jacobi_matx[i][j];
+  for(i=0; i<ns_; i++)
+    A_[i][i]+=dummy;
+  LUfact(ns_, A_, index_);
+
+  reac(x_, k1_);
+  for(i=0; i<ns_; i++)
+    k1_[i]+=(BT1_*jactime_[i]);  
+  LUsubst(ns_, A_, index_, k1_);
+
+  temp1_[ns_]= time_+AT2_*htime_;
+  for(i=0; i<ns_; i++)
+    temp1_[i]=x_[i]+a21_*k1_[i];
+  reac(temp1_, k2_);
+  for(i=0; i<ns_; i++)
+    k2_[i]+=((c21_*k1_[i])/htime_+BT2_*jactime_[i]);
+  LUsubst(ns_, A_, index_, k2_);
+
+  temp1_[ns_]=time_+AT3_*htime_;
+  for(i=0; i<ns_; i++)
+    temp1_[i]=x_[i]+a31_*k1_[i]+a32_*k2_[i];
+  reac(temp1_, k3_);
+  for(i=0; i<ns_; i++)  {
+    k4_[i] = k3_[i];
+    k3_[i]+=((c31_*k1_[i]+c32_*k2_[i])/htime_+BT3_*jactime_[i]);
+  } /* for i */
+  LUsubst(ns_, A_, index_, k3_);
+
+  for(i=0; i<ns_; i++)
+    k4_[i]+=((c41_*k1_[i]+c42_*k2_[i]+c43_*k3_[i])/htime_+BT4_*jactime_[i]);
+  LUsubst(ns_, A_, index_, k4_);
+
+  for(i=0; i<ns_; i++) {
+    xnew_[i]= x_[i]+m1_*k1_[i]+m2_*k2_[i]+m3_*k3_[i]+m4_*k4_[i];
+    xerr_[i]= dm1_*k1_[i]+dm2_*k2_[i]+dm3_*k3_[i]+dm4_*k4_[i];
+  } /* for i */
+  
+  MatrixFree(equa, A_);
+  VectorFree(equa, k1_);
+  VectorFree(equa, k2_);
+  VectorFree(equa, k3_);
+  VectorFree(equa, k4_);
+  IntVectorFree(equa, index_);
+} /* GRK4TTime */
+								 
+
+/***************************************************************************
+  Main initialises the system, and it is also the driver routine for the
+  numerical schemes implemented.
+
+  The idea is that each solver takes one time step, and main contains a 
+  loop going from time=initial time to termination time. The step length
+  controller is implemented as part of main.
+****************************************************************************/
+
+void main(void) {
+
+  double fx_[equa], temp_[equa], xnew_[equa], xerr_[equa], xdt_[equa];
+  double hlp_, cmax_, cmin_;
+  double twiddle_[2][2], quit_[2][2];
+  int    i;
+  int    nospecieserr_;    /* Number of variables used in the estimate
+			      of local error */
+  int    steprejection_=0; /* Number of step rejections. */
+  time_t timer_;           /* time and date */
+  
+  /* Find time and date */
+  timer_=time(&timer_);
+
+  printf("KKsolver v%s, CopyWrong 1994 by Keld Nielsen and Kenneth Geisshirt\n", VERSION_);
+
+  /* Initialization of the model dependent variables. */
+  InitValues();
+
+  /* Setup "precision" */
+  if (epsmin_==0.0)
+    epsmin_=FindMachEps();
+
+  /* Time equal to the initial time. */
+  time_=stime_;
+  
+  /* The next time a output will be performed */
+  thtime_=time_+dtime_;
+
+  /* Program aborted: If initial time is larger than the end time */
+  if (time_>etime_)
+    kcerror("stime > etime");
+
+  /* Program aborted: If initial time is less than the zero */
+  if (time_<0.0)
+    kcerror("stime < 0.0");
+
+  /* Program aborted: If initial stepsize is less than the zero */
+  if (htime_<0.0)
+    kcerror("htime < 0.0");
+
+  /* Program aborted: If requested output at eqvidistant points 
+     is not resonable */
+  if (dtime_<0.0)
+    kcerror("dtime < 0.0");
+
+  /* Smallest absoulte error not less than relative machine precision */
+  if (epsa_<epsmin_)
+    epsa_=epsmin_;
+
+  /* Smallest stepsize not less than relative machine precision */
+  if (htimemin_<epsmin_)
+    htimemin_=epsmin_;
+
+  /* Smallest initial stepsize equal to htimemin_ */
+  if (htime_<htimemin_)
+    htime_=htimemin_;
+
+  /* Largest initial stepsize equal to 0.5*dtime_  */
+  if (htime_>=0.5*dtime_)
+    htime_=0.5*dtime_;
+
+  /* Opening output file */
+  outfile=fopen(datafilename_, "w");
+  fprintf(outfile, "# Output from kksolver v%s, %s", VERSION_, 
+	  ctime(&timer_));
+  fprintf(outfile, "# CopyWrong 1994 by Keld Nielsen and Kenneth Geisshirt\n");
+
+  /* Scaling method: Initialization */
+  if (scaling_==0) {               /* Strict relative error */
+    for(i=0; i<equa; i++)
+      xscal_[i]=MaxPair(epsa_, fabs(x_[i]));
+  } else {                         /* Scaling due to Deuflhard et al. ([8]) */
+    cmax_= fabs(x_[0]);
+    for (i=0; i<equa; i++)
+      cmax_=MaxPair(cmax_, fabs(x_[i]));
+    cmin_= cmax_*epsmin_/epsr_;
+    for (i=0; i<equa; i++)
+       xscal_[i]=MaxPair(cmin_, fabs(x_[i]));
+  } /* if else */
+
+  /* Initialising the various schemes */
+  switch (solver_) {
+  case 1:                          /* Calahan     */
+    order_of_method=3.0;
+    nospecieserr_=equa;
+    break;
+  case 2:                          /* RKFNC       */
+    order_of_method=5.0;
+    nospecieserr_=equa;
+    break;
+  case 3:                         /* RK4          */
+    order_of_method=4.0;
+    nospecieserr_=equa;
+    break;
+  case 4:                         /* GRK4T         */
+    order_of_method=4.0;
+    nospecieserr_=equa;
+    break;
+  case 5:                         /* RKFNCTime    */
+    order_of_method=5.0;
+    nospecieserr_=equa-1;
+    break;
+  case 6:                         /* VRKF          */
+    order_of_method=5.0;
+    nospecieserr_=equa;
+    twiddle_[0][0]=twiddle_[1][0]=1.5;
+    twiddle_[0][1]=twiddle_[1][1]=1.1;
+    quit_[0][0]=quit_[0][1]=quit_[1][0]=quit_[1][1]=100.0;
+    break;
+  case 7:                         /* GRK4TTime     */
+    order_of_method=4.0;
+    nospecieserr_=equa-1;
+    break;
+  } /* switch */
+
+  step_increase_factor=(-1.0/(order_of_method));
+
+  /* Smallest value of errlim_, see [1] */
+  errcon_=pow(steplimit_increase/step_adjustment_factor,
+	      -1.0*(order_of_method+1.0));
+
+  /* Print out of initial values */
+  PrintState(prnmode_, 0, time_, x_);
+
+  /* Main part of the integration algorithm */
+  while (time_<etime_) {
+
+    /* Integration of one step */
+    switch (solver_) {
+    case 1:                               /* Calahan       */
+      Calahan(htime_, x_, xnew_, xerr_);
+      break;
+    case 2:                               /* RKFNC         */
+      RKFNC(htime_, x_, xnew_, xerr_);
+      break;
+    case 3:                               /* RK4           */
+      RK4(htime_, x_, xnew_, xerr_);
+      break;
+    case 4:                               /* GRK4T         */
+      GRK4T(htime_, x_, xnew_, xerr_);
+      break;
+    case 5:                               /* RKFNCTime     */
+      RKFNCTime(time_, htime_, x_, xnew_, xerr_);
+      break;
+    case 6:                               /* VRKF          */
+      VRKF(htime_, x_, xnew_, xerr_, twiddle_, quit_);
+      break;
+    case 7:                               /* GRK4T         */
+      GRK4TTime(time_, htime_, x_, xnew_, xerr_);
+      break;
+    } /* switch (solver_) */
+
+    if (scaling_==0) {
+      for(i=0; i<equa; i++)
+	xscal_[i]=MaxPair(epsa_, fabs(xnew_[i]));
+    } else {
+      for(i=0; i<equa; i++)
+	xscal_[i]=MaxPair(xscal_[i], MaxPair(cmin_, fabs(x_[i])));
+    } /* else */
+
+    /* Scaling the error estimate */
+    for(i=0; i<equa; i++)
+      temp_[i]=xerr_[i]/xscal_[i];
+
+    /* Maximal values of (local error estimate/relative error tolerance) */
+    errlim_=MaxVec(nospecieserr_, temp_)/epsr_;
+
+    /* New stepsize: The new stepsize is determined from: SAF*(EST/RTOL)**(SIF)
+		     (SAF=step_adjustment_factor,EST=local error estimate,
+		     RTOL=relative error tolerance,**(SIF)=pow of 
+		     step_increase_factor).
+		     The new stepsize is restricted to the following values:
+		       [steplimit_decrease*h_old;steplimit_increase*h_old].
+		     If the new stepsize is larger than dtime_, then it 
+		     is changed to dtime_. */
+    
+    if (errlim_<errcon_) {
+      htimenew_= htime_*steplimit_increase; /* Small values of errlim_, 
+					       see [1] */
+    } else {
+      htimenew_ = MinPair(dtime_, htime_*
+			  MaxPair(steplimit_decrease,
+			  MinPair(steplimit_increase, step_adjustment_factor
+			  *pow(errlim_, step_increase_factor))));
+    } /* else */
+
+
+   /* Program aborted: If stepsize less than the smallest 
+                       acceptable stepsize */
+    if (htimenew_<htimemin_)
+      kcerror("htimenew < htimemin");
+
+    if (errlim_>1.0) {  /* The new stepsize is not accepted if the 
+			   local error estimate is larger than the 
+			   relative error tolerance */
+      htime_=htimenew_;
+      if (steprejection_!=2) {
+	steprejection_++;
+      } else {          /* If the new stepsize has been rejected more 
+			   than two times the new stepsize is drastical 
+			   reduced; h_new= h_old/10.
+			   Method suggested by Hairer and Wanner [9] */
+	steprejection_=0;
+	htime_= htimenew_/10.0;
+      } /* else */
+    } else  {          /* The new stepsize is accepted if the local error 
+			  estimate is less or equal to the relative error 
+			  tolerance */
+      timenew_=time_+htime_;
+      steprejection_=0;
+      if (timenew_<thtime_)  { /* The new time do not exceed the time 
+				  the next output */
+	time_+=htime_;
+	htime_=htimenew_;
+	for(i=0; i<equa; i++)
+	  x_[i]=xnew_[i];
+	if (prnmode_==0)       /* Output: The extrema values */
+	  PrintState(prnmode_, 1, time_, x_);
+      } else  {
+	if (timenew_==thtime_) { /* Output: the new time is equal to the 
+				    time for the next output */
+	  time_+=htime_;
+	  htime_=htimenew_;
+	  for(i=0; i<equa; i++)
+	    x_[i]=xnew_[i];
+	  thtime_+=dtime_;
+	  PrintState(prnmode_, 0, time_, x_);
+	} else  {              /* The new time exceed the time for the 
+				  next output. The differential equations 
+				  are integrated from (t) to (t+dt), and 
+				  the solution at t+dt is printed. The 
+				  integration begin again from (t+h, xnew_) */
+	  hlp_=thtime_-time_;
+	  switch(solver_) {
+	  case 1:                               /* Calahan       */
+	    CalahanOneStep(hlp_, x_, xdt_);
+	    break;
+	  case 2:                               /* RKFNC         */
+	    RKFNC(hlp_, x_, xdt_, xerr_);
+	    break;
+	  case 3:                               /* RK4           */
+	    RK4OneStep(hlp_, x_, xdt_);
+	    break;
+	  case 4:                               /* GRK4T         */
+	    GRK4T(hlp_, x_, xdt_, xerr_);
+	    break;
+	  case 5:                               /* RKFNCTime     */
+	    RKFNCTime(time_, hlp_, x_, xdt_, xerr_);
+	    break;
+	  case 6:                               /* VRKF          */
+	    VRKF(htime_, x_, xnew_, xerr_, twiddle_, quit_);
+	    break;
+	  case 7:                               /* GRK4TTime     */
+	    GRK4TTime(time_, hlp_, x_, xdt_, xerr_);
+	    break;
+	  } /* switch (solver_) */
+	  time_+=htime_;
+	  htime_=htimenew_;
+	  for(i=0; i<equa; i++)
+	    x_[i]=xnew_[i];
+	  PrintState(prnmode_, 0, thtime_, xdt_);
+	  thtime_+=dtime_;
+	} /* else */
+      } /* else */
+    } /* errlim_ <= 1.0 */
+    
+#ifdef _DO_PERT_                  /* code for doing perturbations */
+    if (pert_) {
+      if (fabs(ptime_-time_)<0.5*htime_) {
+	pert_=0;
+	fprintf(outfile, "# Perturbation\n");
+	for(i=0; i<equa; i++)
+	  x_[i]+=x_pert[i];
+      }
+    }
+#endif
+  } /* while (time_<etime_) */
+} /* main */

@@ -1,0 +1,46 @@
+/* ODEs from Anita Kildebaek Nielsen */
+
+method = 2;
+
+prnmode = 2;
+
+m = 4.6262e5;
+BETA = 0.9847;
+De = 5.733e-2;
+x0 = 5.02646;
+
+etime = 15000.0;
+dtime = 5;
+
+epsa = 1.0e-15;
+epsr = 1.0e-15;
+
+konst = 0.01;
+integrmin = 0.1;
+integrmax = 60;
+
+PI = 3.1415926535;
+
+datafile = "grdout";
+
+x' = p/m;
+
+p' = -2*BETA*De*(exp(-BETA*(x-x0)) - exp(-2*BETA*(x-x0)));
+
+
+ar' = (-2/m)*(ar*ar-ai*ai) - BETA*BETA*De*(2*exp(-2*BETA*(x-x0)) - exp(-BETA*(x-x0)));
+ai' = (-4/m)*ar*ai;
+
+gr' = -ai/m + (p*p)/(2*m) - De*(1 + exp(-2*BETA*(x-x0)) - 2*exp(-BETA*(x-x0)));
+gi' = 1/m*ar;
+
+
+x(0) = 5.02646;
+
+p(0) = 0.9;
+
+ar(0) = 0.1;
+ai(0) = konst;
+
+gr(0) = 0.0;
+gi(0) = -0.25*log(((2*konst/PI)^2)^0.5);

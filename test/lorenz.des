@@ -1,0 +1,25 @@
+/* Lorenz system */
+method = 1;
+mode = 0; 
+screen = 1;
+prnmode = 0;
+
+stime = 0.0; 
+dtime = 0.5; 
+etime = 4100.0;
+epsr = 1.0E-8;  
+epsa = 1.0E-8;
+
+#print X ;
+
+sigma  = 16.0;
+gamma  = 45.92;
+b      = 4.0;
+
+X' =  -sigma*X+sigma*Y;
+Y' =  gamma*X-X*Z-Y;
+Z' =  X*Y-b*Z;
+
+X(0)  = 10.0;
+Y(0)  = 1.0;
+Z(0)  = 0.0;

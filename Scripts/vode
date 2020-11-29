@@ -1,0 +1,16 @@
+kc -m8 -q < $1
+cp /users/local/num/dvode.o .
+cp /users/local/num/dcopy.o .
+cp /users/local/num/dgbfa.o .
+cp /users/local/num/dgbsl.o .
+cp /users/local/num/dgefa.o .
+cp /users/local/num/dscal.o .
+cp /users/local/num/ddot.o .
+cp /users/local/num/idamax.o .
+cp /users/local/num/dgesl.o .
+cp /users/local/num/daxpy.o .
+f77 -O -w -c model.f 
+f77 -O -w model.o dvode.o dcopy.o dgbfa.o dgbsl.o dgefa.o dscal.o ddot.o idamax.o dgesl.o daxpy.o
+rm -f dvode.o model.f model.o dcopy.o dgbfa.o dgbsl.o dgefa.o dscal.o ddot.o idamax.o dgesl.o daxpy.o
+a.out
+rm -f a.out
