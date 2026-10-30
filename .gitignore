@@ -78,3 +78,7 @@ dkms.conf
 *.mtc1
 *.out
 *.synctex.gz
+# Build output
+build/
+src/parser.c
+src/lex.c
