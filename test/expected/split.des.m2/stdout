@@ -1,0 +1,13 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+   BrO3(1-)
+  *Br(1-)
+  *HBrO2()
+   P()
+  *Ce(4+)
+   BrMA()
+   MA()
+Constants declared:
+  epsr = 1.000000e-20
+  k3 = 1.000000e+00
+  k4 = 2.000000e+00

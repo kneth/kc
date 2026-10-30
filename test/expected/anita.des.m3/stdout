@@ -1,0 +1,20 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *a1
+  *b1
+  *a2
+  *b2
+  *a3
+  *b3
+  *a4
+  *b4
+Constants declared:
+  method = 3.000000e+00
+  prnmode = 2.000000e+00
+  am = 4.626300e+05
+  ZETA = 1.000000e+00
+  etime = 1.500000e+04
+  dtime = 1.000000e+00
+  epsa = 1.000000e-10
+  epsr = 1.000000e-08
+  datafile = "anitaout"

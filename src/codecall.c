@@ -24,6 +24,8 @@
 #include "kncont.h"
 #include "kgode.h"
 #include "conis.h"
+#include "mixed.h"
+#include "codecall.h"
 
 void CodeGenCall(int mode) {
 
@@ -36,8 +38,7 @@ void CodeGenCall(int mode) {
   5 - KnCont (K. Nielsen)
 ***************************************************************************/
 
-  FILE *code, *code_h, *code_c, *code_ini, *code_ini2;
-  int  intgr;
+  FILE *code_h, *code_c, *code_ini;
 
   switch (mode) {
   case 1:

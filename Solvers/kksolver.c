@@ -291,7 +291,7 @@ int ChangeSignVectors(int N_, double *x_, double *xnew_, double *xmax_,
   controller is implemented as part of main.
 ****************************************************************************/
 
-void main(void) {
+int main(void) {
   
   double xmin_[equa], xmax_[equa], hlp_;
   time_t timer_;           /* time and date */
@@ -700,4 +700,5 @@ void main(void) {
     fprintf(outfile, "# The user interrupted the program at time=%e\n", time_);
   fclose(outfile);
   MatrixFree(equa, jacobi_matx);
+  return 0;
 } /* main */

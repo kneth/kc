@@ -1,3 +1,9 @@
+%option noyywrap
+%option nounput
+%{
+static void Comment(int close);
+static void num(void);
+%}
 Digit       [0-9]
 Letter      [A-Za-z]
 Sign        "-"|"+"
@@ -5,8 +11,8 @@ alphabet    ({Digit}|{Letter})
 %%
 [ \t] ;
 \n   lineno++;
-"/*" { CommentC(); }
-"(*" { CommentPas(); }
+"/*" { Comment('/'); }
+"(*" { Comment(')'); }
 
 "exp"    return fun_exp;
 "log"    return fun_log;
@@ -25,7 +31,12 @@ alphabet    ({Digit}|{Letter})
 "atanh"  return fun_atanh;
 
 (({Digit}+)|({Digit}*\.{Digit}+)([eELl][-+]?{Digit}+)?) { num(); yylval.dval=value; return numbers; }
-{Letter}({Digit}|{Letter})* { (void) strcpy(yylval.name, yytext); return names; } 
+{Letter}({Digit}|{Letter})* { if (yyleng>=STRING_LENGTH) {
+                                fprintf(stderr, "Line %d: name %s is longer than %d characters\n",
+                                        lineno, yytext, STRING_LENGTH-1);
+                                exit(EXIT_FAILURE);
+                              } /* if */
+                              (void) strcpy(yylval.name, yytext); return names; }
 "#parameter" return param;
 "#print" return print;
 "'"      return prime;
@@ -41,7 +52,6 @@ alphabet    ({Digit}|{Letter})
 "k<"     { strcpy(yylval.name, "k"); return rightarr; }
 "v>"     { strcpy(yylval.name, "v"); return leftarr; }
 "v<"     { strcpy(yylval.name, "v"); return rightarr; }
-"K"      return K;    
 "+"      return plus;
 "-"      return minus;
 "**"     return powop;
@@ -56,57 +66,35 @@ alphabet    ({Digit}|{Letter})
 "\""     return quotation;
 
 %%
-CommentC() 
-{ char c;
-  int finished;
+/* Skips a comment up to and including the closing '*' followed by CLOSE. */
+static void Comment(int close)
+{ int c, prev=0, start=lineno;
 
-  finished=0;
-  while (finished==0) {
-    while (input()!='*') /* nothing */;
-    if ((c=input())=='/') finished=1;
+  while ((c=input())!=EOF && c!=0) {
+    if (c=='\n')
+      lineno++;
+    if ((prev=='*') && (c==close))
+      return;
+    prev=c;
   } /* while */
-} /* Comment */       
+  fprintf(stderr, "Line %d: comment is not closed\n", start);
+  exit(EXIT_FAILURE);
+} /* Comment */
 
-CommentPas() 
-{ char c;
-  int finished;
-
-  finished=0;
-  while (finished==0) {
-    while (input()!='*') /* nothing */;
-    if ((c=input())==')') finished=1;
-  } /* while */
-} /* Comment */       
-
-
-incl() {
-
-  int i, start;
-
-  i=8; 
-  while (yytext[i]==' ') i++;
-  start=i;
-  while (yytext[i]!='\0') { yytext[i-start]=yytext[i]; i++; }
-  yytext[i]='\0';
-} /* incl */
-
-num() {
+static void num(void) {
   
   float temp;
-  int i;
+  size_t i;
 
   for(i=0; i<strlen(yytext); i++)
     if ((yytext[i]=='L') || (yytext[i]=='l'))
       yytext[i]='e';
-#ifdef _PLATFORM_AIX_
-  sscanf((char *)yytext, "%e", &temp);
-#else
   sscanf(yytext, "%e", &temp);
-#endif
   value=(double)temp;
 } /* num */
 
 int yyerror(char *s) {
 
   fprintf(stderr, "Line %d: %s at input text %s\n", lineno, s, yytext);
+  return 0;
 } /* yyerror */

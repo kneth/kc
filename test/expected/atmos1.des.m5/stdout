@@ -1,0 +1,24 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *F()
+  *CF3H()
+  *CF3()
+  *HF()
+  *O2()
+  *M()
+  *FO2()
+  *NO()
+  *FNO()
+  *CF3O2()
+  *CF3NO()
+  *NO2()
+  *Prod()
+  *CF3O()
+  *CF3O2NO2()
+  *CF3ONO2()
+  *CF3O3CF3()
+  *CF3O2CF3()
+  *CF2O()
+Constants declared:
+  k4 = 5.000000e-11
+  k8 = 1.680000e-11

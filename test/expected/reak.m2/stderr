@@ -1,0 +1,16 @@
+ERROR: The constant ngrid is not defined!
+ERROR: The constant mgrid is not defined!
+ERROR: Diffusion coeff. for t00(0.000000e+00) not found
+ERROR: Diffusion coeff. for r00(0.000000e+00) not found
+ERROR: Diffusion coeff. for p1(0.000000e+00) not found
+ERROR: Diffusion coeff. for r01(0.000000e+00) not found
+ERROR: Diffusion coeff. for s(0.000000e+00) not found
+ERROR: Diffusion coeff. for r10(0.000000e+00) not found
+ERROR: Diffusion coeff. for r02(0.000000e+00) not found
+ERROR: Diffusion coeff. for r11(0.000000e+00) not found
+ERROR: Diffusion coeff. for r20(0.000000e+00) not found
+ERROR: Diffusion coeff. for r12(0.000000e+00) not found
+ERROR: Diffusion coeff. for r21(0.000000e+00) not found
+ERROR: Diffusion coeff. for r22(0.000000e+00) not found
+ERROR: Diffusion coeff. for p2(0.000000e+00) not found
+ERROR: Diffusion coeff. for out(0.000000e+00) not found

@@ -34,11 +34,10 @@ void AddFullstops(char* str) {
 
 void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
 
-  double  charge, temp, coeff;
+  double  charge, temp;
   char    name[STRING_LENGTH], rename[STRING_LENGTH];
   time_t  timer;
-  Tree    v_temp, tmp, temp_tree;
-  int     i, j, react_no, finished, constraint, dyn, dyn2;
+  int     i, j, constraint, dyn;
 
   timer=time(&timer);
 
@@ -218,8 +217,8 @@ void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
   fprintf(code_c, "}\n");
 
   /* Generate reac_F routine */
-  fprintf(code_h, "extern reac_F(double S[equa], double K[equa], double R[equa], double tk, int l);\n");
-  fprintf(code_c, "reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {\n");
+  fprintf(code_h, "extern double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l);\n");
+  fprintf(code_c, "double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {\n");
   for(i=1; i<=NoOfSpec(); i++) {
     GetSpecNo(i, name, &charge);
     RenameSpec(rename, name, charge);

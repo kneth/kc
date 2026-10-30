@@ -1,0 +1,39 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *t00()
+  *r00()
+  *p1()
+  *r01()
+  *s()
+  *r10()
+  *r02()
+  *r11()
+  *r20()
+  *r12()
+  *r21()
+  *r22()
+   flow()
+  *p2()
+  *out()
+Parameters declared:
+  ks
+Constants declared:
+  stime = 0.000000e+00
+  dtime = 1.000000e+01
+  etime = 8.000000e+03
+  epsr = 1.000000e-04
+  epsa = 1.000000e-20
+  method = 1.000000e+00
+  ksb = 2.000000e+06
+  L1 = 5.000000e+08
+  ktf = 1.000000e+06
+  kpb = 2.000000e+06
+  kp1 = 5.000000e+03
+  Krs = 1.000000e+05
+  Krp = 5.000000e+06
+  vs = 2.500000e-06
+  sigma2 = 1.000000e+01
+  kp2 = 1.000000e+05
+  L2 = 1.000000e+02
+  p0 = 1.000000e-08
+  datafile = "r130707"

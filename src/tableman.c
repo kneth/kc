@@ -19,6 +19,27 @@
 #include <math.h>
 #include "tableman.h"
 
+SymEntry       symtable[SymSize];     /* symbol table */
+int            sym_last;
+ReactEntry     reacttable[ReactSize]; /* stoichimetric matrix */
+int            react_last;
+int            current;               /* pointer current reaction */
+ConstrainEntry contable[ConstrainSize]; /* constrain table */
+int            con_last;
+DynEntry       dyntable[DynSize];     /* dynamical variables */
+int            dyn_last;
+TableErrors    error;
+int            search_i, search_j, search_no;   /* search vars */
+ExprEntry      exprtable[ExprSize];   /* expression table */
+int            expr_last;
+ParamEntry     paramtable[MaxParameter];
+int            param_last;
+PrnEntry       prntable[MaxPrint];
+int            prn_last;
+StrEntry       strtable[StrConstSize];
+int            str_last;
+int            autonom_system; /* 0 if autonomous ODEs, 1 otherwise */
+
 void SetupTableMan(void) {
 
   sym_last=0;
@@ -115,7 +136,7 @@ void NewSpecConst(char *name1, double charge, char *name2, double value) {
 double GetSpecConst(char *name1, double charge, char *name2) {
 
   int i, j, finished;
-  double temp;
+  double temp=0.0;
 
   finished=0;
   i=0;
@@ -151,17 +172,18 @@ void NewDynVarConst(char *dynvar, char *name, double value) {
   finished=0;
   i=0;
   while ((i<dyn_last) && (finished==0)) {
-    if (strcmp(dyntable[i].name, dynvar)==0)
+    if (strcmp(dyntable[i].name, dynvar)==0) {
       j=0;
-    while ((j<MaxDynVarConst) && (finished==0)) {
-      if (dyntable[i].konst[j].used==0) {
-	strcpy(dyntable[i].konst[j].name, name);
-	dyntable[i].konst[j].value=value;
-	dyntable[i].konst[j].used=1;
-	finished=1;
-      } /* if */
-      j++;
-    } /* while */
+      while ((j<MaxDynVarConst) && (finished==0)) {
+	if (dyntable[i].konst[j].used==0) {
+	  strcpy(dyntable[i].konst[j].name, name);
+	  dyntable[i].konst[j].value=value;
+	  dyntable[i].konst[j].used=1;
+	  finished=1;
+	} /* if */
+	j++;
+      } /* while */
+    } /* if */
     i++;
   } /* while */
   if (finished==1)
@@ -173,22 +195,23 @@ void NewDynVarConst(char *dynvar, char *name, double value) {
 double GetDynVarConst(char *name1, char *name2) {
 
   int i, j, finished;
-  double temp;
+  double temp=0.0;
 
   finished=0;
   i=0;
   while ((i<dyn_last) && (finished==0)) {
-    if (strcmp(dyntable[i].name, name1)==0)
+    if (strcmp(dyntable[i].name, name1)==0) {
       j=0;
-    while ((j<MaxDynVarConst) && (finished==0)) {
-      if (dyntable[i].konst[j].used==1) {
-	if (strcmp(dyntable[i].konst[j].name, name2)==0) {
-	  temp=dyntable[i].konst[j].value;
-	  finished=1;
+      while ((j<MaxDynVarConst) && (finished==0)) {
+	if (dyntable[i].konst[j].used==1) {
+	  if (strcmp(dyntable[i].konst[j].name, name2)==0) {
+	    temp=dyntable[i].konst[j].value;
+	    finished=1;
+	  } /* if */
 	} /* if */
-      } /* if */
-      j++;
-    } /* while */
+	j++;
+      } /* while */
+    } /* if */
     i++;
   } /* while */
   if (finished==1)
@@ -264,7 +287,7 @@ void NewCoeff(int react_no, char *name, double charge,
 double SumCoeff(int react_no, int side) {
 
   int i, j, finished;
-  double res;
+  double res=0.0;
 
   i=0;
   finished=0;
@@ -573,7 +596,7 @@ int NoOfSpec(void) {
 int GetFirstSpecA(int no, char *name, double *charge, 
 		  double *coeff, int side) {
 
-  int finished, i, j;
+  int finished, i, j=0;
 
   i=0;
   finished=0;
@@ -674,7 +697,7 @@ double GetCoeffInReact(int react_no, char *name, double charge, int side) {
 double GetPowConstInReact(int react_no, char *name, double charge, int side) {
   
   int i, j, finished;
-  double temp;
+  double temp=0.0;
 
   i=0;
   finished=0;
@@ -869,7 +892,7 @@ double GetConstant(char *name) {
 double GetBeginConc(char *name, double charge) {
 
   int i, finished;
-  double temp;
+  double temp=0.0;
 
   finished=0;
   i=0;
@@ -1582,7 +1605,7 @@ void NewInitValue(char *name, double val) {
 double GetInitValue(char *name) {
 
   int i, found;
-  double temp;
+  double temp=0.0;
 
   error=NotFound;
   i=0;

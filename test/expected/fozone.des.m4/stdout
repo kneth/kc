@@ -1,0 +1,17 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *Fe(2+)
+  *O3()
+  *FeO(2+)
+  *O2()
+  *Fe(3+)
+  *H2O()
+  *OH(1-)
+  *HO2(1-)
+  *H2O2()
+  *HO2()
+  *OH()
+Constants declared:
+  etime = 1.000000e+01
+  dtime = 5.000000e-02
+  prnmode = 1.000000e+00

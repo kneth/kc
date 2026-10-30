@@ -1,0 +1,6 @@
+ERROR: The constant ngrid is not defined!
+ERROR: The constant mgrid is not defined!
+ERROR: Diffusion coeff. for F6P(0.000000e+00) not found
+ERROR: Diffusion coeff. for FDP(0.000000e+00) not found
+ERROR: Diffusion coeff. for ATP(0.000000e+00) not found
+ERROR: Diffusion coeff. for ADP(0.000000e+00) not found

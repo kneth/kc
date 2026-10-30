@@ -1,0 +1,14 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *E()
+  *S()
+  *ES()
+  *P()
+  *S2()
+  *P2()
+Constants declared:
+  E0 = 1.000000e-05
+  k1 = 1.000000e+04
+  k1m = 1.000000e+02
+  k2 = 1.000000e+02
+  KM = 2.000000e-02

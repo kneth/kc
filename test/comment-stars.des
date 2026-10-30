@@ -1,0 +1,7 @@
+/** Comments may end with several stars (kc used to hang). **/
+(** Pascal style too **)
+etime = 1.0;
+
+x' = -x;
+
+x(0) = 1.0;

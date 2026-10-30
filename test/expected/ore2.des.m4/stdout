@@ -1,0 +1,21 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+   BrO3(1-)
+  *Br(1-)
+   H(1+)
+  *HBrO2()
+   HOBr()
+  *Ce(4+)
+   Ce(3+)
+   P()
+Constants declared:
+  method = 1.000000e+00
+  kf1 = 2.000000e+00
+  kf2 = 3.000000e+06
+  kf3 = 3.000000e+03
+  kf4 = 4.200000e+01
+  kf5 = 1.320000e-01
+  kf6 = 3.499000e-02
+  prnmode = 1.000000e+00
+  etime = 7.500000e+03
+  dtime = 5.000000e+00

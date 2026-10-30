@@ -1,0 +1,19 @@
+WARNING: Was not able to evaluate element (1, 1) of Jacobian matrix.
+WARNING: Was not able to evaluate element (2, 2) of Jacobian matrix.
+WARNING: Was not able to evaluate element (3, 3) of Jacobian matrix.
+WARNING: Was not able to evaluate element (4, 4) of Jacobian matrix.
+WARNING: Was not able to evaluate element (5, 5) of Jacobian matrix.
+WARNING: Was not able to evaluate element (6, 6) of Jacobian matrix.
+WARNING: Was not able to evaluate element (1) of foreward reaction vector.
+WARNING: Was not able to evaluate element (2) of foreward reaction vector.
+WARNING: Was not able to evaluate element (3) of foreward reaction vector.
+WARNING: Was not able to evaluate element (4) of foreward reaction vector.
+WARNING: Was not able to evaluate element (5) of foreward reaction vector.
+WARNING: Was not able to evaluate element (6) of foreward reaction vector.
+WARNING: Was not able to evaluate element (1, 1) of flow reaction  matrix.
+WARNING: Was not able to evaluate element (2, 2) of flow reaction  matrix.
+WARNING: Was not able to evaluate element (3, 3) of flow reaction  matrix.
+WARNING: Was not able to evaluate element (4, 4) of flow reaction  matrix.
+WARNING: Was not able to evaluate element (5, 5) of flow reaction  matrix.
+WARNING: Was not able to evaluate element (6, 6) of flow reaction  matrix.
+Failure in hqr2 function. Do not trust the given eigenvectors and -values

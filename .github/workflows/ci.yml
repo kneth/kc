@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / ${{ matrix.cc }} / C${{ matrix.std }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, cc: gcc, std: 17 }
+          - { os: ubuntu-latest, cc: clang, std: 17 }
+          - { os: ubuntu-latest, cc: gcc, std: 23 }
+          - { os: macos-latest, cc: clang, std: 17 }
+          - { os: macos-latest, cc: gcc-14, std: 17 }
+    env:
+      CC: ${{ matrix.cc }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install flex and bison
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y flex bison
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_STANDARD=${{ matrix.std }} -DCMAKE_C_FLAGS=-Werror
+      - name: Build
+        run: cmake --build build -j4
+      - name: Test
+        run: ctest --test-dir build -j4 --output-on-failure
+      - name: Upload test output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-work-${{ matrix.os }}-${{ matrix.cc }}-c${{ matrix.std }}
+          path: build/test-work

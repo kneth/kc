@@ -10,6 +10,12 @@ has been added.
 Recently (November 2020) the source code has been compiled on MacOS
 v10.15 using GCC.
 
+In 2026 the code was modernized so it builds cleanly with current C
+compilers, and an automated test suite was added. A few old bugs were
+fixed along the way, which changes some mode 1 results; see `CHANGES.md`
+for details. The manuals in `docs/` describe
+the 1990s releases, including the old `kc-inst` installation procedure.
+
 The publication of kc has been a wish for some time. We hope it can be
 useful to some, and asumement for others.
 
@@ -130,45 +136,56 @@ program is?), and a list of future enchancement is found in the file
 
 ## Installation and running
 
-The installation is very easy! There exists a small script called
-kc-inst which does most of the job. The script must be supplied with
-two arguments, namely a directory name and a platform. The directory
-name is a prefix to the directories which you want kc to "live". The
-platform is at the moment one of the following: 
-
-* Generic GNU C-compiler
-* Linux 
-* DECstations running Ultrix 
-* Silicon Graphics 
-* Convex running ConvexOS 
-* HP-UX v7 
-* IBM RS/6000 running AIX v3.2
-
-Run the script with no arguments and you will get some help. The
-script will generate a script called kci, which is a front-end to the
-kci-mode. 
-
-An example: If you want to install the system on a Linux machine 
-in the directories /usr/local you should type:
+kc needs a C17 compiler, [CMake](https://cmake.org) 3.20 or newer, flex and
+bison (or lex and yacc). Nothing else is required.
 
 ```sh
-kc-inst /usr/local LINUX
+cmake -B build -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --build build
+cmake --install build
 ```
 
-In order to use the DOS version, you have to have an Intel 80386 (or
-higher) computer. You also have to install the djgpp package, and this
-package is surposed to be used during all your simulations. The
-makefile you should used is `src/Makefile.DOS`, and the file
-`Scripts/kci.bat` is a front-end to the `kci-mode`.
+This installs:
 
-There can be a problem with newer Unices, because they have support
-for your natioonal language. Therefore, check the enviroment variable
-called `LANG` to see if it is set to `C`.
+* `bin/kc`: the compiler
+* `bin/kci`: a front end for mode 3 (see below)
+* `lib/libkcsolvers.a` and `include/kc/`: the numerical routines
+* `share/kc/kksolver.c`: the ODE solver that mode 3 models are compiled with
 
-Another thing is that you should create a new directories before
-installing. Let us assume you want to use the directory `DIR` as prefix
-(as mentioned above). You should them create the directories `DIR/num`
-and `DIR/bin`.
+kc reads a model description from standard input and writes code for the
+selected mode (`kc -h` lists the modes):
+
+```sh
+kc -m3 < test/lorenz.des        # writes model.c and model.h
+```
+
+`kci` does the whole round trip for mode 3: it generates the model, compiles
+it with kksolver and runs the simulation. The results are written to
+`kinwrkda` in the current directory.
+
+```sh
+kci test/lorenz.des
+```
+
+The compiler used by `kci` can be changed with the `CC` and `CFLAGS`
+environment variables.
+
+### Testing
+
+Every example in `test/` is run through all five modes and compared with the
+expected output in `test/expected/`. For mode 3 the generated model is also
+compiled and simulated.
+
+```sh
+ctest --test-dir build -j8
+```
+
+Numbers are compared with a relative tolerance, and timestamps are ignored.
+When kc rejects a model, its exit status is written to a `status` file and
+compared as well, so error handling is tested too.
+`test/skip.txt` lists known defects that are skipped for now. After an
+intended change of the output, rewrite the expected files with
+`KC_UPDATE=1 ctest --test-dir build` and review the diff.
 
 ## Legal issues
 

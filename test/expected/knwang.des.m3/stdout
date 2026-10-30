@@ -1,0 +1,26 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+   BrO3m()
+  *Brm()
+   H()
+  *HBrO2()
+  *BrMA()
+  *Ce4p()
+   MA()
+   P()
+Constants declared:
+  stime = 0.000000e+00
+  dtime = 1.000000e+00
+  etime = 4.000000e+03
+  epsr = 1.000000e-06
+  epsa = 1.000000e-20
+  Cetot = 1.330000e-03
+  kf1 = 4.000000e+00
+  kf2 = 2.000000e+06
+  kf3 = 3.000000e+03
+  kf4 = 6.200000e+04
+  kf5 = 3.000000e+01
+  kf6 = 2.500000e-01
+  kf7 = 3.000000e-02
+  kf8 = 7.000000e-04
+  datafile = "knw09"

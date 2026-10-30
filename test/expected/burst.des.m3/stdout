@@ -1,0 +1,32 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *HBrO2()
+   P()
+  *Br(1-)
+  *CeIV()
+  *HBrO()
+  *BrO2()
+  *BrMA()
+   BrO3(1-)
+   H(1+)
+   H2O()
+   CeIII()
+   MA()
+Parameters declared:
+  j0
+  kf6
+Constants declared:
+  dtime = 1.000000e+01
+  etime = 2.000000e+04
+  htime = 5.000000e-03
+  epsr = 1.000000e-04
+  epsa = 1.000000e-20
+  prnmode = 0.000000e+00
+  method = 4.000000e+00
+  stepadjust = 9.000000e-01
+  maxinc = 1.500000e+00
+  mindec = 5.000000e-01
+  htimemin = 1.000000e-20
+  ref = 3.000000e+00
+  C0 = 8.600000e-05
+  datafile = "burstdat1"

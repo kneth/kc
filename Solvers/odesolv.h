@@ -16,7 +16,7 @@
 #ifndef _ODE_SOLV_LIB_
 #define _ODE_SOLV_LIB_
 
-double **jacobi_matx;               /* global variable */
+extern double **jacobi_matx;        /* global variable */
 
 extern void  CalahanOneStep(int, double, double *, double *, 
 			    void (*f_)(double *, double *), 

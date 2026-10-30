@@ -1,0 +1,26 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *HBrO2()
+   P()
+  *Br(1-)
+  *Ce(4+)
+  *HBrO()
+   BrO3(1-)
+   H()
+Constants declared:
+  mixed = 2.000000e+00
+  kf1 = 2.000000e+00
+  kf2 = 3.000000e+06
+  kf3 = 4.200000e+01
+  kf4 = 3.000000e+03
+  kf5 = 1.040000e-01
+  kf6 = 8.000000e-02
+  kf7 = 1.400000e-01
+  j0 = 4.709600e-05
+  stime = 0.000000e+00
+  dtime = 1.000000e+00
+  etime = 1.600000e+04
+  epsr = 1.000000e-04
+  epsa = 1.000000e-14
+  debug = 1.000000e+00
+  ref = 3.000000e+00

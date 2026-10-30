@@ -1,0 +1,20 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *HBrO2()
+   P()
+  *Br(1-)
+  *CeIV()
+  *HBrO()
+  *BrO2()
+  *BrMA()
+   BrO3(1-)
+   H(1+)
+   H2O()
+   CeIII()
+   MA()
+Constants declared:
+  method = 1.000000e+00
+  stime = 0.000000e+00
+  dtime = 1.000000e+00
+  etime = 1.500000e+03
+  j0 = 8.500000e-05

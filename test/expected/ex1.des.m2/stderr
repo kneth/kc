@@ -1,0 +1,9 @@
+Line 33: syntax error at input text .
+ERROR: The constant ngrid is not defined!
+ERROR: The constant mgrid is not defined!
+ERROR: Diffusion coeff. for H2(0.000000e+00) not found
+ERROR: Diffusion coeff. for O2(0.000000e+00) not found
+ERROR: Diffusion coeff. for H2O(0.000000e+00) not found
+ERROR: Diffusion coeff. for H(1.000000e+00) not found
+ERROR: Diffusion coeff. for SO4(-2.000000e+00) not found
+ERROR: Diffusion coeff. for HSO4(-1.000000e+00) not found

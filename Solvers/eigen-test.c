@@ -11,12 +11,11 @@
 
 #include "eigen.h"
 #include "matrix.h"
-#include "complex.h"
 
 void main(void) {
 
   double **A;                /* matrices */
-  Complex *val, **vecs;
+  double complex *val, **vecs;
   int     i, j;
 
   A=MatrixAlloc(3);
@@ -32,11 +31,11 @@ void main(void) {
 
   printf("Eigenvalues:\n");
   for(i=0; i<3; i++)
-    printf("  (%e, %e)\n", val[i].re, val[i].im);
+    printf("  (%e, %e)\n", creal(val[i]), cimag(val[i]));
   printf("\nEigenvectors:\n");
   for(i=0; i<3; i++) {
     for(j=0; j<3; j++)
-      printf("  (%e, %e)\n", vecs[i][j].re, vecs[i][j].im);
+      printf("  (%e, %e)\n", creal(vecs[i][j]), cimag(vecs[i][j]));
     printf("\n");
   }
     
@@ -49,11 +48,11 @@ void main(void) {
 
   printf("Eigenvalues:\n");
   for(i=0; i<3; i++)
-    printf("  (%e, %e)\n", val[i].re, val[i].im);
+    printf("  (%e, %e)\n", creal(val[i]), cimag(val[i]));
   printf("\nEigenvectors:\n");
   for(i=0; i<3; i++) {
     for(j=0; j<3; j++)
-      printf("  (%e, %e)\n", vecs[i][j].re, vecs[i][j].im);
+      printf("  (%e, %e)\n", creal(vecs[i][j]), cimag(vecs[i][j]));
     printf("\n");
   }
 }

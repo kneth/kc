@@ -1,0 +1,28 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *A()
+  *B()
+Constants declared:
+The Jacobian matrix is:
+J(1, 1) =        nan
+J(1, 2) =        nan
+J(2, 1) =        nan
+J(2, 2) =        nan
+
+The eigenvalues are:
+  (           nan, 0.0000000000e+00)
+  (           nan, 0.0000000000e+00)
+
+The eigenvectors are:
+  (1.0000000000e+00, 0.0000000000e+00)
+  (0.0000000000e+00, 0.0000000000e+00)
+
+  (0.0000000000e+00, 0.0000000000e+00)
+  (1.0000000000e+00, 0.0000000000e+00)
+
+No. 0,REAL part: Left nan,  Right nan, Diff. nan
+No. 0,IM   part: Left nan,  Right nan, Diff nan
+No. 1,REAL part: Left nan,  Right nan, Diff. nan
+No. 1,IM   part: Left nan,  Right nan, Diff nan
+
+The eigenvalues 

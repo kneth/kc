@@ -1,0 +1,18 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *X
+  *Y
+  *Z
+Constants declared:
+  method = 1.000000e+00
+  mode = 0.000000e+00
+  screen = 1.000000e+00
+  prnmode = 0.000000e+00
+  stime = 0.000000e+00
+  dtime = 5.000000e-01
+  etime = 4.100000e+03
+  epsr = 1.000000e-08
+  epsa = 1.000000e-08
+  sigma = 1.600000e+01
+  gamma = 4.592000e+01
+  b = 4.000000e+00

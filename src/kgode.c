@@ -27,12 +27,10 @@
 
 void KGode(FILE* ccode, FILE *hcode) {
 
-  double  charge, temp, coeff;
+  double  charge, temp;
   char    *name, *rename, *strtmp;
   time_t  timer;
-  Tree    v_temp, tmp, temp_tree, tree_temp;
-  int     i, j, react_no, finished, constraint, dyn, dyn2;
-  int     ngrid, mgrid, boundary, jj;
+  int     i, j, constraint, dyn;
 
   name=StringAlloc();
   rename=StringAlloc();
@@ -56,6 +54,7 @@ void KGode(FILE* ccode, FILE *hcode) {
   fprintf(ccode, "**********************************************/\n");
   fprintf(ccode, "#include \"model.h\"\n");
   fprintf(ccode, "#include <math.h>\n");
+  fprintf(ccode, "#include <string.h>\n");
   i=NoOfSpec()+NumOfDynVar()-NumOfConstraint(); 
   fprintf(hcode, "#define equa %d\n", i);
   temp=GetConstant("mode");
@@ -230,7 +229,7 @@ void KGode(FILE* ccode, FILE *hcode) {
   for(i=1; i<=NumOfDynVar(); i++) {
     GetDynVarNo(i, name);
     fprintf(ccode, "(void) strcpy(species[%d], \"%s\");\n", 
-	    i+NoOfSpec()-NumOfConstraint()-IsNonAutoSystem()-1, name);
+	    i+NoOfSpec()-NumOfConstraint()-1, name);
   } /* for i */
   if (IsNonAutoSystem()==1)
     fprintf(ccode, "x_[equa-1]=stime_;\n");

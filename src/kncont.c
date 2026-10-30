@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <math.h>
 #include "config.h"
@@ -26,13 +27,13 @@
 
 void KnCont(FILE *pcode, FILE *hcode) {
 
-  double charge, temp, coeff, temp1, temp2;
+  double charge, temp, temp1, temp2;
   char   *name, *rename;
   time_t timer;
-  Tree   v_temp, tmp, temp_tree, tmp2;
-  int    i, j, k, l, react_no, finished, constraint, dyn, dyn2, dyn3, form;
+  Tree   tmp;
+  int    i, j, k, l, constraint, dyn, form;
   int    NumbOfParams, NumbOfDynVars;
-  int    need_dd_jac, BfErrorCode;
+  int    need_dd_jac=0, BfErrorCode;
 
   name=StringAlloc();
   rename=StringAlloc();
@@ -476,7 +477,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
 	GetLowHighPrefParam(name, &temp, &temp1, &temp2);
 	fprintf(pcode, "initxlow[n%d]:=%e;\n", i, temp);
 	fprintf(pcode, "initxupp[n%d]:=%e;\n", i, temp1);
-	if ((temp2>1.0) && (temp2<0.0))
+	if ((temp2>1.0) || (temp2<0.0))
 	  fprintf(pcode, "KnCont: Pref. for %s must between 0 and 1.\n", name);
 	else
 	  fprintf(pcode, "initpref[n%d]:=%e;\n", i, temp2);
@@ -494,7 +495,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
 	GetLowHighPrefConc(name, charge, &temp, &temp1, &temp2);
 	fprintf(pcode, "initxlow[n%d]:=%e;\n", i, temp);
 	fprintf(pcode, "initxupp[n%d]:=%e;\n", i, temp1);
-	if ((temp2>1.0) && (temp2<0.0))
+	if ((temp2>1.0) || (temp2<0.0))
 	  fprintf(pcode, "KnCont: Pref. for %s(%d) must between 0 and 1.\n",
 		  name, (int)charge);
 	else
@@ -713,7 +714,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
 	GetLowHighPrefParam(name, &temp, &temp1, &temp2);
 	fprintf(pcode, "initxlow[n%d]:=%e;\n", i, temp);
 	fprintf(pcode, "initxupp[n%d]:=%e;\n", i, temp1);
-	if ((temp2>1.0) && (temp2<0.0))
+	if ((temp2>1.0) || (temp2<0.0))
 	  fprintf(pcode, "KnCont: Pref. for %s must between 0 and 1.\n", name);
 	else
 	  fprintf(pcode, "initpref[n%d]:=%e;\n", i, temp2);
@@ -731,7 +732,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
 	GetLowHighPrefConc(name, charge, &temp, &temp1, &temp2);
 	fprintf(pcode, "initxlow[n%d]:=%e;\n", i, temp);
 	fprintf(pcode, "initxupp[n%d]:=%e;\n", i, temp1);
-	if ((temp2>1.0) && (temp2<0.0))
+	if ((temp2>1.0) || (temp2<0.0))
 	  fprintf(pcode, "KnCont: Pref. for %s(%d) must between 0 and 1.\n",
 		  name, (int)charge);
 	else

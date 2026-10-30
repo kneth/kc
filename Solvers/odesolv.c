@@ -55,6 +55,8 @@
 #include <time.h>
 #include "odesolv.h"
 
+double **jacobi_matx;
+
 /***************************************************************************
   The matrix manipulating routines like linear equation solvers are all
   implemented in a small library. It is imported below. 

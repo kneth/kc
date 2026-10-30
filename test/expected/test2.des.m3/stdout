@@ -1,0 +1,7 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *A()
+  *P()
+Constants declared:
+  k1 = 1.000000e+00
+  k2 = 2.000000e+00

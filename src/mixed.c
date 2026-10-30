@@ -23,8 +23,8 @@
 #include "misc.h"
 #include "codegen.h"
 #include "eigen.h"
-#include "complex.h"
 #include "matrix.h"
+#include "quench.h"
 
 void Mixed(void) {
   
@@ -35,13 +35,12 @@ void Mixed(void) {
   int     num_of_spec, max_iter,num_of_reac;
   double  angle,eps, sum_left, sum_right, sumfw, sumrv,sumfw_im,sumrv_im;
   double  qd, fd;
-  double  leftsc,rightsc;
   double  *am,*ph,*fu,*qu;
   double  *stconc, *reacfw_, *reacrv_, *flowfw, *flowrv;
   double  **jac_num;
   double  **QP, **INVQP;
   double  **reacfwds_, **reacrvds_;
-  Complex z_,*values, **vectors;
+  double complex z_, *values, **vectors;
 
   name=StringAlloc();
   rename=StringAlloc();
@@ -86,7 +85,7 @@ void Mixed(void) {
   if (GetError()==NoError) 
     eps=temp;
   else
-    temp=1.0e-18;
+    eps=1.0e-18;
   temp=GetConstant("maxiter");
   if (GetError()==NoError)
     max_iter=(int)temp;
@@ -227,12 +226,12 @@ void Mixed(void) {
     
     printf("\nThe eigenvalues are:\n");
     for(i=0; i<num_of_spec; i++)
-      printf("  (%14.10e, %14.10e)\n", values[i].re, values[i].im);
+      printf("  (%14.10e, %14.10e)\n", creal(values[i]), cimag(values[i]));
 
     printf("\nThe eigenvectors are:\n");
     for(i=0; i<num_of_spec; i++) {
       for(j=0; j<num_of_spec; j++)
-	printf("  (%14.10e, %14.10e)\n", vectors[i][j].re, vectors[i][j].im);
+	printf("  (%14.10e, %14.10e)\n", creal(vectors[i][j]), cimag(vectors[i][j]));
       printf("\n");
     } /* for i */
 
@@ -240,15 +239,15 @@ void Mixed(void) {
     for(i=0; i<num_of_spec; i++) {
       sum_left=  0.0; sum_right= 0.0;
       for(j=0; j<num_of_spec; j++) {
-        sum_left +=  jac_num[i][j]*vectors[i][j].re;
+        sum_left +=  jac_num[i][j]*creal(vectors[i][j]);
       } /* for j */
-      sum_right+= values[i].re*vectors[i][i].re-values[i].im*vectors[i][i].im;
+      sum_right+= creal(values[i]*vectors[i][i]);
       printf("No. %d,REAL part: Left %e,  Right %e, Diff. %e\n",i,sum_left,sum_right,sum_left-sum_right);
       sum_left=  0.0; sum_right= 0.0;
       for(j=0; j<num_of_spec; j++) {
-        sum_left +=  jac_num[i][j]*vectors[i][j].im;
+        sum_left +=  jac_num[i][j]*cimag(vectors[i][j]);
       } /* for j */
-      sum_right+= values[i].re*vectors[i][i].im+values[i].im*vectors[i][i].re;
+      sum_right+= cimag(values[i]*vectors[i][i]);
       printf("No. %d,IM   part: Left %e,  Right %e, Diff %e\n",
 	     i, sum_left, sum_right, sum_left-sum_right);
     } /* for i */
@@ -269,15 +268,15 @@ void Mixed(void) {
     } /* for l  */
     i=0;
     do {
-      if (values[i].im != 0.0) {
+      if (cimag(values[i]) != 0.0) {
         for (j=0;j<num_of_spec;j++) {
-          QP[j][i]= vectors[i][j].re;
-          QP[j][i+1]= vectors[i][j].im;
+          QP[j][i]= creal(vectors[i][j]);
+          QP[j][i+1]= cimag(vectors[i][j]);
         }
         i+=2;
       } else {
         for (j=0;j<num_of_spec;j++) 
-  	QP[j][i]= vectors[i][j].re;
+  	QP[j][i]= creal(vectors[i][j]);
         i+=1;
       }
     } while (i<num_of_spec);
@@ -311,25 +310,25 @@ void Mixed(void) {
     printf("\n");
     i=0;
     do {
-      if (values[i].im != 0.0) {
+      if (cimag(values[i]) != 0.0) {
 	printf("\n");
 	printf("Eigenvector no. %d. Complex.\n",i+1);
 	for(j=0;j<num_of_reac;j++) {
 	  sumfw= 0.0; sumrv= 0.0;
 	  sumfw_im= 0.0; sumrv_im= 0.0;
 	  for(k=0;k<num_of_spec;k++) {
-	    sumfw += reacfwds_[j][k]*vectors[i][k].re;
-	    sumrv += reacrvds_[j][k]*vectors[i][k].re;
-	    sumfw_im += reacfwds_[j][k]*vectors[i][k].im;
-	    sumrv_im += reacrvds_[j][k]*vectors[i][k].im;
+	    sumfw += reacfwds_[j][k]*creal(vectors[i][k]);
+	    sumrv += reacrvds_[j][k]*creal(vectors[i][k]);
+	    sumfw_im += reacfwds_[j][k]*cimag(vectors[i][k]);
+	    sumrv_im += reacrvds_[j][k]*cimag(vectors[i][k]);
 	  } /* for k */
-	  ComplexAssign(sumfw,1.0*sumfw_im,&z_);
-	  angle= 57.296*ComplexArg(z_);
-	  printf("Flow in reaction no. %d. FW: Ampl.: %e  , Phase: %e\n",j,ComplexNorm(z_),angle); 
+	  z_= sumfw + sumfw_im*I;
+	  angle= 57.296*carg(z_);
+	  printf("Flow in reaction no. %d. FW: Ampl.: %e  , Phase: %e\n",j,cabs(z_),angle); 
 	  if ((sumrv !=0.0)||(sumrv_im != 0.0)) {
-	    ComplexAssign(sumrv,1.0*sumrv_im,&z_);
-	    angle= 57.296*ComplexArg(z_);
-	    printf("Flow in reaction no. %d.RV: Ampl.: %e  , Phase: %e\n",j,ComplexNorm(z_),angle); 
+	    z_= sumrv + sumrv_im*I;
+	    angle= 57.296*carg(z_);
+	    printf("Flow in reaction no. %d.RV: Ampl.: %e  , Phase: %e\n",j,cabs(z_),angle); 
 	  }
 	} /* for j */
 	i+=2;
@@ -339,8 +338,8 @@ void Mixed(void) {
 	for(j=0;j<num_of_reac;j++) {
 	  sumfw= 0.0; sumrv= 0.0;
 	  for(k=0;k<num_of_spec;k++) {
-	    sumfw += reacfwds_[j][k]*vectors[i][k].re;
-	    sumrv += reacrvds_[j][k]*vectors[i][k].re;
+	    sumfw += reacfwds_[j][k]*creal(vectors[i][k]);
+	    sumrv += reacrvds_[j][k]*creal(vectors[i][k]);
 	  } /* for k */
 	  flowfw[j] = sumfw;
 	  flowrv[j] = sumrv;

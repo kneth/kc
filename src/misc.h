@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-int         verbose;         /* 1==verbose on */
+extern int  verbose;         /* 1==verbose on */
 extern void write0(char *);
 extern void write1(char *, double);
 extern void write2(char *, double, double);

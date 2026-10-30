@@ -21,9 +21,11 @@
 #include "tableman.h"
 #include "misc.h"
 
+int verbose;         /* 1==verbose on */
+
 void write0(char *str) {
 
-  printf(str);
+  fputs(str, stdout);
   printf("\n");
 }
 
@@ -114,5 +116,5 @@ char *StringAlloc(void) {
 
 void StringFree(char *str) {
 
-  free((MALLOCTYPE *)str);
+  free(str);
 } /* StringFree */
