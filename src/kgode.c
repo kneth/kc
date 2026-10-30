@@ -228,7 +228,7 @@ void KGode(FILE* ccode, FILE *hcode) {
   for(i=1; i<=NumOfDynVar(); i++) {
     GetDynVarNo(i, name);
     fprintf(ccode, "(void) strcpy(species[%d], \"%s\");\n", 
-	    i+NoOfSpec()-NumOfConstraint()-IsNonAutoSystem()-1, name);
+	    i+NoOfSpec()-NumOfConstraint()-1, name);
   } /* for i */
   if (IsNonAutoSystem()==1)
     fprintf(ccode, "x_[equa-1]=stime_;\n");
