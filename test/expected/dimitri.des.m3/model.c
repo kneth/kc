@@ -5,6 +5,7 @@
 **********************************************/
 #include "model.h"
 #include <math.h>
+#include <string.h>
 void reac(double* S_, double* v_) {
 int j_;
 double S1;

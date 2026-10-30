@@ -67,7 +67,7 @@ set_target_properties(runner PROPERTIES C_STANDARD 17 C_EXTENSIONS OFF)
 target_link_libraries(runner PRIVATE m)
 target_compile_definitions(runner PRIVATE
   KC_CC="${CMAKE_C_COMPILER}"
-  KC_SIM_CFLAGS="-w -std=gnu89"
+  KC_SIM_CFLAGS="-w -std=c17"
   KC_SOLVERS="${CMAKE_CURRENT_SOURCE_DIR}/Solvers"
   KC_SOLVERS_LIB="$<TARGET_FILE:kcsolvers>"
   KC_SKIP_LIST="${CMAKE_CURRENT_SOURCE_DIR}/test/skip.txt")

@@ -54,6 +54,7 @@ void KGode(FILE* ccode, FILE *hcode) {
   fprintf(ccode, "**********************************************/\n");
   fprintf(ccode, "#include \"model.h\"\n");
   fprintf(ccode, "#include <math.h>\n");
+  fprintf(ccode, "#include <string.h>\n");
   i=NoOfSpec()+NumOfDynVar()-NumOfConstraint(); 
   fprintf(hcode, "#define equa %d\n", i);
   temp=GetConstant("mode");
