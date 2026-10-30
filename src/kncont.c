@@ -476,7 +476,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
 	GetLowHighPrefParam(name, &temp, &temp1, &temp2);
 	fprintf(pcode, "initxlow[n%d]:=%e;\n", i, temp);
 	fprintf(pcode, "initxupp[n%d]:=%e;\n", i, temp1);
-	if ((temp2>1.0) && (temp2<0.0))
+	if ((temp2>1.0) || (temp2<0.0))
 	  fprintf(pcode, "KnCont: Pref. for %s must between 0 and 1.\n", name);
 	else
 	  fprintf(pcode, "initpref[n%d]:=%e;\n", i, temp2);
@@ -494,7 +494,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
 	GetLowHighPrefConc(name, charge, &temp, &temp1, &temp2);
 	fprintf(pcode, "initxlow[n%d]:=%e;\n", i, temp);
 	fprintf(pcode, "initxupp[n%d]:=%e;\n", i, temp1);
-	if ((temp2>1.0) && (temp2<0.0))
+	if ((temp2>1.0) || (temp2<0.0))
 	  fprintf(pcode, "KnCont: Pref. for %s(%d) must between 0 and 1.\n",
 		  name, (int)charge);
 	else
@@ -713,7 +713,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
 	GetLowHighPrefParam(name, &temp, &temp1, &temp2);
 	fprintf(pcode, "initxlow[n%d]:=%e;\n", i, temp);
 	fprintf(pcode, "initxupp[n%d]:=%e;\n", i, temp1);
-	if ((temp2>1.0) && (temp2<0.0))
+	if ((temp2>1.0) || (temp2<0.0))
 	  fprintf(pcode, "KnCont: Pref. for %s must between 0 and 1.\n", name);
 	else
 	  fprintf(pcode, "initpref[n%d]:=%e;\n", i, temp2);
@@ -731,7 +731,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
 	GetLowHighPrefConc(name, charge, &temp, &temp1, &temp2);
 	fprintf(pcode, "initxlow[n%d]:=%e;\n", i, temp);
 	fprintf(pcode, "initxupp[n%d]:=%e;\n", i, temp1);
-	if ((temp2>1.0) && (temp2<0.0))
+	if ((temp2>1.0) || (temp2<0.0))
 	  fprintf(pcode, "KnCont: Pref. for %s(%d) must between 0 and 1.\n",
 		  name, (int)charge);
 	else
