@@ -31,7 +31,12 @@ alphabet    ({Digit}|{Letter})
 "atanh"  return fun_atanh;
 
 (({Digit}+)|({Digit}*\.{Digit}+)([eELl][-+]?{Digit}+)?) { num(); yylval.dval=value; return numbers; }
-{Letter}({Digit}|{Letter})* { (void) strcpy(yylval.name, yytext); return names; } 
+{Letter}({Digit}|{Letter})* { if (yyleng>=STRING_LENGTH) {
+                                fprintf(stderr, "Line %d: name %s is longer than %d characters\n",
+                                        lineno, yytext, STRING_LENGTH-1);
+                                exit(EXIT_FAILURE);
+                              } /* if */
+                              (void) strcpy(yylval.name, yytext); return names; }
 "#parameter" return param;
 "#print" return print;
 "'"      return prime;

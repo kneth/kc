@@ -1,0 +1,6 @@
+/* Names longer than 24 characters must be rejected (they overflowed a buffer). */
+etime = 1.0;
+
+averyveryveryverylongname123' = -averyveryveryverylongname123;
+
+averyveryveryverylongname123(0) = 1.0;
