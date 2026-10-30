@@ -1,0 +1,8 @@
+/* A comment that is never closed must be reported (kc used to hang). */
+etime = 1.0;
+
+x' = -x;
+
+x(0) = 1.0;
+
+/* not closed

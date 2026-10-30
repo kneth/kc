@@ -1,8 +1,7 @@
 %option noyywrap
 %option nounput
 %{
-static void CommentC(void);
-static void CommentPas(void);
+static void Comment(int close);
 static void num(void);
 %}
 Digit       [0-9]
@@ -12,8 +11,8 @@ alphabet    ({Digit}|{Letter})
 %%
 [ \t] ;
 \n   lineno++;
-"/*" { CommentC(); }
-"(*" { CommentPas(); }
+"/*" { Comment('/'); }
+"(*" { Comment(')'); }
 
 "exp"    return fun_exp;
 "log"    return fun_log;
@@ -62,28 +61,18 @@ alphabet    ({Digit}|{Letter})
 "\""     return quotation;
 
 %%
-static void CommentC(void)
-{ char c;
-  int finished;
+/* Skips a comment up to and including the closing '*' followed by CLOSE. */
+static void Comment(int close)
+{ int c, prev=0, start=lineno;
 
-  finished=0;
-  while (finished==0) {
-    while (input()!='*') /* nothing */;
-    if ((c=input())=='/') finished=1;
+  while ((c=input())!=EOF && c!=0) {
+    if ((prev=='*') && (c==close))
+      return;
+    prev=c;
   } /* while */
-} /* Comment */       
-
-static void CommentPas(void)
-{ char c;
-  int finished;
-
-  finished=0;
-  while (finished==0) {
-    while (input()!='*') /* nothing */;
-    if ((c=input())==')') finished=1;
-  } /* while */
-} /* Comment */       
-
+  fprintf(stderr, "Line %d: comment is not closed\n", start);
+  exit(EXIT_FAILURE);
+} /* Comment */
 
 static void num(void) {
   
