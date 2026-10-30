@@ -25,6 +25,7 @@
 #include "eigen.h"
 #include "complex.h"
 #include "matrix.h"
+#include "quench.h"
 
 void Mixed(void) {
   
@@ -35,7 +36,6 @@ void Mixed(void) {
   int     num_of_spec, max_iter,num_of_reac;
   double  angle,eps, sum_left, sum_right, sumfw, sumrv,sumfw_im,sumrv_im;
   double  qd, fd;
-  double  leftsc,rightsc;
   double  *am,*ph,*fu,*qu;
   double  *stconc, *reacfw_, *reacrv_, *flowfw, *flowrv;
   double  **jac_num;

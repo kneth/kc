@@ -6,13 +6,13 @@ include(GNUInstallDirs)
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
-# The legacy sources still rely on pre-C99 behaviour (implicit
-# declarations, tentative definitions shared between translation units).
-# These flags are temporary and are removed once the code is cleaned up.
-set(CMAKE_C_STANDARD 90)
-set(CMAKE_C_EXTENSIONS ON)
-add_compile_definitions(_PLATFORM_GCC_)
-add_compile_options(-fcommon -Wno-implicit-function-declaration -Wno-implicit-int)
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 17)
+endif()
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+add_compile_definitions(_POSIX_C_SOURCE=200809L)  # getopt, fileno
+add_compile_options(-Wall -Wextra -Wpedantic)
 
 # Numerical library: linked into kc and into generated simulators.
 add_library(kcsolvers STATIC
@@ -67,7 +67,7 @@ set_target_properties(runner PROPERTIES C_STANDARD 17 C_EXTENSIONS OFF)
 target_link_libraries(runner PRIVATE m)
 target_compile_definitions(runner PRIVATE
   KC_CC="${CMAKE_C_COMPILER}"
-  KC_SIM_CFLAGS="-w -std=gnu89 -D_PLATFORM_GCC_"
+  KC_SIM_CFLAGS="-w -std=gnu89"
   KC_SOLVERS="${CMAKE_CURRENT_SOURCE_DIR}/Solvers"
   KC_SOLVERS_LIB="$<TARGET_FILE:kcsolvers>"
   KC_SKIP_LIST="${CMAKE_CURRENT_SOURCE_DIR}/test/skip.txt")

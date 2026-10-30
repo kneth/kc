@@ -34,11 +34,10 @@ void AddFullstops(char* str) {
 
 void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
 
-  double  charge, temp, coeff;
+  double  charge, temp;
   char    name[STRING_LENGTH], rename[STRING_LENGTH];
   time_t  timer;
-  Tree    v_temp, tmp, temp_tree;
-  int     i, j, react_no, finished, constraint, dyn, dyn2;
+  int     i, j, constraint, dyn;
 
   timer=time(&timer);
 

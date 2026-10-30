@@ -35,12 +35,17 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 
 #ifndef TINY
 #  define TINY 1.0e-18
 #endif
 
 #include "matrix.h"
+
+double **A_fixed;
+double *x_fixed, *s_fixed;
+int    *p_fixed, n_fixed;
 
 /*****************************************************************************
   MatrixAlloc allocates storage for a square matrix with dimension
@@ -183,8 +188,8 @@ void MatrixFree(const int n, double **matrix) {
   int i;
 
   for(i=0; i<n; i++)
-    free((MALLOCTYPE *)matrix[i]);
-  free((MALLOCTYPE *)matrix);
+    free(matrix[i]);
+  free(matrix);
 } /* MatrixFree */
 
 void ComplexMatrixFree(const int n, Complex **matrix) {
@@ -192,23 +197,26 @@ void ComplexMatrixFree(const int n, Complex **matrix) {
   int i;
 
   for(i=0; i<n; i++)
-    free((MALLOCTYPE *)matrix[i]);
-  free((MALLOCTYPE *)matrix);
+    free(matrix[i]);
+  free(matrix);
 } /* ComplexMatrixFree */
 
 void VectorFree(const int n, double *vector) {
 
-  free((MALLOCTYPE *)vector);
+  (void)n;
+  free(vector);
 } /* VectorFree */
 
 void IntVectorFree(const int n, int *vector) {
 
-  free((MALLOCTYPE *)vector);
+  (void)n;
+  free(vector);
 } /* IntVectorFree */
 
 void ComplexVectorFree(const int n, Complex *vector) {
 
-  free((MALLOCTYPE *)vector);
+  (void)n;
+  free(vector);
 } /* ComplexVectorFree */
 
 

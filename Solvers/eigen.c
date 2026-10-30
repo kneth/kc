@@ -81,7 +81,7 @@ void NormalizingMatrix(int n, double **A, int fixedref, int *ref,
 
   int      j, col, block;
   Complex  c1, c2, c3;
-  double   cd1, cd2, sqrnorm, norm, normi, max;
+  double   sqrnorm, norm, max;
 
   col=1;
   do {
@@ -123,9 +123,9 @@ void Permutation(int n, double **P, double **A, double **B, int colon,
 		 double eps) {
 
   int      *nr;
-  int      block, OK;
-  double   max, y, x;
-  int      im, j, ki, u, v, i, k, ii;
+  int      block;
+  double   max, x;
+  int      im, j, ki, u, i, k, ii;
   double   **AA;
 
   nr=IntVectorAlloc(n);
@@ -225,7 +225,6 @@ void Swap(int n, double **A, double **B, double epsx) {
 
   double **PR, **PS;
   double **temp;
-  int      i, j;
   
   PR=MatrixAlloc(n);
   PS=MatrixAlloc(n);
@@ -401,31 +400,31 @@ void Elmhes(int n, int k, int l, double **a, int *index) {
 	x=a[j-1][m-2];
 	i=j;
       } /* if */
-      index[m-1]=i;
-      if (i!=m) {
-	for(j=(m-1); j<=n; j++) {
-	  y=a[i-1][j-1];
-	  a[i-1][j-1]=a[m-1][j-1];
-	  a[m-1][j-1]=y;
-	} /* for j */
-	for(j=1; j<=l; j++) {
-	  y=a[j-1][i-1];
-	  a[j-1][i-1]=a[j-1][m-1];
-	  a[j-1][m-1]=y;
-	} /* for j */
-      } /* if */
-      if (x!=0.0) 
-	for(i=(m+1); i<=l; i++) {
-	  y=a[i-1][m-2];
-	  if (y!=0.0) {
-	    a[i-1][m-2]=y/x;
-	    y/=x;
-	    for(j=m; j<=n; j++)
-	      a[i-1][j-1]-=y*a[m-1][j-1];
-	    for(j=1; j<=l; j++)
-	      a[j-1][m-1]+=y*a[j-1][i-1];
-	  } /* if */
-	} /* for i */
+    index[m-1]=i;
+    if (i!=m) {
+      for(j=(m-1); j<=n; j++) {
+	y=a[i-1][j-1];
+	a[i-1][j-1]=a[m-1][j-1];
+	a[m-1][j-1]=y;
+      } /* for j */
+      for(j=1; j<=l; j++) {
+	y=a[j-1][i-1];
+	a[j-1][i-1]=a[j-1][m-1];
+	a[j-1][m-1]=y;
+      } /* for j */
+    } /* if */
+    if (x!=0.0) 
+      for(i=(m+1); i<=l; i++) {
+	y=a[i-1][m-2];
+	if (y!=0.0) {
+	  a[i-1][m-2]=y/x;
+	  y/=x;
+	  for(j=m; j<=n; j++)
+	    a[i-1][j-1]-=y*a[m-1][j-1];
+	  for(j=1; j<=l; j++)
+	    a[j-1][m-1]+=y*a[j-1][i-1];
+	} /* if */
+      } /* for i */
   } /* for m */
 } /* Elmhes */
 
@@ -458,7 +457,7 @@ void hqr2(int n, int low, int upp, int maxits, double macheps,
           double **h, double **vecs, double *wr,
           double *wi, int *cnt, int *fail) {
 
-  int     i, j, k, l, m, na, its, en, dummy;
+  int     i, j, k, l, m, na, its, en;
   double  p, q, r, s, t, w, x, y, z, ra, sa, vr, vi, norm;
   int     notlast;
   Complex c1, c2, c3;
@@ -607,7 +606,7 @@ void hqr2(int n, int low, int upp, int maxits, double macheps,
     } /* for i */
 
   L233:
-    dummy=0; 
+    ; 
   } /* for k */
   goto L220;
   
@@ -824,14 +823,14 @@ void hqr2(int n, int low, int upp, int maxits, double macheps,
   } /* for j */
   
  L270:
-  dummy=0;
+  ;
 } /* hqr2 */
 	  
 void Eigen(int n, int ref, double **AJAC, int maxit, double eps, 
 	   int fixedref, Complex *values, Complex **vectors) {
 
   double  *wr, *wi, *bald, **T, **A;
-  int     i, j, ballow, balhi, max, block;
+  int     i, j, ballow, balhi, block;
   int     *intout;
   int     fail;
 

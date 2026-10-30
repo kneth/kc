@@ -34,7 +34,6 @@ void compamppha(int n, double **P, double *amp, double *phase) {
 
    int   i;
    Complex z;
-   double hlp;
 
    for(i=0;i<n;i++) {
      ComplexAssign(P[i][0],P[i][1],&z);

@@ -27,12 +27,10 @@
 
 void KGode(FILE* ccode, FILE *hcode) {
 
-  double  charge, temp, coeff;
+  double  charge, temp;
   char    *name, *rename, *strtmp;
   time_t  timer;
-  Tree    v_temp, tmp, temp_tree, tree_temp;
-  int     i, j, react_no, finished, constraint, dyn, dyn2;
-  int     ngrid, mgrid, boundary, jj;
+  int     i, j, constraint, dyn;
 
   name=StringAlloc();
   rename=StringAlloc();

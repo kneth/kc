@@ -14,9 +14,9 @@
   Last updated: 25 July 1994
 **************************************************************************/
 
-#ifdef _CODECALL_
+#ifndef _CODECALL_
 #define _CODECALL_
 
-void extern CodeGenCall(int);
+extern void CodeGenCall(int);
 #endif
 

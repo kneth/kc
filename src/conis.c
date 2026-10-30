@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <math.h>
 #include "config.h"
@@ -26,13 +27,12 @@
 
 void ConIS(FILE *fcode) {
 
-  double charge, temp, coeff, temp1, temp2;
+  double charge;
   char   *name, *rename;
   time_t timer;
-  Tree   v_temp, tmp, temp_tree, tmp2;
-  int    i, j, k, l, react_no, finished, constraint, dyn, dyn2, dyn3, form;
+  Tree   tmp;
+  int    i, j, constraint, dyn, form;
   int    NumbOfParams, NumbOfDynVars;
-  int    need_dd_jac, BfErrorCode;
 
   name=StringAlloc();
   rename=StringAlloc();
@@ -136,7 +136,7 @@ void ConIS(FILE *fcode) {
   
   for(i=1; i<=NumbOfDynVars; i++) {
     for(j=1; j<=NumbOfDynVars; j++) {
-      temp=TreeEval(jacobi[i-1][j-1]);
+      (void) TreeEval(jacobi[i-1][j-1]);
       fprintf(fcode, "      gvar(%d,%d) = ", i, j);
       TreePrint(jacobi[i-1][j-1], 1, fcode);
       fprintf(fcode, "\n");

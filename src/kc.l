@@ -1,4 +1,10 @@
 %option noyywrap
+%option nounput
+%{
+static void CommentC(void);
+static void CommentPas(void);
+static void num(void);
+%}
 Digit       [0-9]
 Letter      [A-Za-z]
 Sign        "-"|"+"
@@ -42,7 +48,6 @@ alphabet    ({Digit}|{Letter})
 "k<"     { strcpy(yylval.name, "k"); return rightarr; }
 "v>"     { strcpy(yylval.name, "v"); return leftarr; }
 "v<"     { strcpy(yylval.name, "v"); return rightarr; }
-"K"      return K;    
 "+"      return plus;
 "-"      return minus;
 "**"     return powop;
@@ -57,7 +62,7 @@ alphabet    ({Digit}|{Letter})
 "\""     return quotation;
 
 %%
-CommentC() 
+static void CommentC(void)
 { char c;
   int finished;
 
@@ -68,7 +73,7 @@ CommentC()
   } /* while */
 } /* Comment */       
 
-CommentPas() 
+static void CommentPas(void)
 { char c;
   int finished;
 
@@ -80,34 +85,20 @@ CommentPas()
 } /* Comment */       
 
 
-incl() {
-
-  int i, start;
-
-  i=8; 
-  while (yytext[i]==' ') i++;
-  start=i;
-  while (yytext[i]!='\0') { yytext[i-start]=yytext[i]; i++; }
-  yytext[i]='\0';
-} /* incl */
-
-num() {
+static void num(void) {
   
   float temp;
-  int i;
+  size_t i;
 
   for(i=0; i<strlen(yytext); i++)
     if ((yytext[i]=='L') || (yytext[i]=='l'))
       yytext[i]='e';
-#ifdef _PLATFORM_AIX_
-  sscanf((char *)yytext, "%e", &temp);
-#else
   sscanf(yytext, "%e", &temp);
-#endif
   value=(double)temp;
 } /* num */
 
 int yyerror(char *s) {
 
   fprintf(stderr, "Line %d: %s at input text %s\n", lineno, s, yytext);
+  return 0;
 } /* yyerror */

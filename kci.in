@@ -14,6 +14,6 @@ trap 'rm -rf "$work"' EXIT
 
 (cd "$work" && "$prefix/@CMAKE_INSTALL_BINDIR@/kc" -m3 -v) < "$1"
 cp "$prefix/@CMAKE_INSTALL_DATADIR@/kc/kksolver.c" "$work"
-${CC:-cc} ${CFLAGS:--O2} -D_PLATFORM_GCC_ -I"$work" -I"$prefix/@CMAKE_INSTALL_INCLUDEDIR@/kc" \
+${CC:-cc} ${CFLAGS:--O2} -I"$work" -I"$prefix/@CMAKE_INSTALL_INCLUDEDIR@/kc" \
   "$work/kksolver.c" -L"$prefix/@CMAKE_INSTALL_LIBDIR@" -lkcsolvers -lm -o "$work/sim"
 "$work/sim"

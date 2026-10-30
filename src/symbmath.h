@@ -47,9 +47,9 @@ struct TreeCell {
 typedef struct TreeCell TreeNode;
 typedef TreeNode *Tree;
 
-int           tree_error, len, left, right;
+extern int    tree_error, len, left, right;
 
-extern int    TreeGetError();
+extern int    TreeGetError(void);
 extern Tree   TreeCreate(void);
 extern void   TreeAdd(Tree, Tree);
 extern void   TreeSub(Tree, Tree);

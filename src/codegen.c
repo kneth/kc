@@ -21,11 +21,18 @@
 #include "codegen.h"
 #include "misc.h"
 
-#ifdef _USE_GARBAGE_COL_
-#  include <gc.h>
-#else
-#  include <stdlib.h>
-#endif
+#include <stdlib.h>
+
+/* Global variables which can be used by the code generators. */
+Tree *v;
+Tree *con;
+Tree **jacobi;
+Tree ***hess;
+Tree ****keld;
+Tree *rfw;
+Tree *rrv;
+Tree **rfwds;
+Tree **rrvds;
 
 /***************************************************************************** 
   Code generator independent routines (exported).
@@ -36,28 +43,6 @@ void InitCodeGenVar(int n, int m, int r) {
 
   int i, j, k;
 
-#ifdef _USE_GARBAGE_COL_
-  v=(Tree *)GC_malloc(n*sizeof(Tree));
-  con=(Tree *)GC_malloc(m*sizeof(Tree));
-  jacobi=(Tree **)GC_malloc(n*sizeof(Tree *));
-  for(i=0; i<n; i++) 
-    jacobi[i]=(Tree *)GC_malloc(n*sizeof(Tree));
-  hess=(Tree ***)GC_malloc(n*sizeof(Tree **));
-  for(i=0; i<n; i++) {
-    hess[i]=(Tree **)GC_malloc(n*sizeof(Tree *));
-    for(j=0; j<n; j++)
-      hess[i][j]=(Tree *)GC_malloc(n*sizeof(Tree));
-  } /* for i */
-  keld=(Tree ****)GC_malloc(n*sizeof(Tree ***));
-  for(i=0; i<n; i++) {
-    keld[i]=(Tree ***)GC_malloc(n*sizeof(Tree **));
-    for(j=0; j<n; j++) {
-      keld[i][j]=(Tree **)GC_malloc(n*sizeof(Tree *));
-      for(k=0; k<n; k++)
-	keld[i][j][k]=(Tree *)GC_malloc(n*sizeof(Tree));
-    } /* for j */
-  } /* for i */
-#else
   v=(Tree *)calloc(n, sizeof(TreeNode));
   con=(Tree *)calloc(m, sizeof(TreeNode));
   jacobi=(Tree **)calloc(n, sizeof(TreeNode *));
@@ -95,28 +80,21 @@ void InitCodeGenVar(int n, int m, int r) {
     for(i=0; i<n; i++) 
       rrvds[i]=(Tree *)calloc(n, sizeof(TreeNode));
   }
-#endif
 } /* InitCodeGenVar */
 
 
 void GenerateRateExpr(void) {
 
   double charge, temp, coeff;
-  char   *name, *rename, *strtmp;
-  Tree   v_temp, tmp, temp_tree, tree_temp;
-  Tree   *v_store, v_tree, *r;
-  int    i, j, react_no, finished, constraint, dyn, dyn2;
+  char   *name, *rename;
+  Tree   v_temp, tmp, temp_tree;
+  Tree   *v_store, *r;
+  int    i, j, react_no, finished, constraint, dyn;
 
-#ifdef _USE_GARBAGE_COL_
-  v_store=(Tree *)GC_malloc((NoOfSpec()-NumOfConstraint()+NumOfDynVar()+IsNonAutoSystem())*sizeof(Tree));
-  r=(Tree *)GC_malloc((ExprSize+SymSize)*sizeof(Tree));
-#else
   v_store=(Tree *)calloc(NoOfSpec()-NumOfConstraint()+NumOfDynVar()+IsNonAutoSystem(), sizeof(Tree));
   r=(Tree *)calloc((ExprSize+SymSize), sizeof(Tree));
-#endif
   name=StringAlloc();
   rename=StringAlloc();
-  strtmp=StringAlloc();
 
   /* process constraints */
   for(i=1; i<=NumOfConstraint(); i++) { 
@@ -296,11 +274,10 @@ void GenerateRateExpr(void) {
 
 void GenerateJacobi(void) {
 
-  double charge, temp, coeff;
+  double charge;
   char   *name, *rename, *strtmp;
-  Tree   v_temp, tmp, temp_tree;
-  int    i, j, react_no, finished, constraint, dyn, dyn2, dyn3;
-  int    jj;
+  Tree   tmp, temp_tree;
+  int    i, j, dyn, dyn2;
 
   name=StringAlloc();
   rename=StringAlloc();
@@ -325,7 +302,7 @@ void GenerateJacobi(void) {
 	  tmp=TreeCreate();
 	  TreeCpy(tmp, temp_tree);
 	  TreeKill(temp_tree);
-	  temp=TreeEval(tmp);
+	  (void) TreeEval(tmp);
 	  TreeCpy(jacobi[dyn-1][dyn2-1], tmp);
 	  dyn2++;
 	} /* if */
@@ -409,7 +386,7 @@ void GenerateHessian(void) {
 
 void EvalJacobian(double *x, double **jac) {
 
-  int     dyn, dyn1, dyn2, i, j, l;
+  int     dyn, dyn2, i, j, l;
   Tree    tmp;
   double  charge;
   char    *name, *rename;
@@ -493,12 +470,11 @@ void GenerateDiffReac(void) {
 
   double charge;
   char   *name, *rename;
-  int    i, j, NumInd, NumbOfDynVars,dyn;
+  int    i, j, dyn;
 
   name=StringAlloc();
   rename=StringAlloc();
 
-  NumbOfDynVars=NoOfSpec()+NumOfDynVar()-NumOfConstraint();
   for(i=1; i<=NoOfReact(); i++) {
     dyn=0;
     for(j=1; j<=NoOfSpec(); j++) {

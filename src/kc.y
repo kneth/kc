@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <float.h>
 #include "symbmath.h"
 #include "tableman.h"
@@ -42,6 +43,9 @@ double     coeff, charge, value, temp, temp1, temp2;
 char       flag, name[STRING_LENGTH], string[STRING_LENGTH];
 int        i, j, side, lineno=1;
 Tree       tmp;
+
+int yylex(void);
+int yyerror(char *);
 %}
 
 %union {
@@ -252,12 +256,12 @@ pentry    : names equal expr comma expr comma expr comma expr comma expr comma e
 	    | conc equal expr comma expr comma expr comma expr comma expr comma expr
 	    { temp=TreeEval($3);
 	      if (TreeGetError()==NoEval)
-		fprintf(stderr, "WARNING: Could not evaluate expr in line %\n", lineno);
+		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
 	      else
 		NewParamConc($1.name, $1.charge, temp);
 	      temp=TreeEval($5);
 	      if (TreeGetError()==NoEval)
-		fprintf(stderr, "WARNING: Could not evaluate expr in line %\n", lineno);
+		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
 	      TreeKill($3);
 	      TreeKill($5);
 	      temp1=TreeEval($7);

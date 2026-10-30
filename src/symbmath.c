@@ -21,11 +21,9 @@
 #include "symbmath.h" 
 #include "misc.h"
 
-#ifdef _USE_GARBAGE_COL_
-#  include <gc.h>
-#else                    /* use ordinary malloc */
-#  include <stdlib.h>
-#endif
+#include <stdlib.h>
+
+int tree_error, len, left, right;
 
 #undef WORKING
 
@@ -372,7 +370,7 @@ void LineBreak(FILE *out, int mode) {
 *************************************************************************** */
 
 
-int TreeGetError() {
+int TreeGetError(void) {
 
   return tree_error;
 } /* TreeGetError */
@@ -382,11 +380,7 @@ Tree TreeCreate(void) {
 
   Tree t;
 
-#ifdef _USE_GARBAGE_COL_
-  t=(Tree) GC_malloc(sizeof(TreeNode));
-#else
   t=(Tree) malloc(sizeof(TreeNode));
-#endif
   if (t==NULL) {
     fprintf(stderr, "ERROR in TreeCreate: NULL pointer recieved.\nAborting kc - sorry.\n");
     exit(-1);
@@ -536,6 +530,8 @@ void TreeSubstVar(Tree t, char* name, double val) {
     case Func:
       TreeSubstVar(t->data.func.right, name, val);
       break;
+    default:
+      break;
     } /* switch tag */
     tree_error=0;
   } /* else */
@@ -561,6 +557,8 @@ void TreeSubstTree(Tree t, char *name, Tree value) {
       break;
     case NegSign:
       TreeSubstTree(t->data.right, name, value);
+      break;
+    default:
       break;
     } /* switch */
     tree_error=0;
@@ -892,6 +890,8 @@ void TreeDerive(Tree res, Tree t, char* name) {
         res->data.oper.right->data.oper.left->data.value=0.4342944819;
         TreeCpy(res->data.oper.right->data.oper.right, t->data.func.right);
 	break;
+      default:
+	break;
       }; /* switch */
       break; /* Functions */
     case NegSign:
@@ -906,7 +906,7 @@ void TreeDerive(Tree res, Tree t, char* name) {
 
 double TreeEval(Tree t) {
  
-  double c1, c2, res;
+  double c1, c2, res=0.0;
 
   if (t==NULL) 
     return 0.0;
@@ -1014,8 +1014,7 @@ void TreePrintXtra(Tree t, int mode, FILE *output) {
 /*	  2 - (HP) Pascal     */
 /*        3 - ANSI C          */
 
-  int i, expo;
-  double mant;
+  int i;
 
   switch (mode) {
   case 1: 
@@ -1112,6 +1111,8 @@ void TreePrintXtra(Tree t, int mode, FILE *output) {
       case Tan:
 	fprintf(output, "TAN(");
 	len+=4;
+	break;
+      default:
 	break;
       } /* switch */
       LineBreak(output, mode);
@@ -1521,7 +1522,6 @@ void TreeCpy(Tree res, Tree t) {
 
 void TreeKill(Tree t) {
 
-#ifndef _USE_GARBAGE_COL_
   if (t!=NULL) { 
     switch (t->tag) {
     case Oper: 
@@ -1536,10 +1536,11 @@ void TreeKill(Tree t) {
     case NegSign:
       TreeKill(t->data.right);
       break;
+    default:
+      break;
     } 
-    free((MALLOCTYPE *) t);
+    free(t);
   }  
-#endif
 } /* TreeKill */
 
 void TreeApplyFunc(Tree *t, Function fun) {

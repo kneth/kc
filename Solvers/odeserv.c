@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #include <time.h>
 
 /****************************************************************************
@@ -112,8 +113,7 @@ double MinPair(double x_, double y_) {
 void PrintState(int N_, int prnmode_, int prnflag_, double time_, 
 		double *x_, FILE *outfile_, int *do_prn) {
   
-  int    i_, j_, flag_;
-  static int first_time = 1;
+  int    i_;
 
   switch (prnmode_) {
   case 0:                            /* printing extrema */

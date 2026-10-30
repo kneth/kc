@@ -20,36 +20,9 @@
 
 #include "complex.h"
 
-#ifndef MALLOCTYPE         /* init. the type used by free(3) */
-#ifdef _PLATFORM_DOS_
-#define MALLOCTYPE void
-#endif
-#ifdef _PLATFORM_GCC_
-#define MALLOCTYPE void
-#endif
-#ifdef _PLATFORM_HPUX_
-#define MALLOCTYPE char
-#endif
-#ifdef _PLATFORM_CONVEX_
-#define MALLOCTYPE void
-#endif
-#ifdef _PLATFORM_ULTRIX_
-#define MALLOCTYPE char
-#endif
-#ifdef _PLATFORM_SGI_
-#define MALLOCTYPE void
-#endif
-#ifdef _PLATFORM_LINUX_
-#define MALLOCTYPE void
-#endif
-#ifdef _PLATFORM_AIX_
-#define MALLOCTYPE void
-#endif
-#endif
-
-double **A_fixed;
-double *x_fixed, *s_fixed;
-int    *p_fixed, n_fixed;
+extern double **A_fixed;
+extern double *x_fixed, *s_fixed;
+extern int    *p_fixed, n_fixed;
 
 extern double  **MatrixAlloc(const int);
 extern double   *VectorAlloc(const int);

@@ -19,6 +19,27 @@
 #include <math.h>
 #include "tableman.h"
 
+SymEntry       symtable[SymSize];     /* symbol table */
+int            sym_last;
+ReactEntry     reacttable[ReactSize]; /* stoichimetric matrix */
+int            react_last;
+int            current;               /* pointer current reaction */
+ConstrainEntry contable[ConstrainSize]; /* constrain table */
+int            con_last;
+DynEntry       dyntable[DynSize];     /* dynamical variables */
+int            dyn_last;
+TableErrors    error;
+int            search_i, search_j, search_no;   /* search vars */
+ExprEntry      exprtable[ExprSize];   /* expression table */
+int            expr_last;
+ParamEntry     paramtable[MaxParameter];
+int            param_last;
+PrnEntry       prntable[MaxPrint];
+int            prn_last;
+StrEntry       strtable[StrConstSize];
+int            str_last;
+int            autonom_system; /* 0 if autonomous ODEs, 1 otherwise */
+
 void SetupTableMan(void) {
 
   sym_last=0;

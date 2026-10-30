@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <math.h>
 #include "config.h"
@@ -26,11 +27,11 @@
 
 void KnCont(FILE *pcode, FILE *hcode) {
 
-  double charge, temp, coeff, temp1, temp2;
+  double charge, temp, temp1, temp2;
   char   *name, *rename;
   time_t timer;
-  Tree   v_temp, tmp, temp_tree, tmp2;
-  int    i, j, k, l, react_no, finished, constraint, dyn, dyn2, dyn3, form;
+  Tree   tmp;
+  int    i, j, k, l, constraint, dyn, form;
   int    NumbOfParams, NumbOfDynVars;
   int    need_dd_jac, BfErrorCode;
 

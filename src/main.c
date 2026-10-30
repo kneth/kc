@@ -15,20 +15,12 @@
   Last updated: 4 January 1996 by KG
 ***************************************************************************/
 
-
 #define DefaultMode 1
 
 #include "config.h"
 #include <stdio.h>
-#ifdef _USE_GARBAGE_COL_
-#  include <gc.h>
-#else
-#  if _MALLOC_DEBUG_
-#     include "malloc.h"
-#  else
-#    include <stdlib.h>
-#  endif
-#endif
+#include <stdlib.h>
+#include <unistd.h>
 #include "codecall.h"
 #include "misc.h"
 
@@ -40,15 +32,6 @@ int main(int argc, char *argv[]) {
 
   int    j, c;
   extern char *optarg;
-
-#ifdef _MALLOC_DEBUG_
-  union dbmalloptarg m;
-  dbmallopt(MALLOC_ERRFILE, m);
-#endif
-
-#ifdef _PLATFORM_HPUX_
-  mallopt(M_MXFAST, sizeof(Tree));  
-#endif
 
   mode=DefaultMode;
   printf("kc v%s, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996\n", VERSION);
@@ -81,7 +64,7 @@ int main(int argc, char *argv[]) {
       verbose=0;
       break;
     default: 
-      (void) fprintf(stderr, "Warning: Option %1s ignored.\n", argv[i][1]);
+      (void) fprintf(stderr, "Warning: Option %c ignored.\n", optopt);
       break;
     } /* switch */
   (void) yyparse();

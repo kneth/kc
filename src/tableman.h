@@ -21,9 +21,7 @@
 #define _TABLEMAN_
 
 #include "config.h"
-#ifndef _PLATFORM_CONVEX_
 #include <float.h>
-#endif
 #include "symbmath.h" 
 
 #define SymSize       250
@@ -133,26 +131,26 @@ typedef struct StrEntry {
   char value[STRING_LENGTH];
 } StrEntry;
 
-SymEntry       symtable[SymSize];     /* symbol table */
-int            sym_last;
-ReactEntry     reacttable[ReactSize]; /* stoichimetric matrix */
-int            react_last;
-int            current;               /* pointer current reaction */
-ConstrainEntry contable[ConstrainSize]; /* constrain table */
-int            con_last;
-DynEntry       dyntable[DynSize];     /* dynamical variables */
-int            dyn_last;
-TableErrors    error;                
-int            search_i, search_j, search_no;   /* search vars */
-ExprEntry      exprtable[ExprSize];   /* expression table */
-int            expr_last;
-ParamEntry     paramtable[MaxParameter];
-int            param_last;
-PrnEntry       prntable[MaxPrint];
-int            prn_last;
-StrEntry       strtable[StrConstSize];
-int            str_last;
-int            autonom_system; /* 0 if autonomous ODEs, 1 otherwise */
+extern SymEntry       symtable[SymSize];     /* symbol table */
+extern int            sym_last;
+extern ReactEntry     reacttable[ReactSize]; /* stoichimetric matrix */
+extern int            react_last;
+extern int            current;               /* pointer current reaction */
+extern ConstrainEntry contable[ConstrainSize]; /* constrain table */
+extern int            con_last;
+extern DynEntry       dyntable[DynSize];     /* dynamical variables */
+extern int            dyn_last;
+extern TableErrors    error;                
+extern int            search_i, search_j, search_no;   /* search vars */
+extern ExprEntry      exprtable[ExprSize];   /* expression table */
+extern int            expr_last;
+extern ParamEntry     paramtable[MaxParameter];
+extern int            param_last;
+extern PrnEntry       prntable[MaxPrint];
+extern int            prn_last;
+extern StrEntry       strtable[StrConstSize];
+extern int            str_last;
+extern int            autonom_system; /* 0 if autonomous ODEs, 1 otherwise */
 
 extern void         SetupTableMan(void);
 extern TableErrors  GetError(void);
@@ -165,7 +163,7 @@ extern void         SpecieInReaction(int, char *, double);
 extern void         NewReaction(int);
 extern int          GetCurrentReaction(void);
 extern void         AddReactionKind(int, Direc);
-extern int          GetReactionNo(int);
+extern int          GetReactNo(int);
 extern void         RenameSpec(char *, char *, double);
 extern int          NoOfSpec(void);
 extern int          GetFirstSpecA(int, char *, double *, double *, int);
@@ -179,6 +177,7 @@ extern void         GetSpecNo(int, char *, double *);
 extern Direc        GetReactKind(int);
 extern void         GetRateConst(int, Direc, int, Tree);
 extern void         GetRateExpr(int, Direc, int, Tree);
+extern int          GetRateKind(int, Direc, int);
 extern int          NoOfReact(void);
 extern void         NewCoeff(int, char *, double, double, int);
 extern double       SumCoeff(int, int);
@@ -199,7 +198,7 @@ extern void         GetConstraintNo(int, char *, double *, Tree);
 extern int          IsSpecInConstraint(char *, double);
 extern void         NewSpecConst(char *, double, char *, double);
 extern double       GetSpecConst(char *, double, char *);
-extern void         NewParamter(char *, double);
+extern void         NewParameter(char *, double);
 extern void         GetParamNo(int, char *, double *, int *);
 extern int          NumOfParameter(void);
 extern void         NewParamConc(char *, double, double);
