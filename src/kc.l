@@ -1,3 +1,4 @@
+%option noyywrap
 Digit       [0-9]
 Letter      [A-Za-z]
 Sign        "-"|"+"

@@ -1,0 +1,19 @@
+#!/bin/sh
+# kci - compile a kc model (mode 3) together with kksolver and run it.
+# Results (kinwrkda etc.) are written to the current directory.
+set -e
+
+if [ $# -ne 1 ] || [ ! -r "$1" ]; then
+  echo "usage: kci model.des" >&2
+  exit 1
+fi
+
+prefix="@CMAKE_INSTALL_PREFIX@"
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+(cd "$work" && "$prefix/@CMAKE_INSTALL_BINDIR@/kc" -m3 -v) < "$1"
+cp "$prefix/@CMAKE_INSTALL_DATADIR@/kc/kksolver.c" "$work"
+${CC:-cc} ${CFLAGS:--O2} -D_PLATFORM_GCC_ -I"$work" -I"$prefix/@CMAKE_INSTALL_INCLUDEDIR@/kc" \
+  "$work/kksolver.c" -L"$prefix/@CMAKE_INSTALL_LIBDIR@" -lkcsolvers -lm -o "$work/sim"
+"$work/sim"
