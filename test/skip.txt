@@ -46,3 +46,6 @@ reak.m2/in.dat
 real.des.m2/in.dat
 shn90.des.m2/in.dat
 split.des.m2/in.dat
+
+# Lorenz is chaotic: the end state of the simulation depends on the compiler.
+lorenz.des.m3/sim.last

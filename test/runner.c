@@ -19,6 +19,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <math.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,9 +30,22 @@
 
 #define SKIP 77        /* CTest SKIP_RETURN_CODE */
 #define REL_TOL 1e-6
+#define SIM_REL_TOL 1e-4 /* step size control differs slightly between compilers */
 #define ABS_TOL 1e-10
 
 static bool update;
+
+/* snprintf that treats truncation as a fatal error. */
+static void format(char *buf, size_t size, const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  int n = vsnprintf(buf, size, fmt, ap);
+  va_end(ap);
+  if (n < 0 || (size_t)n >= size) {
+    fprintf(stderr, "runner: path or command too long\n");
+    exit(2);
+  }
+}
 
 static char *slurp(const char *path) {
   FILE *f = fopen(path, "rb");
@@ -70,7 +84,7 @@ static bool starts_number(const char *s, const char *begin) {
 
 /* Compares text, treating numbers as equal within tolerance. Returns the
    1-based line of the first difference, or 0 when equal. */
-static int compare(const char *a, const char *b) {
+static int compare(const char *a, const char *b, double rel_tol) {
   const char *a0 = a, *b0 = b;
   int line = 1;
   while (*a || *b) {
@@ -79,7 +93,7 @@ static int compare(const char *a, const char *b) {
       double x = strtod(a, &ea), y = strtod(b, &eb);
       if (ea != a && eb != b) {
         bool same = (isnan(x) && isnan(y)) || x == y ||
-                    fabs(x - y) <= ABS_TOL + REL_TOL * fmax(fabs(x), fabs(y));
+                    fabs(x - y) <= ABS_TOL + rel_tol * fmax(fabs(x), fabs(y));
         if (!same) return line;
         a = ea;
         b = eb;
@@ -113,7 +127,7 @@ static int run(const char *cmd) {
    last line of the simulation output in DIR/sim.last. */
 static bool simulate(const char *dir) {
   char cmd[4096];
-  snprintf(cmd, sizeof cmd,
+  format(cmd, sizeof cmd,
            "mkdir -p %s/sim && cd %s/sim && "
            "'%s' %s -I.. -I'%s' '%s/kksolver.c' '%s' -lm -o sim 2> cc.log && "
            "./sim > /dev/null 2> sim.log && tail -n 1 kinwrkda > ../sim.last",
@@ -123,9 +137,9 @@ static bool simulate(const char *dir) {
 
 static int check_file(const char *dir, const char *expdir, const char *name) {
   char path[1024], exp_path[1024];
-  snprintf(path, sizeof path, "%s/%s", dir, name);
+  format(path, sizeof path, "%s/%s", dir, name);
   if (skipped(path)) return 0;
-  snprintf(exp_path, sizeof exp_path, "%s/%s", expdir, name);
+  format(exp_path, sizeof exp_path, "%s/%s", expdir, name);
 
   char *got = slurp(path), *want = slurp(exp_path);
   int rc = 0;
@@ -139,7 +153,7 @@ static int check_file(const char *dir, const char *expdir, const char *name) {
     rc = 1;
   } else {
     mask_dates(want);
-    int line = compare(got, want);
+    int line = compare(got, want, strcmp(name, "sim.last") ? REL_TOL : SIM_REL_TOL);
     if (line) {
       fprintf(stderr, "%s: differs from expected at line %d\n", path, line);
       rc = 1;
@@ -158,7 +172,7 @@ static int check_missing(const char *dir, const char *expdir) {
   int failures = 0;
   while (d && (e = readdir(d))) {
     if (e->d_name[0] == '.' || !strcmp(e->d_name, "sim.last")) continue;
-    snprintf(path, sizeof path, "%s/%s", dir, e->d_name);
+    format(path, sizeof path, "%s/%s", dir, e->d_name);
     if (access(path, R_OK) != 0) {
       fprintf(stderr, "%s: expected file was not generated\n", path);
       failures++;
@@ -178,13 +192,13 @@ int main(int argc, char *argv[]) {
   char dir[512], expdir[1024], cmd[4096], sim_last[1024];
   update = getenv("KC_UPDATE") != NULL;
 
-  snprintf(dir, sizeof dir, "%s.m%s", base, mode);
+  format(dir, sizeof dir, "%s.m%s", base, mode);
   if (skipped(dir)) return SKIP;
-  snprintf(expdir, sizeof expdir, "%s/%s", argv[4], dir);
-  snprintf(sim_last, sizeof sim_last, "%s/sim.last", expdir);
+  format(expdir, sizeof expdir, "%s/%s", argv[4], dir);
+  format(sim_last, sizeof sim_last, "%s/sim.last", expdir);
   if (update) mkdir(expdir, 0755);
 
-  snprintf(cmd, sizeof cmd, "rm -rf %s && mkdir %s && cd %s && '%s' -m%s < '%s' > stdout 2> stderr",
+  format(cmd, sizeof cmd, "rm -rf %s && mkdir %s && cd %s && '%s' -m%s < '%s' > stdout 2> stderr",
            dir, dir, dir, kc, mode, model);
   int status = run(cmd);
   if (status != 0) {
@@ -205,7 +219,7 @@ int main(int argc, char *argv[]) {
   while ((e = readdir(d))) {
     char path[1024];
     struct stat st;
-    snprintf(path, sizeof path, "%s/%s", dir, e->d_name);
+    format(path, sizeof path, "%s/%s", dir, e->d_name);
     if (stat(path, &st) == 0 && S_ISREG(st.st_mode) && (sim_ok || strcmp(e->d_name, "sim.last")))
       failures += check_file(dir, expdir, e->d_name);
   }
