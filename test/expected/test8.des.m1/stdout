@@ -14,15 +14,15 @@ The eigenvalues are:
   (0.0000000000e+00, 0.0000000000e+00)
 
 The eigenvectors are:
-  (           nan, 0.0000000000e+00)
-  (           nan, 0.0000000000e+00)
-
-  (           nan, 0.0000000000e+00)
+  (1.0000000000e+00, 0.0000000000e+00)
   (0.0000000000e+00, 0.0000000000e+00)
 
-No. 0,REAL part: Left nan,  Right nan, Diff. nan
-No. 0,IM   part: Left 0.000000e+00,  Right nan, Diff nan
-No. 1,REAL part: Left nan,  Right 0.000000e+00, Diff. nan
+  (1.0000000000e+00, 0.0000000000e+00)
+  (1.0000000000e-18, 0.0000000000e+00)
+
+No. 0,REAL part: Left 0.000000e+00,  Right 0.000000e+00, Diff. 0.000000e+00
+No. 0,IM   part: Left 0.000000e+00,  Right 0.000000e+00, Diff 0.000000e+00
+No. 1,REAL part: Left 0.000000e+00,  Right 0.000000e+00, Diff. 0.000000e+00
 No. 1,IM   part: Left 0.000000e+00,  Right 0.000000e+00, Diff 0.000000e+00
 
 The eigenvalues 

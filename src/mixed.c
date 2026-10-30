@@ -85,7 +85,7 @@ void Mixed(void) {
   if (GetError()==NoError) 
     eps=temp;
   else
-    eps=0.0; /* was left uninitialized (in practice 0); 1.0e-18 was intended */
+    eps=1.0e-18;
   temp=GetConstant("maxiter");
   if (GetError()==NoError)
     max_iter=(int)temp;
