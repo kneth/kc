@@ -59,3 +59,30 @@ install(FILES
   Solvers/odesolv.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/kc)
 install(FILES Solvers/kksolver.c DESTINATION ${CMAKE_INSTALL_DATADIR}/kc)
+
+# Golden-output tests: one test per example model and code generator mode.
+enable_testing()
+add_executable(runner test/runner.c)
+set_target_properties(runner PROPERTIES C_STANDARD 17 C_EXTENSIONS OFF)
+target_link_libraries(runner PRIVATE m)
+target_compile_definitions(runner PRIVATE
+  KC_CC="${CMAKE_C_COMPILER}"
+  KC_SIM_CFLAGS="-w -std=gnu89 -D_PLATFORM_GCC_"
+  KC_SOLVERS="${CMAKE_CURRENT_SOURCE_DIR}/Solvers"
+  KC_SOLVERS_LIB="$<TARGET_FILE:kcsolvers>"
+  KC_SKIP_LIST="${CMAKE_CURRENT_SOURCE_DIR}/test/skip.txt")
+add_dependencies(runner kcsolvers)
+
+file(GLOB models LIST_DIRECTORIES false ${CMAKE_CURRENT_SOURCE_DIR}/test/*)
+list(FILTER models EXCLUDE REGEX "\\.(c|txt)$")
+set(test_work ${CMAKE_CURRENT_BINARY_DIR}/test-work)
+file(MAKE_DIRECTORY ${test_work})
+foreach(model IN LISTS models)
+  get_filename_component(name ${model} NAME)
+  foreach(mode 1 2 3 4 5)
+    add_test(NAME ${name}.m${mode}
+      COMMAND runner $<TARGET_FILE:kc> ${model} ${mode} ${CMAKE_CURRENT_SOURCE_DIR}/test/expected
+      WORKING_DIRECTORY ${test_work})
+    set_tests_properties(${name}.m${mode} PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120)
+  endforeach()
+endforeach()

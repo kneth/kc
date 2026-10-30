@@ -1,0 +1,24 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *A()
+  *X()
+  *Y()
+Constants declared:
+  mixed = 1.000000e+00
+  method = 1.000000e+00
+  prnmode = 0.000000e+00
+  etime = 1.500000e+03
+  dtime = 1.000000e+00
+
+Amp: 1.414214 .  Phase: 45.000000
+Amp: 0.655083 .  Phase: 84.656071
+Amp: 1.908763 .  Phase: -57.595691
+
+Que: 1.596290 .  Phase: -137.115578
+Que: 1.846400 .  Phase: 166.012415
+Que: 1.552693 .  Phase: 140.579960
+Dqu: -0.672753 . Dphas: -4.381643
+
+
+
+ Quenching 

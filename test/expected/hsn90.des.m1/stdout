@@ -1,0 +1,91 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *HBrO2()
+   P()
+  *Br(1-)
+  *Ce(4+)
+  *HBrO()
+   BrO3(1-)
+   H()
+Constants declared:
+  mixed = 2.000000e+00
+  kf1 = 2.000000e+00
+  kf2 = 3.000000e+06
+  kf3 = 4.200000e+01
+  kf4 = 3.000000e+03
+  kf5 = 1.040000e-01
+  kf6 = 8.000000e-02
+  kf7 = 1.400000e-01
+  j0 = 4.709600e-05
+  stime = 0.000000e+00
+  dtime = 1.000000e+00
+  etime = 1.600000e+04
+  epsr = 1.000000e-04
+  epsa = 1.000000e-14
+  debug = 1.000000e+00
+  ref = 3.000000e+00
+Stationary flow
+Reac. no. 0.  Foreward: 1.323398e-12.
+Reac. no. 1.  Foreward: 9.875089e-12.
+Reac. no. 2.  Foreward: 8.975556e-12.
+Reac. no. 3.  Foreward: 5.825304e-12.
+Reac. no. 4.  Foreward: 2.465837e-09.
+Reac. no. 5.  Foreward: 1.237322e-08.
+Reac. no. 6.  Foreward: 9.913680e-09.
+Reac. no. 7.  Foreward: 2.368830e-12.
+Reac. no. 8.  Foreward: 1.982032e-08.
+Reac. no. 9.  Foreward: 9.895200e-09.
+Reac. no. 10.  Foreward: 1.731660e-08.
+
+
+Eigenvector no. 1. Real.
+Flow in reaction no. 0.: FW: 1.554472e-05
+Flow in reaction no. 1.: FW: 1.193414e-04
+Flow in reaction no. 2.: FW: 4.709600e-05
+Flow in reaction no. 3.: FW: -3.320841e-04
+Flow in reaction no. 4.: FW: 2.979987e-02
+Flow in reaction no. 5.: FW: 2.948681e-01
+Flow in reaction no. 6.: FW: 1.164467e-01
+Flow in reaction no. 7.: FW: 5.564887e-05
+Flow in reaction no. 8.: FW: 1.040000e-01
+Flow in reaction no. 9.: FW: -5.640974e-01
+Flow in reaction no. 10.: FW: -9.871705e-01
+
+Eigenvector no. 2. Real.
+Flow in reaction no. 0.: FW: -5.434564e-07
+Flow in reaction no. 1.: FW: -4.485531e-05
+Flow in reaction no. 2.: FW: 4.709600e-05
+Flow in reaction no. 3.: FW: 2.561266e-05
+Flow in reaction no. 4.: FW: -1.120049e-02
+Flow in reaction no. 5.: FW: -6.128356e-02
+Flow in reaction no. 6.: FW: -4.071077e-03
+Flow in reaction no. 7.: FW: -1.945532e-06
+Flow in reaction no. 8.: FW: 1.040000e-01
+Flow in reaction no. 9.: FW: 4.350714e-02
+Flow in reaction no. 10.: FW: 7.613750e-02
+
+Eigenvector no. 3. Real.
+Flow in reaction no. 0.: FW: 7.548883e-06
+Flow in reaction no. 1.: FW: 1.102247e-05
+Flow in reaction no. 2.: FW: 4.709600e-05
+Flow in reaction no. 3.: FW: 4.352864e-05
+Flow in reaction no. 4.: FW: 2.752340e-03
+Flow in reaction no. 5.: FW: 8.438976e-02
+Flow in reaction no. 6.: FW: 5.654930e-02
+Flow in reaction no. 7.: FW: 2.702441e-05
+Flow in reaction no. 8.: FW: 1.040000e-01
+Flow in reaction no. 9.: FW: 7.394028e-02
+Flow in reaction no. 10.: FW: 1.293955e-01
+
+Eigenvector no. 4. Real.
+Flow in reaction no. 0.: FW: 3.492476e-06
+Flow in reaction no. 1.: FW: -4.030842e-05
+Flow in reaction no. 2.: FW: -4.709600e-05
+Flow in reaction no. 3.: FW: -1.321855e-05
+Flow in reaction no. 4.: FW: -1.006512e-02
+Flow in reaction no. 5.: FW: -1.785215e-02
+Flow in reaction no. 6.: FW: 2.616242e-02
+Flow in reaction no. 7.: FW: 1.250279e-05
+Flow in reaction no. 8.: FW: -1.040000e-01
+Flow in reaction no. 9.: FW: -2.245380e-02
+Flow in reaction no. 10.: FW: -3.929415e-02

@@ -1,0 +1,31 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+   F6Po()
+  *F6P()
+   P()
+  *FDP()
+  *ATP()
+  *ADP()
+   AMP()
+Constants declared:
+  stime = 1.000000e+01
+  dtime = 2.500000e-01
+  etime = 1.000000e+02
+  epsr = 1.000000e-04
+  epsa = 1.000000e-20
+  j0 = 0.000000e+00
+  k0 = 1.000000e+00
+  k1 = 1.000000e+02
+  k2 = 5.000000e+01
+  ks = 6.000000e+00
+  kd = 1.000000e+00
+  Vm = 3.300000e+01
+  Kf = 3.000000e-02
+  Ki = 5.000000e-02
+  Ka = 1.000000e-02
+  Km = 1.000000e-02
+  L = 2.500000e+02
+  Vn = 2.000000e+01
+  Kn = 1.000000e+00
+  Kr = 3.000000e-01
+  No = 3.300000e+00

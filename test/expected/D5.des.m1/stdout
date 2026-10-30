@@ -1,0 +1,31 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *y1
+  *y2
+Constants declared:
+  method = 4.000000e+00
+  etime = 1.000000e+02
+  htime = 1.000000e-04
+The Jacobian matrix is:
+J(1, 1) = -1.01100999977626e+03
+J(1, 2) = -1.00100000000000e+03
+J(2, 1) = -1.00000000000000e+00
+J(2, 2) = -1.00000000000000e+00
+
+The eigenvalues are:
+  (-1.0120001085e+03, 0.0000000000e+00)
+  (-9.8913030665e-03, 0.0000000000e+00)
+
+The eigenvectors are:
+  (-1.0000000000e+00, 0.0000000000e+00)
+  (-9.8911957736e-04, 0.0000000000e+00)
+
+  (9.9010869693e-01, 0.0000000000e+00)
+  (-1.0000000000e+00, 0.0000000000e+00)
+
+No. 0,REAL part: Left 1.012000e+03,  Right 1.012000e+03, Diff. 0.000000e+00
+No. 0,IM   part: Left 0.000000e+00,  Right 0.000000e+00, Diff 0.000000e+00
+No. 1,REAL part: Left 9.891303e-03,  Right 9.891303e-03, Diff. 5.551115e-16
+No. 1,IM   part: Left 0.000000e+00,  Right 0.000000e+00, Diff 0.000000e+00
+
+The eigenvalues 

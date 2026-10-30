@@ -1,0 +1,29 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *A()
+  *P()
+Constants declared:
+  k1 = 1.000000e+00
+The Jacobian matrix is:
+J(1, 1) = -1.00000000000000e+00
+J(1, 2) = 0.00000000000000e+00
+J(2, 1) = 1.00000000000000e+00
+J(2, 2) = 0.00000000000000e+00
+
+The eigenvalues are:
+  (0.0000000000e+00, 0.0000000000e+00)
+  (-1.0000000000e+00, 0.0000000000e+00)
+
+The eigenvectors are:
+  (0.0000000000e+00, 0.0000000000e+00)
+  (1.0000000000e+00, 0.0000000000e+00)
+
+  (1.0000000000e+00, 0.0000000000e+00)
+  (-1.0000000000e+00, 0.0000000000e+00)
+
+No. 0,REAL part: Left 0.000000e+00,  Right 0.000000e+00, Diff. 0.000000e+00
+No. 0,IM   part: Left 0.000000e+00,  Right 0.000000e+00, Diff 0.000000e+00
+No. 1,REAL part: Left 1.000000e+00,  Right 1.000000e+00, Diff. 0.000000e+00
+No. 1,IM   part: Left 0.000000e+00,  Right 0.000000e+00, Diff 0.000000e+00
+
+The eigenvalues 

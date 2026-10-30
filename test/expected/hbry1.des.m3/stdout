@@ -1,0 +1,23 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *Br2()
+   M()
+  *Br()
+  *H2()
+  *HBr()
+  *H()
+Constants declared:
+  stime = 0.000000e+00
+  dtime = 5.000000e+01
+  etime = 2.000000e+03
+  espr = 1.000000e-06
+  epsa = 1.000000e-20
+  T = 6.000000e+02
+  R = 1.987094e-03
+  k1 = 2.205938e-02
+  km1 = 8.800000e+08
+  k2 = 1.794836e+04
+  km2 = 4.739617e+07
+  k3 = 4.190137e+10
+  km3 = 5.131501e-05
+  method = 1.000000e+00

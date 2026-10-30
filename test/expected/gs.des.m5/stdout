@@ -1,0 +1,23 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *P()
+  *A()
+   B()
+  *dT
+Constants declared:
+  method = 1.000000e+00
+  etime = 3.500000e+01
+  dtime = 1.000000e-02
+  epsa = 1.000000e-20
+  epsr = 1.000000e-15
+  htimemin = 1.000000e-20
+  R = 8.314413e+00
+  V = 1.000000e+00
+  S = 5.000000e+00
+  Ta = 4.000000e+02
+  c = 1.500000e-01
+  Xi = 3.000000e-01
+  Q = 4.000000e+05
+  k1 = 5.000000e-01
+  Ea = 1.660000e+05
+  Arr = 2.377122e+21

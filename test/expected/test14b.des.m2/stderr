@@ -1,0 +1,9 @@
+ERROR: The constant ngrid is not defined!
+ERROR: The constant mgrid is not defined!
+ERROR: Diffusion coeff. for H(0.000000e+00) not found
+ERROR: Diffusion coeff. for NO2(0.000000e+00) not found
+ERROR: Diffusion coeff. for OH(0.000000e+00) not found
+ERROR: Diffusion coeff. for NO(0.000000e+00) not found
+ERROR: Diffusion coeff. for H2O(0.000000e+00) not found
+ERROR: Diffusion coeff. for O(0.000000e+00) not found
+ERROR: Diffusion coeff. for O2(0.000000e+00) not found

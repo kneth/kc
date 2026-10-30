@@ -1,0 +1,9 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *y1
+  *y2
+  *y3
+  *y4
+Constants declared:
+  etime = 1.000000e+03
+  htime = 5.000000e-05

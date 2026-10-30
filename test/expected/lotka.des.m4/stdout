@@ -1,0 +1,11 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *A()
+  *X()
+  *Y()
+Constants declared:
+  mixed = 1.000000e+00
+  method = 1.000000e+00
+  prnmode = 0.000000e+00
+  etime = 1.500000e+03
+  dtime = 1.000000e+00

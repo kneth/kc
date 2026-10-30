@@ -1,0 +1,48 @@
+# Cases and files the test runner skips, one per line: model.mN or model.mN/file.
+# All entries are defects inherited from the original kc; remove an entry
+# once the defect is fixed and its expected output has been recorded.
+
+# Mode 1 crashes (segmentation fault, bus error, abort) or hangs.
+B1.des.m1
+burst.des.m1
+burst-2par.des.m1
+burst3.13.m1
+kcore3.des.m1
+open.des.m1
+reak.m1
+test4.des.m1
+test7.des.m1
+zhab.des.m1
+
+# Mode 1 eigenvalue analysis reads uninitialized memory; output varies.
+D3.des.m1/stdout
+atmos1.des.m1/stdout
+test10a.des.m1/stdout
+test10b.des.m1/stdout
+test12.des.m1/stdout
+test14a.des.m1/stdout
+test14b.des.m1/stdout
+test9.des.m1/stdout
+
+# Mode 2 writes uninitialized initial values (init-val) to in.dat.
+burst-2par.des.m2/in.dat
+burst.des.m2/in.dat
+burst.kcd.m2/in.dat
+burst3.13.m2/in.dat
+burst3.des.m2/in.dat
+glyco.des.m2/in.dat
+gs.des.m2/in.dat
+gtf.des.m2/in.dat
+hbry1.des.m2/in.dat
+hbry2.des.m2/in.dat
+hsn90.des.m2/in.dat
+knwang.des.m2/in.dat
+op.des.m2/in.dat
+open.des.m2/in.dat
+ore.kc.m2/in.dat
+ore1.kc.m2/in.dat
+ore2.des.m2/in.dat
+reak.m2/in.dat
+real.des.m2/in.dat
+shn90.des.m2/in.dat
+split.des.m2/in.dat
