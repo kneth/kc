@@ -15,10 +15,11 @@
   Last updated: 16 October 1995
 *****************************************************************************/
 
-#include "complex.h"
+#include "eigen.h"
 #include "matrix.h"
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void BlockCheck(double **A, int n, int i, int *block, double epsx) {
 
@@ -79,17 +80,14 @@ void PrintEigen(int n, double **A, double **B, double eps, FILE *outfile) {
 /* Modulus of V[row][col-1] + i*V[row][col]; the last column has no imaginary part. */
 static double EntryNorm(int n, double **V, int row, int col) {
 
-  Complex c;
-
-  ComplexAssign(V[row-1][col-1], (col<n) ? V[row-1][col] : 0.0, &c);
-  return ComplexNorm(c);
+  return cabs(V[row-1][col-1] + ((col<n) ? V[row-1][col] : 0.0)*I);
 } /* EntryNorm */
 
 void NormalizingMatrix(int n, double **A, int fixedref, int *ref, 
 		       double **V, double eps) {
 
   int      j, col, block;
-  Complex  c1, c2, c3;
+  double complex c;
   double   sqrnorm, norm, max;
 
   col=1;
@@ -107,12 +105,11 @@ void NormalizingMatrix(int n, double **A, int fixedref, int *ref,
     } /* if fixedref */
     BlockCheck(A, n, col, &block, eps);
     if (block==1) {
-      ComplexAssign(V[*ref-1][col-1], V[*ref-1][col], &c1);
+      c=V[*ref-1][col-1] + V[*ref-1][col]*I;
       for(j=1; j<=n; j++) {
-	ComplexAssign(V[j-1][col-1], V[j-1][col], &c2);
-	ComplexDiv(c2, c1, &c3);
-	V[j-1][col-1]=c3.re;
-	V[j-1][col]=c3.im;
+	double complex v=(V[j-1][col-1] + V[j-1][col]*I)/c;
+	V[j-1][col-1]=creal(v);
+	V[j-1][col]=cimag(v);
       } /* for j */
       col+=2;
     } /* if */
@@ -468,7 +465,7 @@ void hqr2(int n, int low, int upp, int maxits, double macheps,
   double  p, q, t, w, x, y, ra, sa, vr, vi, norm;
   double  r=0.0, s=0.0, z=0.0; /* set when wi<0, used for the next row */
   int     notlast;
-  Complex c1, c2, c3;
+  double complex c;
 
   *fail=0;
   for(i=1; i<=(low-1); i++) {
@@ -736,11 +733,9 @@ void hqr2(int n, int low, int upp, int maxits, double macheps,
 	  h[na-1][en-1]=-q/h[en-1][na-1];
 	} /* if */ 
 	else {
-	  ComplexAssign(-h[na-1][en-1], 0.0, &c1);
-	  ComplexAssign(h[na-1][na-1]-p, q, &c2);
-	  ComplexDiv(c1, c2, &c3);
-	  h[na-1][na-1]=c3.re;
-	  h[na-1][en-1]=c3.im;
+	  c=-h[na-1][en-1]/(h[na-1][na-1]-p + q*I);
+	  h[na-1][na-1]=creal(c);
+	  h[na-1][en-1]=cimag(c);
 	} /* else */
 	h[en-1][na-1]=1.0;
 	h[en-1][en-1]=0.0;
@@ -760,11 +755,9 @@ void hqr2(int n, int low, int upp, int maxits, double macheps,
 	  else {
 	    m=i;
 	    if (wi[i-1]==0.0) {
-	      ComplexAssign(-ra, -sa, &c1);
-	      ComplexAssign(w, q, &c2);
-	      ComplexDiv(c1, c2, &c3);
-	      h[i-1][na-1]=c3.re;
-	      h[i-1][en-1]=c3.im;
+	      c=(-ra - sa*I)/(w + q*I);
+	      h[i-1][na-1]=creal(c);
+	      h[i-1][en-1]=cimag(c);
 	    } /* if */
 	    else {
 	      x=h[i-1][i];
@@ -773,22 +766,17 @@ void hqr2(int n, int low, int upp, int maxits, double macheps,
 	      vi=(wr[i-1]-p)*2.0*q;
 	      if ((vr==0.0) && (vi==0.0)) 
 		vr=macheps*norm*(fabs(w)+fabs(q)+fabs(x)+fabs(y)+fabs(z));
-	      ComplexAssign(x*r-z*ra+q*sa, x*s-z*sa-q*ra, &c1);
-	      ComplexAssign(vr, vi, &c2);
-	      ComplexDiv(c1, c2, &c3);
-	      h[i-1][na-1]=c3.re;
-	      h[i-1][en-1]=c3.im;
+	      c=(x*r-z*ra+q*sa + (x*s-z*sa-q*ra)*I)/(vr + vi*I);
+	      h[i-1][na-1]=creal(c);
+	      h[i-1][en-1]=cimag(c);
 	      if (fabs(x)>(fabs(z)+fabs(q))) {
 		h[i][na-1]=(-ra-w*h[i-1][na-1]+q*h[i-1][en-1])/x;
 		h[i][en-1]=(-sa-w*h[i-1][en-1]-q*h[i-1][na-1])/x;
 	      } /* if */
 	      else {
-		ComplexAssign(-r-y*h[i-1][na-1], -s-y*h[i-1][en-1],
-			      &c1);
-		ComplexAssign(z, q, &c2);
-		ComplexDiv(c1, c2, &c3);
-		h[i][na-1]=c3.re;
-		h[i][en-1]=c3.im;
+		c=(-r-y*h[i-1][na-1] + (-s-y*h[i-1][en-1])*I)/(z + q*I);
+		h[i][na-1]=creal(c);
+		h[i][en-1]=cimag(c);
 	      } /* else */
 	    } /* else */
 	  } /* else */
@@ -835,7 +823,7 @@ void hqr2(int n, int low, int upp, int maxits, double macheps,
 } /* hqr2 */
 	  
 void Eigen(int n, int ref, double **AJAC, int maxit, double eps, 
-	   int fixedref, Complex *values, Complex **vectors) {
+	   int fixedref, double complex *values, double complex **vectors) {
 
   double  *wr, *wi, *bald, **T, **A;
   int     i, j, ballow, balhi, block;
@@ -895,11 +883,11 @@ void Eigen(int n, int ref, double **AJAC, int maxit, double eps,
   do {
     BlockCheck(A, n, i, &block, eps);
     if (block==1) {
-      ComplexAssign(A[i-1][i-1], A[i-1][i], &values[i-1]);
-      ComplexAssign(A[i][i], A[i][i-1], &values[i]);
+      values[i-1]=A[i-1][i-1] + A[i-1][i]*I;
+      values[i]=A[i][i] + A[i][i-1]*I;
       i+=2;
     } else {
-      ComplexAssign(A[i-1][i-1], 0.0, &values[i-1]);
+      values[i-1]=A[i-1][i-1];
       i++;
     } /* if else */
   } while (i!=(n+1));
@@ -908,13 +896,13 @@ void Eigen(int n, int ref, double **AJAC, int maxit, double eps,
     BlockCheck(A, n, i, &block, eps);
     if (block==1) {
       for(j=1; j<=n; j++)
-	ComplexAssign(T[j-1][i-1], T[j-1][i], &vectors[i-1][j-1]);
+	vectors[i-1][j-1]=T[j-1][i-1] + T[j-1][i]*I;
       for(j=1; j<=n; j++)
-	ComplexAssign(T[j-1][i-1], -T[j-1][i], &vectors[i][j-1]);
+	vectors[i][j-1]=T[j-1][i-1] - T[j-1][i]*I;
       i+=2;
     } else {
       for(j=1; j<=n; j++)
-	ComplexAssign(T[j-1][i-1], 0.0, &vectors[i-1][j-1]);
+	vectors[i-1][j-1]=T[j-1][i-1];
       i++;
     } /* if else */
   } while (i!=(n+1));
@@ -928,6 +916,55 @@ void Eigen(int n, int ref, double **AJAC, int maxit, double eps,
 } /* Eigen */
 
 
+/****************************************************************************
+  ComplexMatrixAlloc allocates space for a nxn matrix with complex elements.
+*****************************************************************************/
+
+double complex **ComplexMatrixAlloc(const int n) {
+
+  int       i;
+  double complex **temp;
+
+  temp=(double complex **)calloc(n, sizeof(double complex *));
+  if (temp==NULL)
+    fprintf(stderr, "In EigenLib: Not able to allocate matrix.\n");
+  else {
+    for(i=0; i<n; i++) {
+      temp[i]=(double complex *)calloc(n, sizeof(double complex));
+      if (temp[i]==NULL)
+	fprintf(stderr, "In EigenLib: Not able to allocate matrix.\n");
+    } /* for i */
+  } /* if else */
+  return temp;
+} /* ComplexMatrixAlloc */
 
 
+/***************************************************************************
+  ComplexVectorAlloc allocates a vector of dimension n with complex 
+  elements.
+****************************************************************************/
+       
+double complex *ComplexVectorAlloc(const int n) {
 
+  double complex *temp;
+
+  temp=(double complex *)calloc(n, sizeof(double complex));
+  if (temp==NULL) 
+    fprintf(stderr, "In EigenLib: Not able to allocate vector.\n");
+  return temp;
+} /* ComplexVectorAlloc */
+
+void ComplexMatrixFree(const int n, double complex **matrix) {
+
+  int i;
+
+  for(i=0; i<n; i++)
+    free(matrix[i]);
+  free(matrix);
+} /* ComplexMatrixFree */
+
+void ComplexVectorFree(const int n, double complex *vector) {
+
+  (void)n;
+  free(vector);
+} /* ComplexVectorFree */

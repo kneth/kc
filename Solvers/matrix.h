@@ -18,8 +18,6 @@
 #ifndef _MATRIX_LIB_
 #define _MATRIX_LIB_
 
-#include "complex.h"
-
 extern double **A_fixed;
 extern double *x_fixed, *s_fixed;
 extern int    *p_fixed, n_fixed;
@@ -27,15 +25,11 @@ extern int    *p_fixed, n_fixed;
 extern double  **MatrixAlloc(const int);
 extern double   *VectorAlloc(const int);
 extern int      *IntVectorAlloc(const int);
-extern Complex  *ComplexVectorAlloc(const int);
-extern Complex **ComplexMatrixAlloc(const int);
 extern void      MatrixMul(const int, double **, double **, double **);
 extern void      Transpose(const int, double **, double **);
 extern void      MatrixFree(const int, double **);
 extern void      VectorFree(const int, double *);
 extern void      IntVectorFree(const int, int *);
-extern void      ComplexMatrixFree(const int, Complex **);
-extern void      ComplexVectorFree(const int, Complex *);
 extern void      LUfact(const int, double **, int *);
 extern void      LUsubst(const int, double **, int *, double *);
 extern void      LUfact_fixed(void);

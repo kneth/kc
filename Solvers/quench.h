@@ -7,12 +7,12 @@
 #ifndef _QUENCH_LIB_
 #define _QUENCH_LIB_
 
-#include "complex.h"
+#include <complex.h>
 #include "matrix.h"
 #include <math.h>
 #include <stdio.h>
 
-extern double arctan_local(Complex);
+extern double arctan_local(double complex);
 extern void compamppha(int, double **, double *, double *);
 extern void stopdata(int, int, double **, double *,
 	      double *, double *, double *, double *);

@@ -104,45 +104,6 @@ int *IntVectorAlloc(const int n) {
 
 
 /****************************************************************************
-  ComplexMatrixAlloc allocates space for a nxn matrix with complex elements.
-*****************************************************************************/
-
-Complex **ComplexMatrixAlloc(const int n) {
-
-  int       i;
-  Complex **temp;
-
-  temp=(Complex **)calloc(n, sizeof(Complex *));
-  if (temp==NULL)
-    fprintf(stderr, "In MatrixLib: Not able to allocate matrix.\n");
-  else {
-    for(i=0; i<n; i++) {
-      temp[i]=(Complex *)calloc(n, sizeof(Complex));
-      if (temp[i]==NULL)
-	fprintf(stderr, "In MatrixLib: Not able to allocate matrix.\n");
-    } /* for i */
-  } /* if else */
-  return temp;
-} /* ComplexMatrixAlloc */
-
-
-/***************************************************************************
-  ComplexVectorAlloc allocates a vector of dimension n with complex 
-  elements.
-****************************************************************************/
-       
-Complex *ComplexVectorAlloc(const int n) {
-
-  Complex *temp;
-
-  temp=(Complex *)calloc(n, sizeof(Complex));
-  if (temp==NULL) 
-    fprintf(stderr, "In MatrixLib: Not able to allocate vector.\n");
-  return temp;
-} /* ComplexVectorAlloc */
-
-
-/****************************************************************************
   MatrixMul computes the product between two square matrices, [4, pp. 
   357-358]. Both matrices are assumed to have the dimension n*n. A and B are 
   input, and res is the output, i.e. the routine computes res=A*B.
@@ -179,8 +140,8 @@ void Transpose(const int n, double **res, double **A) {
 
 
 /*****************************************************************************
-  MatrixFree, VectorFree, IntVectorFree, ComplexMatrixFree, and 
-  ComplexVectorFree free the space used by the objects, [3].
+  MatrixFree, VectorFree, and IntVectorFree free the space used by the
+  objects, [3].
 *****************************************************************************/
 
 void MatrixFree(const int n, double **matrix) {
@@ -191,15 +152,6 @@ void MatrixFree(const int n, double **matrix) {
     free(matrix[i]);
   free(matrix);
 } /* MatrixFree */
-
-void ComplexMatrixFree(const int n, Complex **matrix) {
-
-  int i;
-
-  for(i=0; i<n; i++)
-    free(matrix[i]);
-  free(matrix);
-} /* ComplexMatrixFree */
 
 void VectorFree(const int n, double *vector) {
 
@@ -212,12 +164,6 @@ void IntVectorFree(const int n, int *vector) {
   (void)n;
   free(vector);
 } /* IntVectorFree */
-
-void ComplexVectorFree(const int n, Complex *vector) {
-
-  (void)n;
-  free(vector);
-} /* ComplexVectorFree */
 
 
 /****************************************************************************

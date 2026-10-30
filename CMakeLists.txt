@@ -18,7 +18,6 @@ add_compile_options(-ffp-contract=off)
 
 # Numerical library: linked into kc and into generated simulators.
 add_library(kcsolvers STATIC
-  Solvers/complex.c
   Solvers/eigen.c
   Solvers/integr.c
   Solvers/matrix.c
@@ -54,7 +53,6 @@ configure_file(kci.in ${CMAKE_CURRENT_BINARY_DIR}/kci @ONLY)
 install(TARGETS kc kcsolvers)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/kci TYPE BIN)
 install(FILES
-  Solvers/complex.h
   Solvers/integr.h
   Solvers/matrix.h
   Solvers/odeserv.h
