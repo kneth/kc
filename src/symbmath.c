@@ -380,7 +380,7 @@ Tree TreeCreate(void) {
 
   Tree t;
 
-  t=(Tree) malloc(sizeof(TreeNode));
+  t=(Tree) calloc(1, sizeof(TreeNode));
   if (t==NULL) {
     fprintf(stderr, "ERROR in TreeCreate: NULL pointer recieved.\nAborting kc - sorry.\n");
     exit(-1);
