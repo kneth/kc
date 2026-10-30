@@ -33,7 +33,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
   Tree   tmp;
   int    i, j, k, l, constraint, dyn, form;
   int    NumbOfParams, NumbOfDynVars;
-  int    need_dd_jac, BfErrorCode;
+  int    need_dd_jac=0, BfErrorCode;
 
   name=StringAlloc();
   rename=StringAlloc();

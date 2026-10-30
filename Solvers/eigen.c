@@ -458,7 +458,8 @@ void hqr2(int n, int low, int upp, int maxits, double macheps,
           double *wi, int *cnt, int *fail) {
 
   int     i, j, k, l, m, na, its, en;
-  double  p, q, r, s, t, w, x, y, z, ra, sa, vr, vi, norm;
+  double  p, q, t, w, x, y, ra, sa, vr, vi, norm;
+  double  r=0.0, s=0.0, z=0.0; /* set when wi<0, used for the next row */
   int     notlast;
   Complex c1, c2, c3;
 
