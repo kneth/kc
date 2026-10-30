@@ -30,3 +30,9 @@ jobs:
         run: cmake --build build -j4
       - name: Test
         run: ctest --test-dir build -j4 --output-on-failure
+      - name: Upload test output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-work-${{ matrix.os }}-${{ matrix.cc }}-c${{ matrix.std }}
+          path: build/test-work
