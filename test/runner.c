@@ -61,7 +61,7 @@ static char *slurp(const char *path) {
 
 /* Matches a ctime(3) timestamp such as "Fri Oct 30 14:48:31 2026". */
 static bool is_date(const char *s) {
-  const char *pat = "Aaa Aaa _9 99:99:99 9999";
+  const char *pat = "AAA AAA _9 99:99:99 9999";
   for (; *pat; pat++, s++) {
     if (*pat == 'A' && !isalpha((unsigned char)*s)) return false;
     if (*pat == '9' && !isdigit((unsigned char)*s)) return false;
