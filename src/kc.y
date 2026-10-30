@@ -565,4 +565,8 @@ timeopt   : { $$=0; }
 	    | time0
 	    { $$=1; };
 %%
+/* Some flex versions (e.g. Apple's) generate sign-compare warnings. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
 #include "lex.c"
+#pragma GCC diagnostic pop
