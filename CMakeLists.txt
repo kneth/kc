@@ -13,6 +13,8 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 add_compile_definitions(_POSIX_C_SOURCE=200809L)  # getopt, fileno
 add_compile_options(-Wall -Wextra -Wpedantic)
+# No fused multiply-add: mode 1 results must not depend on compiler or CPU.
+add_compile_options(-ffp-contract=off)
 
 # Numerical library: linked into kc and into generated simulators.
 add_library(kcsolvers STATIC
