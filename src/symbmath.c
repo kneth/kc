@@ -15,6 +15,7 @@
 ****************************************************************************/
 
 #include "config.h"
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -1210,7 +1211,7 @@ void TreePrintXtra(Tree t, int mode, FILE *output) {
       LineBreak(output, mode);
       break;
     case Konst:
-      if (fmod(t->data.value, 1.0)==0.0) {
+      if (fmod(t->data.value, 1.0)==0.0 && fabs(t->data.value)<=INT_MAX) {
 	fprintf(output, "(%d)", (int)t->data.value);
 	len+=5;
       } else {

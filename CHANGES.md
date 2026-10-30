@@ -57,6 +57,9 @@ current C compilers, and an automated test suite has been added.
 * Mode 3: the species names of non-autonomous models were stored one
   slot too low. Generated simulators now compile as C17.
 * Mode 5: the range check of preference values could never trigger.
+* Mode 5: integral constants too large for an `int` (e.g. 4e11) were
+  written as 2147483647 or -2147483648, depending on the CPU. They are
+  now written in exponent notation.
 * Several uninitialized variables have been fixed, including the
   result of `TreeEval` and table lookups of unknown names.
 * The warning for an unknown command-line option printed the wrong
