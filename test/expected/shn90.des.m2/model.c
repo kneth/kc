@@ -191,7 +191,7 @@ Jac[5][5]=tk*(((-3.323600e-05+(2.000000e+00*(-(((7.640000e+05
 *(BrO2*2.000000e+00))*5.550000e+01)))))+(-1.000000e+00
 *(8.000000e+04*(8.300000e-05-Ce_pppp)))))-(1+4*R[4]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double HBrO2;
  double P;
  double Br_m;

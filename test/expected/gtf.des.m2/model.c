@@ -1480,7 +1480,7 @@ MAR))+(2.000000e+09*TTAR))+(1.000000e+07*CeIV))+(1.000000e+09
 )));
 Jac[23][23]=tk*(-3.060000e-04)-(1+4*R[22]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double HBrO2;
  double OP;
  double Br_m;

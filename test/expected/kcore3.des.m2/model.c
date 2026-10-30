@@ -15,7 +15,7 @@ void eval(double S[equa], double F[equa]) {
 void calc_jac(double S[equa], double tk, double R[equa], double Jac[equa+1][equa+1]) 
 {
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
 switch (l) {
 }
 }

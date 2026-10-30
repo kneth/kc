@@ -149,7 +149,7 @@ Jac[7][5]=tk*(0.000000e+00);
 Jac[7][6]=tk*((1.100000e+10*OH));
 Jac[7][7]=tk*(0.000000e+00)-(1+4*R[6]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double H;
  double NO2;
  double OH;

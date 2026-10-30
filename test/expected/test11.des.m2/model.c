@@ -37,7 +37,7 @@ Jac[1][2]=tk*(0.000000e+00);
 Jac[2][1]=tk*(((pow(x,(y-1.000000e+00)))*y));
 Jac[2][2]=tk*(((pow(x,y))*log(x)))-(1+4*R[1]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double x;
  double y;
   x=S[0];

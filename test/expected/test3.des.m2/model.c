@@ -117,7 +117,7 @@ Jac[5][3]=tk*(0.000000e+00);
 Jac[5][4]=tk*((1.000000e-01*(A*A)));
 Jac[5][5]=tk*(-1.000000e+00)-(1+4*R[4]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double A;
  double B;
  double C;

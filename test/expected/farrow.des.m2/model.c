@@ -4027,7 +4027,7 @@ Jac[54][52]=tk*(0.000000e+00);
 Jac[54][53]=tk*(0.000000e+00);
 Jac[54][54]=tk*((-1.000000e+00*(3.600000e+05*CH3COO_rad)))-(1+4*R[53]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double NO2;
  double NO;
  double O;

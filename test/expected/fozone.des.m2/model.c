@@ -300,7 +300,7 @@ Jac[11][9]=tk*(0.000000e+00);
 Jac[11][10]=tk*(0.000000e+00);
 Jac[11][11]=tk*((-1.000000e+00*(1.000000e+07*FeO_pp)))-(1+4*R[10]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double Fe_pp;
  double O3;
  double FeO_pp;

@@ -64,7 +64,7 @@ Jac[3][2]=tk*((-((-1.000000e+01+((3.000000e+07*y3)*-1.000000e+00
 Jac[3][3]=tk*((-(((1.000000e+08*(1.000000e+00-y1))+(3.000000e+07
 *(1.000000e+00-y2))))))-(1+4*R[2]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double y1;
  double y2;
  double y3;

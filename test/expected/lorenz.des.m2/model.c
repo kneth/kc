@@ -51,7 +51,7 @@ Jac[3][1]=tk*(Y);
 Jac[3][2]=tk*(X);
 Jac[3][3]=tk*(-4.000000e+00)-(1+4*R[2]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double X;
  double Y;
  double Z;

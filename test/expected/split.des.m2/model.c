@@ -100,7 +100,7 @@ Jac[3][1]=tk*(0.000000e+00);
 Jac[3][2]=tk*(1.440000e-02);
 Jac[3][3]=tk*(-4.303468e-01)-(1+4*R[2]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double BrO3_m;
  double Br_m;
  double HBrO2;

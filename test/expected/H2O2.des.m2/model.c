@@ -219,7 +219,7 @@ Jac[8][7]=tk*(((1.098751e+04*H)*O2));
 Jac[8][8]=tk*(((-1.000000e+00*(4.060058e+07*H))+(-1.000000e+00
 *(9.043536e+07*H))))-(1+4*R[7]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double H2;
  double O2;
  double OH;

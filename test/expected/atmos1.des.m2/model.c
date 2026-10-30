@@ -647,7 +647,7 @@ Jac[19][17]=tk*(0.000000e+00);
 Jac[19][18]=tk*(0.000000e+00);
 Jac[19][19]=tk*(0.000000e+00)-(1+4*R[18]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double F;
  double CF3H;
  double CF3;

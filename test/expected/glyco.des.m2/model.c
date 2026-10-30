@@ -761,7 +761,7 @@ Jac[4][4]=tk*(((((((1.000000e-02+ATP)*(((-((((3.300000e+01*
 *ATP)))+(-2.000000e+00*(5.000000e+01*(ADP*2.000000e+00
 )))))-(1+4*R[3]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double F6Po;
  double F6P;
  double P;

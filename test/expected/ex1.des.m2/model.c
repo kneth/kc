@@ -135,7 +135,7 @@ Jac[6][4]=tk*((2.000000e+00*SO4_mm));
 Jac[6][5]=tk*((2.000000e+00*H_p));
 Jac[6][6]=tk*(-3.000000e+00)-(1+4*R[5]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double H2;
  double O2;
  double H2O;

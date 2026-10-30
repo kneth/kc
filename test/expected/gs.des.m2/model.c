@@ -78,7 +78,7 @@ Jac[3][3]=tk*(((1.500000e-01*(((9.508489e+26*((1.380193e+06
 +dT))))*exp((-1.660000e+05/(8.314413e+00*(4.000000e+02
 +dT))))))*A)-1.500000e+00))/2.250000e-02))-(1+4*R[2]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double P;
  double A;
  double B;

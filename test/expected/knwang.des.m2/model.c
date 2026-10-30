@@ -133,7 +133,7 @@ Jac[4][3]=tk*((-1.000000e+00*(3.000000e+01*Ce4p)));
 Jac[4][4]=tk*((((2.000000e+00*(-7.998000e+04*HBrO2))+(-1.000000e+00
 *(3.000000e+01*BrMA)))+-1.100000e-01))-(1+4*R[3]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double BrO3m;
  double Brm;
  double H;

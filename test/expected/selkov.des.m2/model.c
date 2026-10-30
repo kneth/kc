@@ -38,7 +38,7 @@ Jac[2][1]=tk*((3.000000e-01*(y*y*y)));
 Jac[2][2]=tk*((3.000000e-01*((x*((y*y)*3.000000e+00))-1.000000e+00
 )))-(1+4*R[1]);
 }
-reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
+double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double x;
  double y;
   x=S[0];
