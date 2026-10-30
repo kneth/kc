@@ -82,8 +82,9 @@ static bool starts_number(const char *s, const char *begin) {
   return isdigit((unsigned char)*s) || strchr("+-.", *s) || !strncmp(s, "nan", 3);
 }
 
-/* Compares text, treating numbers as equal within tolerance. Returns the
-   1-based line of the first difference, or 0 when equal. */
+/* Compares text, treating numbers as equal within tolerance and runs of blanks
+   as equal regardless of length (a padded "-nan" on x86-64 is "nan" on arm64).
+   Returns the 1-based line of the first difference, or 0 when equal. */
 static int compare(const char *a, const char *b, double rel_tol) {
   const char *a0 = a, *b0 = b;
   int line = 1;
@@ -99,6 +100,11 @@ static int compare(const char *a, const char *b, double rel_tol) {
         b = eb;
         continue;
       }
+    }
+    if (*a == ' ' && *b == ' ') {
+      a += strspn(a, " ");
+      b += strspn(b, " ");
+      continue;
     }
     if (*a != *b) return line;
     if (*a == '\n') line++;
