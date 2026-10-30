@@ -66,6 +66,8 @@ static void Comment(int close)
 { int c, prev=0, start=lineno;
 
   while ((c=input())!=EOF && c!=0) {
+    if (c=='\n')
+      lineno++;
     if ((prev=='*') && (c==close))
       return;
     prev=c;

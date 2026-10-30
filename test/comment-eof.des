@@ -1,4 +1,5 @@
-/* A comment that is never closed must be reported (kc used to hang). */
+/* A comment that is never closed must be reported (kc used to hang),
+   with the right line number. */
 etime = 1.0;
 
 x' = -x;
