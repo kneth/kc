@@ -529,7 +529,7 @@ void hqr2(int n, int low, int upp, int maxits, double macheps,
     p/=s;
     q/=s;
     r/=s;
-    if (m==1)
+    if (m==l)
       goto L232;
     if ((fabs(h[m-1][m-2])*(fabs(q)+fabs(r)))<=
 	(macheps*fabs(p)*(fabs(h[m-2][m-2])+fabs(z)+fabs(h[m][m]))))
