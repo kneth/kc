@@ -76,6 +76,15 @@ void PrintEigen(int n, double **A, double **B, double eps, FILE *outfile) {
 } /* PrintEigen */
 
 
+/* Modulus of V[row][col-1] + i*V[row][col]; the last column has no imaginary part. */
+static double EntryNorm(int n, double **V, int row, int col) {
+
+  Complex c;
+
+  ComplexAssign(V[row-1][col-1], (col<n) ? V[row-1][col] : 0.0, &c);
+  return ComplexNorm(c);
+} /* EntryNorm */
+
 void NormalizingMatrix(int n, double **A, int fixedref, int *ref, 
 		       double **V, double eps) {
 
@@ -87,11 +96,9 @@ void NormalizingMatrix(int n, double **A, int fixedref, int *ref,
   do {
     if (fixedref==0) {
       *ref=1;
-      ComplexAssign(V[*ref-1][col-1], V[*ref-1][col], &c1);
-      max=ComplexNorm(c1);
+      max=EntryNorm(n, V, *ref, col);
       for(j=2; j<=n; j++) {
-	ComplexAssign(V[j-1][col-1], V[j-1][col], &c2);
-	sqrnorm=ComplexNorm(c2);
+	sqrnorm=EntryNorm(n, V, j, col);
 	if (sqrnorm>max) {
 	  *ref=j;
 	  max=sqrnorm;
