@@ -181,6 +181,8 @@ ctest --test-dir build -j8
 ```
 
 Numbers are compared with a relative tolerance, and timestamps are ignored.
+When kc rejects a model, its exit status is written to a `status` file and
+compared as well, so error handling is tested too.
 `test/skip.txt` lists known defects that are skipped for now. After an
 intended change of the output, rewrite the expected files with
 `KC_UPDATE=1 ctest --test-dir build` and review the diff.
