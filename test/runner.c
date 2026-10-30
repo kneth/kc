@@ -200,13 +200,18 @@ int main(int argc, char *argv[]) {
 
   format(cmd, sizeof cmd, "rm -rf %s && mkdir %s && cd %s && '%s' -m%s < '%s' > stdout 2> stderr",
            dir, dir, dir, kc, mode, model);
+  /* A failing kc leaves its exit status in DIR/status, which is compared like any
+     other output, so models that must be rejected can be tested too. */
   int status = run(cmd);
   if (status != 0) {
-    fprintf(stderr, "%s: kc failed with status %d\n", dir, status);
-    return 1;
+    char path[1024];
+    format(path, sizeof path, "%s/status", dir);
+    FILE *f = fopen(path, "w");
+    fprintf(f, "%d\n", status);
+    fclose(f);
   }
 
-  bool want_sim = !strcmp(mode, "3") && (update || access(sim_last, R_OK) == 0);
+  bool want_sim = status == 0 && !strcmp(mode, "3") && (update || access(sim_last, R_OK) == 0);
   bool sim_ok = want_sim && simulate(dir);
   if (want_sim && !sim_ok && !update) {
     fprintf(stderr, "%s: simulation failed\n", dir);
