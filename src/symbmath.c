@@ -936,13 +936,13 @@ double TreeEval(Tree t) {
 	  res=atan(res);
 	  break;
 	case Asinh:
-	  /* res=asinh(res); */
+	  res=asinh(res);
 	  break;
 	case Acosh:
-	  /* res=acosh(res); */
+	  res=acosh(res);
 	  break;
 	case Atanh:
-	  /* res=atanh(res); */
+	  res=atanh(res);
 	  break;
 	} /* switch */
       } /* if */

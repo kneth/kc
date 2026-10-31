@@ -1,4 +1,7 @@
 etime = 1.0;
+c1 = asinh(1.0);
+c2 = acosh(2.0);
+c3 = atanh(0.5);
 
 u1' = -tan(u1);
 u2' = -tanh(u2);

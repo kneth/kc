@@ -10,6 +10,9 @@ Species used (*=dyn. var.):
   *u8
 Constants declared:
   etime = 1.000000e+00
+  c1 = 8.813736e-01
+  c2 = 1.316958e+00
+  c3 = 5.493061e-01
 The Jacobian matrix is:
 J(1, 1) = -1.29844641040952e+00
 J(1, 2) = -0.00000000000000e+00
