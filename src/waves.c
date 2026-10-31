@@ -347,7 +347,7 @@ void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
   if (GetError()==NotFound) temp=10.0;
   fprintf(code_ini, "period..= %e\n", temp);
   for(i=0; i<NoOfSpec(); i++) {
-    GetSpecNo(i, name, &charge);
+    GetSpecNo(i+1, name, &charge);
     if (IsSpecInConstraint(name, charge)==0) {
       temp=GetBeginConc(name, charge);
       fprintf(code_ini, "init-val= %e\n", temp);
