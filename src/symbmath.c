@@ -10,8 +10,6 @@
   Denmark                                                             Denmark
 
   See kc.tex for details.
-
-  Last updated: 17 February 1995
 ****************************************************************************/
 
 #include "config.h"
@@ -19,335 +17,182 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #include "symbmath.h" 
 #include "misc.h"
 
-#include <stdlib.h>
-
-int tree_error, len, left, right;
-
-#undef WORKING
+static int tree_error, len;
 
 /****************************************************************************
-  TreeReduce tries to reduce the complexity of the expression. The routine
-  is an internal one only, i.e. it is not called by the user explicitely.
-
-  The code is _not_ commented, but at many reductions one can find a short
-  explaination. The notation is: Expression 1 -> Expression 2. It should be
-  read as: Expression 1 is reduced to expression 2. The symbols f and g 
-  represents two generic expressions.
+  Node arena. Nodes are never freed one by one: trees share subtrees, and
+  kc builds them for a single run. TreeFreeAll releases all of them.
 *****************************************************************************/
 
-void TreeReduce(Tree tin) {
+#define BlockSize 4096
 
-  Tree   res, t;
-  int    alter;
+typedef struct Block {
+  struct Block *next;
+  int           used;
+  TreeNode      nodes[BlockSize];
+} Block;
 
-  alter=0;
-  res=TreeCreate();
-  t=TreeCreate();
-  if (tin!=NULL) {
-    switch (tin->tag) {
-    case Oper:
-      alter=2;
-      TreeCpy(t, tin);
-      TreeReduce(t->data.oper.left);
-      TreeReduce(t->data.oper.right);
-      switch (t->data.oper.op) {
-      case Add: 
-	if ((t->data.oper.left->tag==Konst) && 
-	    (t->data.oper.right->tag==Konst)) {
-	  alter=1;
-	  res->tag=Konst;
-	  res->data.value=t->data.oper.left->data.value
-	    +t->data.oper.right->data.value;
-	} /* if */
-	if ((t->data.oper.right->tag==Konst) && (alter==2)) {
-	  if (t->data.oper.right->data.value==0.0) {
-	    alter=1;
-	    TreeCpy(res, t->data.oper.left);
-	  } /* if */
-	} /* if */
-	if ((t->data.oper.left->tag==Konst) && (alter==2)) {
-	  if (t->data.oper.left->data.value==0.0) {
-	    alter=1;
-	    TreeCpy(res, t->data.oper.right);
-	  } /* if */
-	} /* if */
+static Block *blocks=NULL;
 
-	/* (f+(-g)) -> (f-g) */
-	if ((t->data.oper.right->tag==NegSign) && (alter==2)) {
-	  alter=1;
-	  res->tag=Oper;
-	  res->data.oper.op=Sub;
-	  res->data.oper.left=TreeCreate();
-	  TreeCpy(res->data.oper.left, t->data.oper.left);
-	  res->data.oper.right=TreeCreate();
-	  TreeCpy(res->data.oper.right, t->data.oper.right->data.right);
-	} /* if */
-	break;
-      case Sub: 
-	if ((t->data.oper.left->tag==Konst) && 
-	    (t->data.oper.right->tag==Konst)) {
-	  alter=1;
-	  res->tag=Konst;
-	  res->data.value=t->data.oper.left->data.value
-	    -t->data.oper.right->data.value;
-	} /* if */
-	if ((t->data.oper.right->tag==Konst) && (alter==2)) 
-	  if (t->data.oper.right->data.value==0.0) {
-	    alter=1;
-	    TreeCpy(res, t->data.oper.left);
-	  } /* if */
+static TreeNode *NewNode(TreeTag tag) {
 
-	if ((t->data.oper.left->tag==Konst) && (alter==2)) {
-	  if (t->data.oper.left->data.value==0.0) {
-	    alter=1;
-	    res->tag=NegSign;
-	    res->data.right=TreeCreate();
-	    TreeCpy(res->data.right, t->data.oper.right);
-	  }
-	} /* if */
-	if ((t->data.oper.left->tag==Var) && 
-	    (t->data.oper.right->tag==Var)) 
-	  if (strcmp(t->data.oper.left->data.name, 
-		     t->data.oper.right->data.name)==0) {
-	    alter=1;
-	    res->tag=Konst;
-	    res->data.value=0.0;
-	  } /* if */
+  TreeNode *t;
 
-	/* (f-(-g)) -> (f+g) */
-	if ((t->data.oper.right->tag==NegSign) && (alter==2)) {
-	  alter=1;
-	  res->tag=Oper;
-	  res->data.oper.op=Add;
-	  res->data.oper.left=TreeCreate();
-	  TreeCpy(res->data.oper.left, t->data.oper.left);
-	  res->data.oper.right=TreeCreate();
-	  TreeCpy(res->data.oper.right, t->data.oper.right->data.right);
-	} /* if */
-	
-	/* (-f-g) -> -(f+g) */
-	if ((t->data.oper.left->tag==NegSign) && (alter==2)) {
-	  alter=1;
-	  res->tag=NegSign;
-	  res->data.right=TreeCreate();
-	  res->data.right->tag=Oper;
-	  res->data.right->data.oper.op=Add;
-	  res->data.right->data.oper.left=TreeCreate();
-	  TreeCpy(res->data.right->data.oper.left, 
-		  t->data.oper.left->data.right);
-	  res->data.right->data.oper.right=TreeCreate();
-	  TreeCpy(res->data.right->data.oper.right, t->data.oper.right);
-	}
-	break;
+  if ((blocks==NULL) || (blocks->used==BlockSize)) {
+    Block *b=malloc(sizeof(Block));
+    if (b==NULL) {
+      fprintf(stderr, "ERROR: Out of memory.\nAborting kc - sorry.\n");
+      exit(-1);
+    }
+    b->next=blocks;
+    b->used=0;
+    blocks=b;
+  }
+  t=&blocks->nodes[blocks->used++];
+  memset(t, 0, sizeof(*t));
+  t->tag=tag;
+  return t;
+} /* NewNode */
 
-      case Mul: 
+void TreeFreeAll(void) {
 
-	/* (Konst1*Konst2) -> Konst3 */
-	if ((t->data.oper.left->tag==Konst) && 
-	    (t->data.oper.right->tag==Konst)) {
-	  alter=1;
-	  res->tag=Konst;
-	  res->data.value=t->data.oper.left->data.value
-	    *t->data.oper.right->data.value;
-	} /* if */
+  while (blocks!=NULL) {
+    Block *next=blocks->next;
+    free(blocks);
+    blocks=next;
+  }
+} /* TreeFreeAll */
 
-	/* (f*0) -> 0 and (f*1) -> (f) */
-	if ((t->data.oper.right->tag==Konst) && (alter==2)) {
-	  if (t->data.oper.right->data.value==0.0) {
-	    alter=1;
-	    res->tag=Konst;
-	    res->data.value=0.0;
-	  }; /* if */
-	  if (t->data.oper.right->data.value==1.0) {
-	    alter=1;
-	    TreeCpy(res, t->data.oper.left);
-	  } /* if */
-	} /* if */
+/****************************************************************************
+  Unreduced node builders.
+*****************************************************************************/
 
-	/* (0*f) -> 0 and (1*f) -> (f) */
-	if ((t->data.oper.left->tag==Konst) && (alter==2)) {
-	  if (t->data.oper.left->data.value==0.0) {
-	    alter=1;
-	    res->tag=Konst;
-	    res->data.value=0.0;
-	  } /* if */
-	  if (t->data.oper.left->data.value==1.0) {
-	    alter=1;
-	    TreeCpy(res, t->data.oper.right);
-	  } /* if */
-	} /* if */
+static Tree Op(TreeOper op, Tree left, Tree right) {
 
-#ifdef WORKING
-	/* (-1*f) -> (-f) */
-	if ((t->data.oper.left->tag==Konst) && (alter==2)) 
-	  if (t->data.oper.left->data.value==-1.0) {
-	    alter=1;
-	    res->tag=NegSign;
-	    res->data.right=TreeCreate();
-	    TreeCpy(res->data.right, t->data.oper.right);
-	  } /* if */
+  TreeNode *t=NewNode(Oper);
 
-	/* (f*(-1)) -> (-f) */
-	if ((t->data.oper.right->tag==Konst) && (alter==2)) 
-	  if (t->data.oper.right->data.value==-1.0) {
-	    alter=1;
-	    res->tag=NegSign;
-	    res->data.right=TreeCreate();
-	    TreeCpy(res->data.right, t->data.oper.left);
-	  } /* if */
-#endif
+  t->data.oper.op=op;
+  t->data.oper.left=left;
+  t->data.oper.right=right;
+  return t;
+} /* Op */
 
-	break;
-      case Div: 
-	if ((t->data.oper.left->tag==Konst) && 
-	    (t->data.oper.right->tag==Konst)) {
-	  /* division by zero is not detected */
-	  alter=1;
-	  res->tag=Konst;
-	  res->data.value=t->data.oper.left->data.value
-	    /t->data.oper.right->data.value;
-	} /* if */
-	if ((t->data.oper.right->tag==Konst) && (alter==2)) {
-	  if (t->data.oper.right->data.value==1.0) {
-	    alter=1;
-	    TreeCpy(res, t->data.oper.left);
-	  } /* if */
-	  if (t->data.oper.right->data.value==0.0) {
-	    alter=1;
-	    res->tag=Konst;
-	    res->data.value=0.0;
-	  } /* if */
-	} /* if */
-	if ((t->data.oper.left->tag==Var) && (t->data.oper.right->tag==Var)) {
-	  if (strcmp(t->data.oper.left->data.name, 
-		     t->data.oper.right->data.name)==0) {
-	    alter=1;
-	    res->tag=Konst;
-	    res->data.value=1.0;
-	  } /* if */
-	} /* if */
-	if ((t->data.oper.left->tag==Konst) && (alter==2))
-	  if (t->data.oper.left->data.value==0.0) {
-	    alter=1;
-	    res->tag=Konst;
-	    res->data.value=0.0;
-	  } /* if */
-	break;
-      case Pow: 
-	if ((t->data.oper.left->tag==Konst) && 
-	    (t->data.oper.right->tag==Konst)) {
-	  alter=1;
-	  res->tag=Konst;
-	  res->data.value=pow(t->data.oper.left->data.value, 
-			      t->data.oper.right->data.value);
-	} /* if */
-	if ((t->data.oper.right->tag==Konst) && (alter==2)) {
-	  if (t->data.oper.right->data.value==1.0) {
-	    alter=1;
-	    TreeCpy(res, t->data.oper.left);
-	  } /* if */
-	  if (t->data.oper.right->data.value==0.0) {
-	    alter=1;
-	    res->tag=Konst;
-	    res->data.value=1.0;
-	  } /* if */
-	} /* if */
-	break;
-      } /* switch */
-      break;
-    case NegSign:
-      alter=2;
-      t=TreeCreate();
-      TreeCpy(t, tin);
-      TreeReduce(t->data.right);
+static Tree Const(double value) {
 
-      /* (-(-f)) -> (f) */
-      if (t->data.right->tag==NegSign) {
-	alter=1;
-	res->tag=t->data.right->data.right->tag;
-	res->data.right=TreeCreate();
-	TreeCpy(res, t->data.right->data.right);
-      } /* if */
+  TreeNode *t=NewNode(Konst);
 
-      /* -(Constant) -> (-Constant) */
-      if (t->data.right->tag==Konst) {
-	alter=1;
-	res->tag=Konst;
-	res->data.value=-t->data.right->data.value;
-      } /* if */
-      break;
-    case Func:
-      alter=2;
-      t=TreeCreate();
-      TreeCpy(t, tin);
-      TreeReduce(t->data.func.right);
-      break;
-    default:
-      /* Nothing */
-      alter=0;
-      break;
-    }; /* switch tag */
-    switch (alter) {
-    case 0: /* nothing altered */
-      TreeCpy(res, tin);
-      break;
-    case 1: /* res is the result */ 
-      break;
-    case 2: /* t is the result */
-      TreeCpy(res, t); 
-      break;
-    }; /* switch */
-/*
-    TreeKill(tin);
-    tin=TreeCreate();
-*/
-    TreeCpy(tin, res);
-    TreeKill(res);
-    TreeKill(t);
-  } /* if */
-  else {
+  t->data.value=value;
+  return t;
+} /* Const */
+
+static Tree Fun(Function fun, Tree arg) {
+
+  TreeNode *t=NewNode(Func);
+
+  t->data.func.fun=fun;
+  t->data.func.right=arg;
+  return t;
+} /* Fun */
+
+static Tree Neg(Tree arg) {
+
+  TreeNode *t=NewNode(NegSign);
+
+  t->data.right=arg;
+  return t;
+} /* Neg */
+
+static int IsConst(Tree t, double value) {
+
+  return (t->tag==Konst) && (t->data.value==value);
+} /* IsConst */
+
+static int SameVar(Tree a, Tree b) {
+
+  return (a->tag==Var) && (b->tag==Var)
+    && (strcmp(a->data.name, b->data.name)==0);
+} /* SameVar */
+
+/****************************************************************************
+  Reduce returns a simpler tree with the same value. It reduces the
+  subtrees, then applies the first matching rule below to the node. The
+  notation f, g stands for any expression, K for a constant.
+*****************************************************************************/
+
+static Tree Reduce(Tree t) {
+
+  Tree l, r;
+
+  if (t==NULL) {
     fprintf(stderr, "ERROR in TreeReduce: NULL pointer.\nAborting kc - sorry.\n");
     exit(-1);
   }
-} /* TreeReduce */
+  switch (t->tag) {
+  case Oper:
+    l=Reduce(t->data.oper.left);
+    r=Reduce(t->data.oper.right);
+    switch (t->data.oper.op) {
+    case Add:
+      if ((l->tag==Konst) && (r->tag==Konst))      /* K1+K2 -> K3 */
+	return Const(l->data.value+r->data.value);
+      if (IsConst(r, 0.0)) return l;               /* f+0 -> f */
+      if (IsConst(l, 0.0)) return r;               /* 0+f -> f */
+      if (r->tag==NegSign)                         /* f+(-g) -> f-g */
+	return Op(Sub, l, r->data.right);
+      break;
+    case Sub:
+      if ((l->tag==Konst) && (r->tag==Konst))      /* K1-K2 -> K3 */
+	return Const(l->data.value-r->data.value);
+      if (IsConst(r, 0.0)) return l;               /* f-0 -> f */
+      if (IsConst(l, 0.0)) return Neg(r);          /* 0-f -> -f */
+      if (SameVar(l, r)) return Const(0.0);        /* x-x -> 0 */
+      if (r->tag==NegSign)                         /* f-(-g) -> f+g */
+	return Op(Add, l, r->data.right);
+      if (l->tag==NegSign)                         /* (-f)-g -> -(f+g) */
+	return Neg(Op(Add, l->data.right, r));
+      break;
+    case Mul:
+      if ((l->tag==Konst) && (r->tag==Konst))      /* K1*K2 -> K3 */
+	return Const(l->data.value*r->data.value);
+      if (IsConst(r, 0.0)) return Const(0.0);      /* f*0 -> 0 */
+      if (IsConst(r, 1.0)) return l;               /* f*1 -> f */
+      if (IsConst(l, 0.0)) return Const(0.0);      /* 0*f -> 0 */
+      if (IsConst(l, 1.0)) return r;               /* 1*f -> f */
+      break;
+    case Div:
+      if ((l->tag==Konst) && (r->tag==Konst))      /* K1/K2 -> K3 */
+	return Const(l->data.value/r->data.value);
+      if (IsConst(r, 1.0)) return l;               /* f/1 -> f */
+      if (IsConst(r, 0.0)) return Const(0.0);      /* f/0 -> 0 (sic) */
+      if (SameVar(l, r)) return Const(1.0);        /* x/x -> 1 */
+      if (IsConst(l, 0.0)) return Const(0.0);      /* 0/f -> 0 */
+      break;
+    case Pow:
+      if ((l->tag==Konst) && (r->tag==Konst))      /* K1^K2 -> K3 */
+	return Const(pow(l->data.value, r->data.value));
+      if (IsConst(r, 1.0)) return l;               /* f^1 -> f */
+      if (IsConst(r, 0.0)) return Const(1.0);      /* f^0 -> 1 */
+      break;
+    }
+    return Op(t->data.oper.op, l, r);
+  case NegSign:
+    r=Reduce(t->data.right);
+    if (r->tag==NegSign) return r->data.right;     /* -(-f) -> f */
+    if (r->tag==Konst) return Const(-r->data.value); /* -(K) -> (-K) */
+    return Neg(r);
+  case Func:
+    return Fun(t->data.func.fun, Reduce(t->data.func.right));
+  default:
+    return t;
+  }
+} /* Reduce */
 
 
-/****************************************************************************
-  The following two procdures are used by TreePrint.
-*****************************************************************************/
-
-void SplitFP(double x, double *mantissa, int *exponent) {
-
-  int i, sign;
-  char str[STRING_LENGTH];
-
-  *mantissa=0.0;
-  sprintf(str, "%e", x);
-  if (str[0]=='-')
-    sign=-1;
-  else
-    sign=1;
-  i=1;
-  while (str[i]!='e') { 
-    *mantissa=*mantissa+(double)str[i]*pow(10.0, -(double)(i-1));
-    i++;
-  } /* while */
-  *mantissa=*mantissa*sign;
-  i+=2;
-  if (str[i]=='-') 
-    sign=-1;
-  else
-    sign=1;
-  *exponent=10*(int)str[i+1];
-  *exponent+=(int)str[i+2];
-  *exponent*=sign;
-} /* SplitFP */
-
-
-void LineBreak(FILE *out, int mode) {
+static void LineBreak(FILE *out, int mode) {
 
   if ((len>=60)) {
     fprintf(out, "\n");
@@ -370,484 +215,154 @@ void LineBreak(FILE *out, int mode) {
   The following routines are exported.
 *************************************************************************** */
 
-
 int TreeGetError(void) {
 
   return tree_error;
 } /* TreeGetError */
 
+Tree TreeConst(double value) {
 
-Tree TreeCreate(void) {
+  tree_error=0;
+  return Const(value);
+} /* TreeConst */
 
-  Tree t;
+Tree TreeVar(const char *name) {
 
-  t=(Tree) calloc(1, sizeof(TreeNode));
-  if (t==NULL) {
-    fprintf(stderr, "ERROR in TreeCreate: NULL pointer recieved.\nAborting kc - sorry.\n");
-    exit(-1);
-  }
+  TreeNode *t=NewNode(Var);
+
+  (void) strcpy(t->data.name, name);
   tree_error=0;
   return t;
-} /* TreeCreate */
+} /* TreeVar */
 
+static Tree Reduced(Tree t) {
 
-void TreeAdd(Tree t1, Tree t2) {
-  
-  Tree    t;
-
-  t=TreeCreate();
-  t->tag=Oper;
-  t->data.oper.op=Add;
-  t->data.oper.left=TreeCreate();
-  t->data.oper.right=TreeCreate();
-  TreeCpy(t->data.oper.left, t1);
-  TreeCpy(t->data.oper.right, t2);
+  t=Reduce(t);
   tree_error=0;
-  TreeReduce(t);
-  TreeCpy(t1, t);
-  TreeKill(t);
-} /* TreeAdd */
+  return t;
+} /* Reduced */
 
-void TreeSub(Tree t1, Tree t2) {
-  
-  Tree    t;
+Tree TreeAdd(Tree a, Tree b) { return Reduced(Op(Add, a, b)); }
+Tree TreeSub(Tree a, Tree b) { return Reduced(Op(Sub, a, b)); }
+Tree TreeMul(Tree a, Tree b) { return Reduced(Op(Mul, a, b)); }
+Tree TreeDiv(Tree a, Tree b) { return Reduced(Op(Div, a, b)); }
+Tree TreePow(Tree a, Tree b) { return Reduced(Op(Pow, a, b)); }
+Tree TreeSign(Tree a) { return Reduced(Neg(a)); }
+Tree TreeApplyFunc(Function fun, Tree a) { return Reduced(Fun(fun, a)); }
 
-  t=TreeCreate();
-  t->tag=Oper;
-  t->data.oper.op=Sub;
-  t->data.oper.left=TreeCreate();
-  t->data.oper.right=TreeCreate();
-  TreeCpy(t->data.oper.left, t1);
-  TreeCpy(t->data.oper.right, t2);
-  tree_error=0;
-  TreeReduce(t);
-  TreeCpy(t1, t);
-  TreeKill(t);
-} /* TreeSub */ 
-
-void TreeMul(Tree t1, Tree t2) {
-  
-  Tree    t;
-
-  t=TreeCreate();
-  t->tag=Oper;
-  t->data.oper.op=Mul;
-  t->data.oper.left=TreeCreate();
-  t->data.oper.right=TreeCreate();
-  TreeCpy(t->data.oper.left, t1);
-  TreeCpy(t->data.oper.right, t2);
-  tree_error=0;
-  TreeReduce(t);
-  TreeCpy(t1, t);
-  TreeKill(t);
-} /* TreeMul */ 
-
-void TreeDiv(Tree t1, Tree t2) {
-  
-  Tree    t;
-
-  t=TreeCreate();
-  t->tag=Oper;
-  t->data.oper.op=Div;
-  t->data.oper.left=TreeCreate();
-  t->data.oper.right=TreeCreate();
-  TreeCpy(t->data.oper.left, t1);
-  TreeCpy(t->data.oper.right, t2);
-  tree_error=0;
-  TreeReduce(t); 
-  TreeCpy(t1, t);
-  TreeKill(t);
-} /* TreeDiv */
-
-void TreePow(Tree t, Tree t2) {
-
-  Tree     res;
-
-  res=TreeCreate();
-  res->tag=Oper;
-  res->data.oper.op=Pow;
-  res->data.oper.left=TreeCreate();
-  res->data.oper.right=TreeCreate();
-  TreeCpy(res->data.oper.left, t);
-  TreeCpy(res->data.oper.right, t2);
-  TreeReduce(res);
-  tree_error=0;
-  TreeCpy(t, res);
-  TreeKill(res);
-} /* TreePow */
-
-void TreeSign(Tree t) {
+/* Replaces the variable name by value. Like the original implementation,
+   it reduces at every level of the tree. */
+Tree TreeSubstTree(Tree t, const char *name, Tree value) {
 
   Tree res;
 
-  res=TreeCreate();
-  res->tag=NegSign;
-  res->data.right=TreeCreate();
-  TreeCpy(res->data.right, t);
-  TreeReduce(res);
-/*  TreeKill(t); 
-  t=TreeCreate(); */
-  TreeCpy(t, res);
-  TreeKill(res);
-  tree_error=0;
-} /* TreeSign */
-
-void TreeAssignConst(Tree t, double val) {
-
-  t->tag=Konst;
-  t->data.value=val;
-  tree_error=0;
-} /* TreeAssignConst */
-
-
-void TreeAssignVar(Tree t, char *name) {
-
-  t->tag=Var;
-  (void) strcpy(t->data.name, name);
-  tree_error=0;
-} /* TreeAssignVar */
-
-
-void TreeSubstVar(Tree t, char* name, double val) {
-
-  if (t==NULL) 
-    tree_error=1; 
-  else { 
-    switch (t->tag) {
-    case Var:  
-      if (strcmp(t->data.name, name)==0) {
-	t->tag=Konst;
-	t->data.value=val;
-	tree_error=0;
-      } /* if */
-      break;
-    case Oper:
-      TreeSubstVar(t->data.oper.left, name, val);
-      TreeSubstVar(t->data.oper.right, name, val);
-      break;
-    case NegSign:
-      TreeSubstVar(t->data.right, name, val);
-      break;
-    case Func:
-      TreeSubstVar(t->data.func.right, name, val);
-      break;
-    default:
-      break;
-    } /* switch tag */
-    tree_error=0;
-  } /* else */
-  TreeReduce(t);
-} /* TreeSubstVar */
-
-void TreeSubstTree(Tree t, char *name, Tree value) {
-
-  if (t==NULL) 
-    tree_error=1; 
-  else { 
-    switch (t->tag) {
-    case Var:
-      if (strcmp(t->data.name, name)==0)
-	TreeCpy(t, value);
-      break;
-    case Oper:
-      TreeSubstTree(t->data.oper.left, name, value);
-      TreeSubstTree(t->data.oper.right, name, value);
-      break;
-    case Func:
-      TreeSubstTree(t->data.func.right, name, value);
-      break;
-    case NegSign:
-      TreeSubstTree(t->data.right, name, value);
-      break;
-    default:
-      break;
-    } /* switch */
-    tree_error=0;
-    TreeReduce(t);
-  } /* else */
+  if (t==NULL) {
+    tree_error=1;
+    return NULL;
+  }
+  switch (t->tag) {
+  case Var:
+    res=(strcmp(t->data.name, name)==0) ? value : t;
+    break;
+  case Oper:
+    res=Op(t->data.oper.op, TreeSubstTree(t->data.oper.left, name, value),
+	   TreeSubstTree(t->data.oper.right, name, value));
+    break;
+  case Func:
+    res=Fun(t->data.func.fun, TreeSubstTree(t->data.func.right, name, value));
+    break;
+  case NegSign:
+    res=Neg(TreeSubstTree(t->data.right, name, value));
+    break;
+  default:
+    res=t;
+    break;
+  }
+  return Reduced(res);
 } /* TreeSubstTree */
 
-/* Builders for TreeDerive: unreduced nodes, the result is reduced once. */
-static Tree Op(TreeOper op, Tree left, Tree right) {
+Tree TreeSubstVar(Tree t, const char *name, double value) {
 
-  Tree t=TreeCreate();
+  return TreeSubstTree(t, name, Const(value));
+} /* TreeSubstVar */
 
-  t->tag=Oper;
-  t->data.oper.op=op;
-  t->data.oper.left=left;
-  t->data.oper.right=right;
-  return t;
-} /* Op */
+/* Derivative of t with respect to name. Every level is reduced once. */
+Tree TreeDerive(Tree t, const char *name) {
 
-static Tree Const(double value) {
-
-  Tree t=TreeCreate();
-
-  t->tag=Konst;
-  t->data.value=value;
-  return t;
-} /* Const */
-
-static Tree Fun(Function fun, Tree arg) {
-
-  Tree t=TreeCreate();
-
-  t->tag=Func;
-  t->data.func.fun=fun;
-  t->data.func.right=arg;
-  return t;
-} /* Fun */
-
-static Tree Neg(Tree arg) {
-
-  Tree t=TreeCreate();
-
-  t->tag=NegSign;
-  t->data.right=arg;
-  return t;
-} /* Neg */
-
-static Tree Copy(Tree t) {
-
-  Tree c=TreeCreate();
-
-  TreeCpy(c, t);
-  return c;
-} /* Copy */
-
-void TreeDerive(Tree res, Tree t, char* name) {
-
-  Tree t1, t2, t3, u;
+  Tree res=NULL, f, g, u, du;
 
   tree_error=0;
-  if (t!=NULL) {
-    switch (t->tag) {
-    case Konst: 
-      res->tag=Konst;
-      res->data.value=0.0; 
+  if (t==NULL)
+    return Const(0.0);
+  switch (t->tag) {
+  case Konst:
+    res=Const(0.0);
+    break;
+  case Var:
+    res=Const((strcmp(t->data.name, name)==0) ? 1.0 : 0.0);
+    break;
+  case Oper:
+    f=t->data.oper.left;
+    g=t->data.oper.right;
+    switch (t->data.oper.op) {
+    case Add:
+      res=Op(Add, TreeDerive(f, name), TreeDerive(g, name));
       break;
-    case Var: 
-      res->tag=Konst;
-      if (strcmp(t->data.name, name)==0)
-	res->data.value=1.0;
-      else
-	res->data.value=0.0;
+    case Sub:
+      res=Op(Sub, TreeDerive(f, name), TreeDerive(g, name));
       break;
-    case Oper:
-      switch (t->data.oper.op) {
-      case Add:
-	res->tag=Oper;
-        res->data.oper.op=Add;
-        res->data.oper.left=TreeCreate();
-        res->data.oper.right=TreeCreate();
-        TreeDerive(res->data.oper.left, t->data.oper.left, name);
-        TreeDerive(res->data.oper.right, t->data.oper.right, name);
-        break;
-      case Sub: 
-	res->tag=Oper;           
-	res->data.oper.op=Sub;
-	res->data.oper.left=TreeCreate();
-	res->data.oper.right=TreeCreate();
-	TreeDerive(res->data.oper.left, t->data.oper.left, name);
-	TreeDerive(res->data.oper.right, t->data.oper.right, name);
-	break;
-      case Mul: 
-	res->data.oper.left=TreeCreate();
-	res->data.oper.right=TreeCreate();
-	res->tag=Oper;
-	res->data.oper.op=Add;
-	res->data.oper.left->tag=Oper;
-	res->data.oper.left->data.oper.op=Mul;
-	res->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.op=Mul;
-	res->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.right=TreeCreate();
-	res->data.oper.left->data.oper.left=TreeCreate();
-	res->data.oper.left->data.oper.right=TreeCreate();
-	TreeDerive(res->data.oper.left->data.oper.left, 
-		   t->data.oper.left, name);
-	TreeCpy(res->data.oper.left->data.oper.right, t->data.oper.right);
-	TreeCpy(res->data.oper.right->data.oper.left, t->data.oper.left);
-	TreeDerive(res->data.oper.right->data.oper.right, 
-		   t->data.oper.right, name);
-	break;
-      case Div: 
-	res->tag=Oper;
-	res->data.oper.op=Div;
-	res->data.oper.left=TreeCreate();
-	res->data.oper.right=TreeCreate();
-	res->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.op=Pow;
-	res->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.right=TreeCreate();
-	res->data.oper.right->data.oper.right->tag=Konst;
-	res->data.oper.right->data.oper.right->data.value=2.0;
-	TreeCpy(res->data.oper.right->data.oper.left, t->data.oper.right); 
-	res->data.oper.left->tag=Oper;
-	res->data.oper.left->data.oper.op=Sub;
-	res->data.oper.left->data.oper.left=TreeCreate();
-	res->data.oper.left->data.oper.right=TreeCreate();
-	res->data.oper.left->data.oper.left->tag=Oper;
-	res->data.oper.left->data.oper.left->data.oper.op=Mul;
-	res->data.oper.left->data.oper.left->data.oper.left=TreeCreate();
-	res->data.oper.left->data.oper.left->data.oper.right=TreeCreate();
-	TreeCpy(res->data.oper.left->data.oper.left->data.oper.left, 
-		t->data.oper.right);
-	TreeDerive(res->data.oper.left->data.oper.left->data.oper.right, 
-		   t->data.oper.left, name);
-	res->data.oper.left->data.oper.right->tag=Oper;
-	res->data.oper.left->data.oper.right->data.oper.op=Mul;
-	res->data.oper.left->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.left->data.oper.right->data.oper.right=TreeCreate();
-	TreeCpy(res->data.oper.left->data.oper.right->data.oper.left, 
-		t->data.oper.left);
-	TreeDerive(res->data.oper.left->data.oper.right->data.oper.right, 
-		   t->data.oper.right, name);
-	break;
-      case Pow:             /* (f^g)' = g*f^(g-1)*f' + f^g*log(f)*g' */
-	t1=TreeCreate();
-	t2=TreeCreate();
-	TreeAssignConst(t1, 1.0);
-	TreeCpy(t2, t->data.oper.right);
-	TreeSub(t2, t1);
-	TreeKill(t1);
-	t1=TreeCreate();
-	TreeCpy(t1, t->data.oper.left);
-	TreePow(t1, t2);
-	TreeKill(t2);
-	t2=TreeCreate();
-	TreeDerive(t2, t->data.oper.left, name);
-	TreeMul(t1, t2);
-	TreeMul(t1, t->data.oper.right);       /* t1 is now first term */
-	TreeKill(t2);
-	t2=TreeCreate();
-	
-	TreeCpy(t2, t->data.oper.left);
-	TreePow(t2, t->data.oper.right);
-	t3=TreeCreate();
-	TreeCpy(t3, t->data.oper.left);
-	TreeApplyFunc(&t3, Ln);
-	TreeMul(t2, t3);
-	TreeKill(t3);
-	t3=TreeCreate();
-	TreeDerive(t3, t->data.oper.right, name);
-	TreeMul(t2, t3);                     /* t2 is now second term */
-	TreeKill(t3);       
-	TreeCpy(res, t1);
-	TreeKill(t1);
-	TreeAdd(res, t2);                    /* res is the final result */
-	TreeKill(t2);
-	break;
-      } /* switch */
+    case Mul:                    /* f'*g + f*g' */
+      res=Op(Add, Op(Mul, TreeDerive(f, name), g),
+	     Op(Mul, f, TreeDerive(g, name)));
       break;
-    case Func:
-      u=t->data.func.right;
-      res->tag=Oper;
-      res->data.oper.op=Mul;
-      res->data.oper.left=TreeCreate();
-      res->data.oper.right=TreeCreate();
-      TreeDerive(res->data.oper.left, t->data.func.right, name);
-      switch (t->data.func.fun) {
-      case Exp:
-	res->data.oper.right->tag=Func;
-	res->data.oper.right->data.func.right=TreeCreate();
-	TreeCpy(res->data.oper.right->data.func.right, t->data.func.right);
-	res->data.oper.right->data.func.fun=Exp;
-	break;
-      case Cos:
-	res->data.oper.right->tag=NegSign;
-	res->data.oper.right->data.right=TreeCreate();
-	res->data.oper.right->data.right->tag=Func;
-	res->data.oper.right->data.right->data.func.right=TreeCreate();
-	res->data.oper.right->data.right->data.func.fun=Sin;
-	TreeCpy(res->data.oper.right->data.right->data.func.right, 
-		t->data.func.right);
-	break;
-      case Sin:
-	res->data.oper.right->tag=Func;
-	res->data.oper.right->data.func.fun=Cos;
-	res->data.oper.right->data.func.right=TreeCreate();
-	TreeCpy(res->data.oper.right->data.func.right, t->data.func.right); 
-	break;
-      case Cosh:
-	res->data.oper.right->tag=Func;
-	res->data.oper.right->data.func.fun=Sinh;
-	res->data.oper.right->data.func.right=TreeCreate();
-	TreeCpy(res->data.oper.right->data.func.right, t->data.func.right);
-	break;
-      case Sinh:
-        res->data.oper.right->tag=Func;
-        res->data.oper.right->data.func.fun=Cosh;
-        res->data.oper.right->data.func.right=TreeCreate();
-        TreeCpy(res->data.oper.right->data.func.right, t->data.func.right);
-        break;
-      case Atan:      /* u'/(1+u^2) */
-	res->data.oper.op=Div;
-	res->data.oper.right=Op(Add, Const(1.0), Op(Pow, Copy(u), Const(2.0)));
-	break;
-      case Atanh:     /* u'/(1-u^2) */
-	res->data.oper.op=Div;
-	res->data.oper.right=Op(Sub, Const(1.0), Op(Pow, Copy(u), Const(2.0)));
-	break;
-      case Asinh:     /* u'/(u^2+1)^0.5 */
-	res->data.oper.op=Div;
-	res->data.oper.right=Op(Pow, Op(Add, Op(Pow, Copy(u), Const(2.0)),
-					Const(1.0)), Const(0.5));
-	break;
-      case Acosh:     /* u'/(u^2-1)^0.5 */
-	res->data.oper.op=Div;
-	res->data.oper.right=Op(Pow, Op(Sub, Op(Pow, Copy(u), Const(2.0)),
-					Const(1.0)), Const(0.5));
-	break;
-      case Tan:       /* u'/cos(u)^2 */
-	res->data.oper.op=Div;
-	res->data.oper.right=Op(Pow, Fun(Cos, Copy(u)), Const(2.0));
-	break;
-      case Tanh:      /* u'/cosh(u)^2 */
-	res->data.oper.op=Div;
-	res->data.oper.right=Op(Pow, Fun(Cosh, Copy(u)), Const(2.0));
-	break;
-      case Asin:      /* u'/(1-u^2)^0.5 */
-	res->data.oper.op=Div;
-	res->data.oper.right=Op(Pow, Op(Sub, Const(1.0),
-					Op(Pow, Copy(u), Const(2.0))), Const(0.5));
-	break;
-      case Acos:      /* -u'/(1-u^2)^0.5 */
-	res->data.oper.op=Div;
-	res->data.oper.left=Neg(res->data.oper.left);
-	res->data.oper.right=Op(Pow, Op(Sub, Const(1.0),
-					Op(Pow, Copy(u), Const(2.0))), Const(0.5));
-	break;
-      case Ln:
-	res->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.op=Div;
-	res->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.right=TreeCreate();
-	res->data.oper.right->data.oper.left->tag=Konst;
-	res->data.oper.right->data.oper.left->data.value=1.0;
-	TreeCpy(res->data.oper.right->data.oper.right, t->data.func.right);
-	break;
-      case Log:
-	res->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.op=Div;
-	res->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.right=TreeCreate();
-	res->data.oper.right->data.oper.left->tag=Konst;
-        res->data.oper.right->data.oper.left->data.value=0.4342944819;
-        TreeCpy(res->data.oper.right->data.oper.right, t->data.func.right);
-	break;
-      default:
-	break;
-      }; /* switch */
-      break; /* Functions */
-    case NegSign:
-      res->tag=NegSign;
-      res->data.right=TreeCreate();
-      TreeDerive(res->data.right, t->data.right, name);
+    case Div:                    /* (g*f' - f*g')/g^2 */
+      res=Op(Div, Op(Sub, Op(Mul, g, TreeDerive(f, name)),
+		     Op(Mul, f, TreeDerive(g, name))), Op(Pow, g, Const(2.0)));
       break;
-    }; /* switch */
-    TreeReduce(res); 
-  }; /* if */
+    case Pow:                    /* g*f^(g-1)*f' + f^g*ln(f)*g' */
+      res=TreeAdd(TreeMul(TreeMul(TreePow(f, TreeSub(g, Const(1.0))),
+				  TreeDerive(f, name)), g),
+		  TreeMul(TreeMul(TreePow(f, g), TreeApplyFunc(Ln, f)),
+			  TreeDerive(g, name)));
+      break;
+    }
+    break;
+  case Func:
+    u=t->data.func.right;
+    du=TreeDerive(u, name);
+    switch (t->data.func.fun) {
+    case Exp:   res=Op(Mul, du, Fun(Exp, u)); break;
+    case Sin:   res=Op(Mul, du, Fun(Cos, u)); break;
+    case Cos:   res=Op(Mul, du, Neg(Fun(Sin, u))); break;
+    case Sinh:  res=Op(Mul, du, Fun(Cosh, u)); break;
+    case Cosh:  res=Op(Mul, du, Fun(Sinh, u)); break;
+    case Ln:    res=Op(Mul, du, Op(Div, Const(1.0), u)); break;
+    case Log:   res=Op(Mul, du, Op(Div, Const(0.4342944819), u)); break;
+    case Tan:   res=Op(Div, du, Op(Pow, Fun(Cos, u), Const(2.0))); break;
+    case Tanh:  res=Op(Div, du, Op(Pow, Fun(Cosh, u), Const(2.0))); break;
+    case Atan:  res=Op(Div, du, Op(Add, Const(1.0), Op(Pow, u, Const(2.0))));
+      break;
+    case Atanh: res=Op(Div, du, Op(Sub, Const(1.0), Op(Pow, u, Const(2.0))));
+      break;
+    case Asinh: res=Op(Div, du, Op(Pow, Op(Add, Op(Pow, u, Const(2.0)),
+					  Const(1.0)), Const(0.5)));
+      break;
+    case Acosh: res=Op(Div, du, Op(Pow, Op(Sub, Op(Pow, u, Const(2.0)),
+					  Const(1.0)), Const(0.5)));
+      break;
+    case Asin:  res=Op(Div, du, Op(Pow, Op(Sub, Const(1.0),
+					  Op(Pow, u, Const(2.0))), Const(0.5)));
+      break;
+    case Acos:  res=Op(Div, Neg(du), Op(Pow, Op(Sub, Const(1.0),
+					       Op(Pow, u, Const(2.0))), Const(0.5)));
+      break;
+    }
+    break;
+  case NegSign:
+    res=Neg(TreeDerive(t->data.right, name));
+    break;
+  }
+  return Reduce(res);
 } /* TreeDerive */
 
 double TreeEval(Tree t) {
@@ -954,7 +469,7 @@ double TreeEval(Tree t) {
 
 /* The following procedure is 'internal' */
 
-void TreePrintXtra(Tree t, int mode, FILE *output) {
+static void TreePrintXtra(Tree t, int mode, FILE *output) {
 
 /* Mode:  1 - (HP) Fortran 77 */
 /*	  2 - (HP) Pascal     */
@@ -1426,82 +941,3 @@ void TreePrint(Tree t, int mode, FILE *output) {
   len=10;
   TreePrintXtra(t, mode, output);
 } /* TreePrint */
-
-void TreeCpy(Tree res, Tree t) {  
-  
-  if (t==NULL) {
-    res=NULL;
-    tree_error=NoTree;
-  } /* if */
-  else {
-    switch (t->tag) {
-    case Oper:  
-      res->tag=Oper;
-      res->data.oper.left=TreeCreate();
-      res->data.oper.right=TreeCreate();
-      res->data.oper.op=t->data.oper.op;
-      TreeCpy(res->data.oper.left, t->data.oper.left);
-      TreeCpy(res->data.oper.right, t->data.oper.right);
-      break;
-    case Konst: 
-      res->tag=Konst;
-      res->data.value=t->data.value;
-      break;
-    case Var:   
-      res->tag=Var;
-      (void) strcpy(res->data.name, t->data.name);
-      break;
-    case Func:
-      res->tag=Func;
-      res->data.func.fun=t->data.func.fun;
-      res->data.func.right=TreeCreate();
-      TreeCpy(res->data.func.right, t->data.func.right);
-      break;
-    case NegSign:
-      res->tag=NegSign;
-      res->data.right=TreeCreate();
-      TreeCpy(res->data.right, t->data.right);
-      break;
-     }; /* switch */
-  }; /* else */
-} /* TreeCpy */
-
-void TreeKill(Tree t) {
-
-  if (t!=NULL) { 
-    switch (t->tag) {
-    case Oper: 
-      TreeKill(t->data.oper.left);
-      TreeKill(t->data.oper.right);
-      break; 
-    case Var: 
-      break;
-    case Func:
-      TreeKill(t->data.func.right);
-      break;
-    case NegSign:
-      TreeKill(t->data.right);
-      break;
-    default:
-      break;
-    } 
-    free(t);
-  }  
-} /* TreeKill */
-
-void TreeApplyFunc(Tree *t, Function fun) {
-
-  Tree temp;
-
-  temp=TreeCreate();
-  temp->tag=Func;
-  temp->data.func.fun=fun;
-  temp->data.func.right=TreeCreate();
-  TreeCpy(temp->data.func.right, *t);
-  TreeReduce(temp);
-  TreeKill(*t);
-  *t=TreeCreate(); 
-  TreeCpy(*t, temp);
-  TreeKill(temp);
-  tree_error=0;
-} /* TreeApplyFunc */  

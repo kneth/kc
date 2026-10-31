@@ -340,6 +340,13 @@ void NewPowerConst(int react_no, char *name, double charge,
   } /* while */
 } /* NewPowerConst */
 
+/* A missing tree reads as 0, like the empty node the old copying API
+   left behind. */
+static Tree OrZero(Tree t) {
+
+  return (t!=NULL) ? t : TreeConst(0.0);
+} /* OrZero */
+
 void NewRateConst(int react, int direct, Tree value) {
  
 /* For direct: -1 = >, 0 = =, 1 = < */
@@ -353,8 +360,7 @@ void NewRateConst(int react, int direct, Tree value) {
       switch (reacttable[i].react_tag) {
       case uni: 
 	if (direct==-1) {
-	  reacttable[i].t1=TreeCreate();
-	  TreeCpy(reacttable[i].t1, value);
+	  reacttable[i].t1=value;
 	  reacttable[i].sel1=1;
 	  error=NoError;
 	} /* if */
@@ -363,14 +369,12 @@ void NewRateConst(int react, int direct, Tree value) {
 	break;
       case bi: 
 	if (direct==-1) {
-	  reacttable[i].t1=TreeCreate();
-	  TreeCpy(reacttable[i].t1, value);
+	  reacttable[i].t1=value;
 	  reacttable[i].sel1=1;
 	  error=NoError;
 	} /* if */
 	else if (direct==1) {
-          reacttable[i].t2=TreeCreate();
-	  TreeCpy(reacttable[i].t2, value);
+          reacttable[i].t2=value;
 	  reacttable[i].sel2=1;
 	  error=NoError;
 	} /* else-if */
@@ -379,8 +383,7 @@ void NewRateConst(int react, int direct, Tree value) {
 	break;
       case equi: 
 	if (direct==0) {
-          reacttable[i].t1=TreeCreate();
-	  TreeCpy(reacttable[i].t1, value);
+          reacttable[i].t1=value;
 	  reacttable[i].sel1=1;	
 	  error=NoError;
 	} /* if */
@@ -407,8 +410,7 @@ void NewRateExpr(int react, int direct, Tree value) {
       switch (reacttable[i].react_tag) {
       case uni: 
 	if (direct==-1) {
-	  reacttable[i].t1=TreeCreate();
-	  TreeCpy(reacttable[i].t1, value);
+	  reacttable[i].t1=value;
 	  reacttable[i].sel1=2;
 	  error=NoError;
 	} /* if */
@@ -417,14 +419,12 @@ void NewRateExpr(int react, int direct, Tree value) {
 	break;
       case bi: 
 	if (direct==-1) {
-	  reacttable[i].t1=TreeCreate();	
-	  TreeCpy(reacttable[i].t1, value);
+	  reacttable[i].t1=value;
 	  reacttable[i].sel1=2;
 	  error=NoError;
 	} /* if */
 	else if (direct==1) {
-	  reacttable[i].t2=TreeCreate();
-	  TreeCpy(reacttable[i].t2, value);
+	  reacttable[i].t2=value;
 	  reacttable[i].sel2=2;
 	  error=NoError;
 	} /* else-if */
@@ -787,7 +787,7 @@ Direc GetReactKind(int react_no) {
   return reacttable[i].react_tag;
 } /* GetReactKind */
 
-void GetRateConst(int react_no, Direc direct, int way, Tree res) {
+Tree GetRateConst(int react_no, Direc direct, int way) {
 
 /****
   way is only used when direct==bi, 
@@ -806,16 +806,12 @@ void GetRateConst(int react_no, Direc direct, int way, Tree res) {
     else
       i++;
   } /* while */ 
-  if (direct==bi) 
-    if (way==1) 
-      TreeCpy(res, reacttable[i].t1);
-    else
-      TreeCpy(res, reacttable[i].t2);
-  else
-    TreeCpy(res, reacttable[i].t1); 
+  if ((direct==bi) && (way!=1))
+    return OrZero(reacttable[i].t2);
+  return OrZero(reacttable[i].t1);
 } /* GetRateConst */     
 
-void GetRateExpr(int react_no, Direc direct, int way, Tree t) {
+Tree GetRateExpr(int react_no, Direc direct, int way) {
 
 /****
   way is only used when direct==bi, 
@@ -834,13 +830,9 @@ void GetRateExpr(int react_no, Direc direct, int way, Tree t) {
     else
       i++;
   } /* while */ 
-  if (direct==bi) 
-    if (way==1) 
-      TreeCpy(t, reacttable[i].t1);
-    else
-      TreeCpy(t, reacttable[i].t2);
-  else
-    TreeCpy(t, reacttable[i].t1); 
+  if ((direct==bi) && (way!=1))
+    return OrZero(reacttable[i].t2);
+  return OrZero(reacttable[i].t1);
 } /* GetRateExpr */     
 
 int GetRateKind(int react_no, Direc direct, int way) {
@@ -978,8 +970,7 @@ void NewExpr(char *name, Tree t) {
     } /* while */
     if (found==0) {
       strcpy(exprtable[expr_last].name, name);
-      exprtable[expr_last].expr=TreeCreate();
-      TreeCpy(exprtable[expr_last].expr, t);
+      exprtable[expr_last].expr=t;
       expr_last++;
       error=NoError;
     } /* if */
@@ -991,17 +982,15 @@ int NumOfExpr(void) {
   return expr_last;
 } /* NumOfExpr */
 
-void GetExprNo(int no, char *name, Tree t) {
+Tree GetExprNo(int no, char *name) {
 
   if (no>expr_last) {
     error=NotFound;
-    t=NULL;
+    return OrZero(NULL);
   } /* if */
-  else {
-    error=NoError;
-    strcpy(name, exprtable[no-1].name);
-    TreeCpy(t, exprtable[no-1].expr);
-  } /* else */
+  error=NoError;
+  strcpy(name, exprtable[no-1].name);
+  return exprtable[no-1].expr;
 } /* GetExprNo */
 
 int IsVarParameter(char *name) {
@@ -1029,9 +1018,8 @@ void NewConstraint(char *name, double charge, Tree t) {
   if (con_last==ConstrainSize)  
     error=TooManyConstrain;
   else {
-    contable[con_last].expr=TreeCreate();
+    contable[con_last].expr=t;
     strcpy(contable[con_last].name, name);
-    TreeCpy(contable[con_last].expr, t);
     contable[con_last].charge=charge;
     con_last++;
     error=NoError;
@@ -1043,18 +1031,16 @@ int NumOfConstraint(void) {
   return con_last;
 } /* NumOfConstraint */
 
-void GetConstraintNo(int no, char *name, double *charge, Tree t) {
+Tree GetConstraintNo(int no, char *name, double *charge) {
 
   if (no>con_last) { 
     error=NotFound;
-    t=NULL;
+    return OrZero(NULL);
   } /* if */
-  else {
-    strcpy(name, contable[no-1].name);
-    *charge=contable[no-1].charge;
-    error=NoError;
-    TreeCpy(t, contable[no-1].expr);
-  } /* else */
+  strcpy(name, contable[no-1].name);
+  *charge=contable[no-1].charge;
+  error=NoError;
+  return contable[no-1].expr;
 } /* GetConstraintNo */
    
 int IsSpecInConstraint(char *name, double charge) {

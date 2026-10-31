@@ -1,4 +1,4 @@
-/**************************************************************************** 
+/****************************************************************************
   Symbolic mathematics in ANSI-C.
 
   CopyWrong 1992-1994 by
@@ -11,7 +11,9 @@
 
   See kc.tex for details.
 
-  Last updated: 27 September 1994
+  Expression trees are immutable: every operation returns a new tree and
+  shares the subtrees of its arguments. All nodes are allocated from one
+  arena, which TreeFreeAll releases; there is no per-tree free.
 ****************************************************************************/
 
 #ifndef _SYMBMATH_
@@ -35,36 +37,32 @@ struct TreeCell {
 	    char name[STRING_LENGTH];       /* variable */
             struct {
 	      TreeOper op;
-	      struct TreeCell *left, *right;
+	      const struct TreeCell *left, *right;
 	    } oper;          /* operation */
 	    struct {
 	      Function fun;
-	      struct TreeCell *right;
+	      const struct TreeCell *right;
 	    } func;
-	    struct TreeCell *right;      /* negative sign */
+	    const struct TreeCell *right;      /* negative sign */
           } data;
 };
 typedef struct TreeCell TreeNode;
-typedef TreeNode *Tree;
-
-extern int    tree_error, len, left, right;
+typedef const TreeNode *Tree;
 
 extern int    TreeGetError(void);
-extern Tree   TreeCreate(void);
-extern void   TreeAdd(Tree, Tree);
-extern void   TreeSub(Tree, Tree);
-extern void   TreeMul(Tree, Tree);
-extern void   TreeDiv(Tree, Tree);
-extern void   TreePow(Tree, Tree);
-extern void   TreeSign(Tree);
-extern void   TreeAssignConst(Tree, double);
-extern void   TreeAssignVar(Tree, char *);
-extern void   TreeSubstVar(Tree, char *, double);
-extern void   TreeDerive(Tree, Tree, char *);
+extern Tree   TreeConst(double);
+extern Tree   TreeVar(const char *);
+extern Tree   TreeAdd(Tree, Tree);
+extern Tree   TreeSub(Tree, Tree);
+extern Tree   TreeMul(Tree, Tree);
+extern Tree   TreeDiv(Tree, Tree);
+extern Tree   TreePow(Tree, Tree);
+extern Tree   TreeSign(Tree);
+extern Tree   TreeApplyFunc(Function, Tree);
+extern Tree   TreeSubstVar(Tree, const char *, double);
+extern Tree   TreeSubstTree(Tree, const char *, Tree);
+extern Tree   TreeDerive(Tree, const char *);
 extern double TreeEval(Tree);
 extern void   TreePrint(Tree, int, FILE *);
-extern void   TreeCpy(Tree, Tree);
-extern void   TreeKill(Tree);
-extern void   TreeSubstTree(Tree, char *, Tree);
-extern void   TreeApplyFunc(Tree *, Function);  
+extern void   TreeFreeAll(void);
 #endif

@@ -363,12 +363,10 @@ void KnCont(FILE *pcode, FILE *hcode) {
     else
       RenameSpec(rename, name, charge);
     for(j=0; j<NumbOfDynVars; j++) {
-      tmp=TreeCreate();
-      TreeDerive(tmp, v[j], rename);
+      tmp=TreeDerive(v[j], rename);
       fprintf(pcode, "gg_[%d, n1]:=", j+1);
       TreePrint(tmp, 2, pcode);
       fprintf(pcode, ";\n");
-      TreeKill(tmp);
     } /* for j */
     fprintf(pcode, "END;\nEND; (* sp_dalfa *)\n\n");
     /* End of printing sp_dalfa */
@@ -562,12 +560,10 @@ void KnCont(FILE *pcode, FILE *hcode) {
     else
       strcpy(rename, name);
     for(j=0; j<NumbOfDynVars; j++) {
-      tmp=TreeCreate();
-      TreeDerive(tmp, v[j], rename);
+      tmp=TreeDerive(v[j], rename);
       fprintf(pcode, "gg_[%d, n1]:=", j+1);
       TreePrint(tmp, 2, pcode);
       fprintf(pcode, ";\n");
-      TreeKill(tmp);
     } /* for j */
     fprintf(pcode, "END;\nEND\nELSE BEGIN\n");
     for(i=NumbOfParams; i>=1; i--) {
@@ -585,12 +581,10 @@ void KnCont(FILE *pcode, FILE *hcode) {
     else
       strcpy(rename, name);
     for(j=0; j<NumbOfDynVars; j++) {
-      tmp=TreeCreate();
-      TreeDerive(tmp, v[j], rename);
+      tmp=TreeDerive(v[j], rename);
       fprintf(pcode, "gg_[%d, n1]:=", j+1);
       TreePrint(tmp, 2, pcode);
       fprintf(pcode, ";\n");
-      TreeKill(tmp);
     } /* for i */
     fprintf(pcode, "END;\nEND;\nEND; (* hf_dalfa *)\n\n");
 

@@ -149,12 +149,10 @@ void ConIS(FILE *fcode) {
   else
     RenameSpec(rename, name, charge);
   for(j=0; j<NumbOfDynVars; j++) {
-    tmp=TreeCreate();
-    TreeDerive(tmp, v[j], rename);
+    tmp=TreeDerive(v[j], rename);
     fprintf(fcode, "      gvar(%d,%d) = ", j+1,NumbOfDynVars+1);
     TreePrint(tmp, 1, fcode);
     fprintf(fcode, "\n");
-    TreeKill(tmp);
   } /* for j */
   fprintf(fcode, "\n\n");
   
@@ -164,12 +162,10 @@ void ConIS(FILE *fcode) {
   else
     strcpy(rename, name);
   for(j=0; j<NumbOfDynVars; j++) {
-    tmp=TreeCreate();
-    TreeDerive(tmp, v[j], rename);
+    tmp=TreeDerive(v[j], rename);
     fprintf(fcode, "      gvar(%d,%d) = ", j+1, NumbOfDynVars+1);
     TreePrint(tmp, 1, fcode);
     fprintf(fcode, "\n");
-    TreeKill(tmp);
   } /* for j */
   fprintf(fcode, "\n");
   GetParamNo(2, name, &charge, &form);
@@ -178,12 +174,10 @@ void ConIS(FILE *fcode) {
   else
     strcpy(rename, name);
   for(j=0; j<NumbOfDynVars; j++) {
-    tmp=TreeCreate();
-    TreeDerive(tmp, v[j], rename);
+    tmp=TreeDerive(v[j], rename);
     fprintf(fcode, "      gvar(%d,%d) = ", j+1, NumbOfDynVars+2);
     TreePrint(tmp, 1, fcode);
     fprintf(fcode, "\n");
-    TreeKill(tmp);
   } /* for i */
   fprintf(fcode, "\n\n");
   fprintf(fcode, "      return\n");

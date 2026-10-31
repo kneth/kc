@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include "codecall.h"
 #include "misc.h"
+#include "symbmath.h"
 
 int    mode;
 
@@ -69,4 +70,5 @@ int main(int argc, char *argv[]) {
     } /* switch */
   (void) yyparse();
   CodeGenCall(mode);
+  TreeFreeAll();
 } 
