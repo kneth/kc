@@ -187,6 +187,15 @@ compared as well, so error handling is tested too.
 intended change of the output, rewrite the expected files with
 `KC_UPDATE=1 ctest --test-dir build` and review the diff.
 
+To check kc for memory errors, leaks and undefined behaviour, build it with
+sanitizers (leaks are only detected on Linux):
+
+```sh
+cmake -B build-sanitize -DKC_SANITIZE=ON
+cmake --build build-sanitize
+ctest --test-dir build-sanitize -j8
+```
+
 ## Legal issues
 
 The program is copyrighted in the sense of GNU General Public License
