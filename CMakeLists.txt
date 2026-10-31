@@ -48,6 +48,15 @@ add_executable(kc
 target_include_directories(kc PRIVATE src ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(kc PRIVATE kcsolvers)
 
+# Developer option: check kc itself for memory errors, leaks and undefined
+# behaviour. Only kc is instrumented, so generated simulators link as usual.
+option(KC_SANITIZE "Build kc with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+if(KC_SANITIZE)
+  set(sanitize -fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer)
+  target_compile_options(kc PRIVATE ${sanitize})
+  target_link_options(kc PRIVATE ${sanitize})
+endif()
+
 configure_file(kci.in ${CMAKE_CURRENT_BINARY_DIR}/kci @ONLY)
 
 install(TARGETS kc kcsolvers)
