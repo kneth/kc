@@ -83,7 +83,7 @@ void TreeReduce(Tree tin) {
 	  res->data.oper.left=TreeCreate();
 	  TreeCpy(res->data.oper.left, t->data.oper.left);
 	  res->data.oper.right=TreeCreate();
-	  TreeCpy(res->data.oper.right, t->data.oper.right);
+	  TreeCpy(res->data.oper.right, t->data.oper.right->data.right);
 	} /* if */
 	break;
       case Sub: 
@@ -125,7 +125,7 @@ void TreeReduce(Tree tin) {
 	  res->data.oper.left=TreeCreate();
 	  TreeCpy(res->data.oper.left, t->data.oper.left);
 	  res->data.oper.right=TreeCreate();
-	  TreeCpy(res->data.oper.right, t->data.oper.right);
+	  TreeCpy(res->data.oper.right, t->data.oper.right->data.right);
 	} /* if */
 	
 	/* (-f-g) -> -(f+g) */
