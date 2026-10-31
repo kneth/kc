@@ -882,6 +882,15 @@ void TreeDerive(Tree res, Tree t, char* name) {
 	fprintf(stderr, "TreeDerive: dAcosh/dx not implemented\n");
 	tree_error=4;
 	break;
+      case Ln:
+	res->data.oper.right->tag=Oper;
+	res->data.oper.right->data.oper.op=Div;
+	res->data.oper.right->data.oper.left=TreeCreate();
+	res->data.oper.right->data.oper.right=TreeCreate();
+	res->data.oper.right->data.oper.left->tag=Konst;
+	res->data.oper.right->data.oper.left->data.value=1.0;
+	TreeCpy(res->data.oper.right->data.oper.right, t->data.func.right);
+	break;
       case Log:
 	res->data.oper.right->tag=Oper;
 	res->data.oper.right->data.oper.op=Div;
