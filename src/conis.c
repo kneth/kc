@@ -34,8 +34,6 @@ void ConIS(FILE *fcode) {
   int    i, j, constraint, dyn, form;
   int    NumbOfParams, NumbOfDynVars;
 
-  name=StringAlloc();
-  rename=StringAlloc();
   timer=time(&timer);
   NumbOfParams=NumOfParameter();
   NumbOfDynVars=NoOfSpec()-NumOfConstraint()+NumOfDynVar();
@@ -43,6 +41,9 @@ void ConIS(FILE *fcode) {
     fprintf(stderr, "Continuation program aborted: Wrong number of parameters - should be between 2 and 40.\n");
     return;
   } /* if */
+
+  name=StringAlloc();
+  rename=StringAlloc();
   
   InitCodeGenVar(NoOfSpec()+NumOfDynVar()-NumOfConstraint(),
 		 NumOfConstraint(), NoOfReact());

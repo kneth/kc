@@ -366,4 +366,6 @@ void Mixed(void) {
     MatrixFree(num_of_reac,reacfwds_);
     MatrixFree(num_of_reac,reacrvds_);
   }
+  StringFree(name);
+  StringFree(rename);
 } /* Mixed */

@@ -35,8 +35,6 @@ void KnCont(FILE *pcode, FILE *hcode) {
   int    NumbOfParams, NumbOfDynVars;
   int    need_dd_jac=0, BfErrorCode;
 
-  name=StringAlloc();
-  rename=StringAlloc();
   timer=time(&timer);
   NumbOfParams=NumOfParameter();
   NumbOfDynVars=NoOfSpec()-NumOfConstraint()+NumOfDynVar();
@@ -44,6 +42,9 @@ void KnCont(FILE *pcode, FILE *hcode) {
     fprintf(stderr, "KNCont: Wrong number of parameters - should be either 1 or 2.\n");
     return;
   } /* if */
+
+  name=StringAlloc();
+  rename=StringAlloc();
 
   InitCodeGenVar(NoOfSpec()+NumOfDynVar()-NumOfConstraint(),
 		 NumOfConstraint(), NoOfReact());
