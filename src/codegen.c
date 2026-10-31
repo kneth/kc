@@ -231,6 +231,8 @@ void GenerateRateExpr(void) {
   for(i=0; i<(NoOfSpec()-NumOfConstraint()+NumOfDynVar()); i++)
     v[i]=v_store[i];
 
+  free(v_store);
+  free(r);
   StringFree(name);
   StringFree(rename);
 } /* GenerateRateExpr */
