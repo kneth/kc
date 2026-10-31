@@ -7,7 +7,7 @@ PROCEDURE djacobian(xx_:glnarray; VAR dS_:gldjacobian);
 BEGIN
 A:=xx_[1];
 B:=xx_[2];
-B:=xx_[1];
+z:=xx_[3];
 dS_[1,1,1]:=0.000000e+00;
 dS_[1,1,2]:=0.000000e+00;
 dS_[1,1,3]:=0.000000e+00;

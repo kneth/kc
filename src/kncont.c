@@ -109,8 +109,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
     } /* for i */
     for(i=1; i<=NumOfDynVar(); i++) {
       GetDynVarNo(i, name);
-      fprintf(pcode, "%s:=xx_[%d];\n", rename,
-	      i+NoOfSpec()/NumOfConstraint());
+      fprintf(pcode, "%s:=xx_[%d];\n", name, i+NoOfSpec()-NumOfConstraint());
     } /* for i */
     need_dd_jac=0;
 
