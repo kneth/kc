@@ -1,0 +1,12 @@
+kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *u1
+  *u2
+  *u3
+  *u4
+  *u5
+  *u6
+  *u7
+  *u8
+Constants declared:
+  etime = 1.000000e+00

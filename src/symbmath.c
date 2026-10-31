@@ -567,9 +567,57 @@ void TreeSubstTree(Tree t, char *name, Tree value) {
   } /* else */
 } /* TreeSubstTree */
 
+/* Builders for TreeDerive: unreduced nodes, the result is reduced once. */
+static Tree Op(TreeOper op, Tree left, Tree right) {
+
+  Tree t=TreeCreate();
+
+  t->tag=Oper;
+  t->data.oper.op=op;
+  t->data.oper.left=left;
+  t->data.oper.right=right;
+  return t;
+} /* Op */
+
+static Tree Const(double value) {
+
+  Tree t=TreeCreate();
+
+  t->tag=Konst;
+  t->data.value=value;
+  return t;
+} /* Const */
+
+static Tree Fun(Function fun, Tree arg) {
+
+  Tree t=TreeCreate();
+
+  t->tag=Func;
+  t->data.func.fun=fun;
+  t->data.func.right=arg;
+  return t;
+} /* Fun */
+
+static Tree Neg(Tree arg) {
+
+  Tree t=TreeCreate();
+
+  t->tag=NegSign;
+  t->data.right=arg;
+  return t;
+} /* Neg */
+
+static Tree Copy(Tree t) {
+
+  Tree c=TreeCreate();
+
+  TreeCpy(c, t);
+  return c;
+} /* Copy */
+
 void TreeDerive(Tree res, Tree t, char* name) {
 
-  Tree t1, t2, t3;
+  Tree t1, t2, t3, u;
 
   tree_error=0;
   if (t!=NULL) {
@@ -693,6 +741,7 @@ void TreeDerive(Tree res, Tree t, char* name) {
       } /* switch */
       break;
     case Func:
+      u=t->data.func.right;
       res->tag=Oper;
       res->data.oper.op=Mul;
       res->data.oper.left=TreeCreate();
@@ -732,155 +781,42 @@ void TreeDerive(Tree res, Tree t, char* name) {
         res->data.oper.right->data.func.right=TreeCreate();
         TreeCpy(res->data.oper.right->data.func.right, t->data.func.right);
         break;
-      case Atan:
+      case Atan:      /* u'/(1+u^2) */
 	res->data.oper.op=Div;
-	TreeDerive(res->data.oper.left, t->data.oper.right, name);
-	res->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.op=Add;
-	res->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.right=TreeCreate();
-	res->data.oper.right->data.oper.left->tag=Konst;
-	res->data.oper.right->data.oper.left->data.value=1.0;
-	res->data.oper.right->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.right->data.oper.op=Pow;
-	res->data.oper.right->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.right->data.oper.right=TreeCreate();
-	TreeCpy(res->data.oper.right->data.oper.right->data.oper.left, 
-		t->data.func.right);
-	res->data.oper.right->data.oper.right->data.oper.right->tag=Konst;
-	res->data.oper.right->data.oper.right->data.oper.right->data.value
-	  =2.0;
+	res->data.oper.right=Op(Add, Const(1.0), Op(Pow, Copy(u), Const(2.0)));
 	break;
-      case Asinh:
+      case Atanh:     /* u'/(1-u^2) */
 	res->data.oper.op=Div;
-	TreeDerive(res->data.oper.left, t->data.oper.right, name);
-	res->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.op=Pow;
-	res->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.right=TreeCreate();
-	res->data.oper.right->data.oper.left->tag=Oper;
-	res->data.oper.right->data.oper.left->data.oper.op=Pow;
-	res->data.oper.right->data.oper.left->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.left->data.oper.right=TreeCreate();
-	res->data.oper.right->data.oper.left->data.oper.left->tag=Oper;
-	res->data.oper.right->data.oper.left->data.oper.left->data.oper.op
-	  =Add;
-	res->data.oper.right->data.oper.left->data.oper.left->data.oper.left
-	  =TreeCreate();
-	res->data.oper.right->data.oper.left->data.oper.left->data.oper.right
-	  =TreeCreate();
-	res->data.oper.right->data.oper.left->data.oper.left->data.oper.left->tag=Oper;
-	res->data.oper.right->data.oper.left->data.oper.left->data.oper.left->data.oper.op=Pow;
-	res->data.oper.right->data.oper.left->data.oper.left->data.oper.left->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.left->data.oper.left->data.oper.left->data.oper.right=TreeCreate();
-	TreeCpy(res->data.oper.right->data.oper.left->data.oper.left->data.oper.left->data.oper.left, t->data.func.right);
-	res->data.oper.right->data.oper.left->data.oper.left->data.oper.left->data.oper.right->tag=Konst;
-	res->data.oper.right->data.oper.left->data.oper.left->data.oper.left->data.oper.right->data.value=2.0;
-	res->data.oper.right->data.oper.left->data.oper.left->data.oper.right->tag=Konst;
-	res->data.oper.right->data.oper.left->data.oper.left->data.oper.right->data.value=1.0;
-	res->data.oper.right->data.oper.left->data.oper.right->tag=Konst;
-	res->data.oper.right->data.oper.left->data.oper.right->data.value=0.5;
+	res->data.oper.right=Op(Sub, Const(1.0), Op(Pow, Copy(u), Const(2.0)));
 	break;
-      case Atanh:
-        res->data.oper.op=Div;
-        TreeDerive(res->data.oper.left, t->data.oper.right, name);
-        res->data.oper.right->tag=Oper;
-        res->data.oper.right->data.oper.op=Sub;
-        res->data.oper.right->data.oper.left=TreeCreate();
-        res->data.oper.right->data.oper.right=TreeCreate();
-        res->data.oper.right->data.oper.left->tag=Konst;
-        res->data.oper.right->data.oper.left->data.value=1.0;
-        res->data.oper.right->data.oper.right->tag=Oper;
-        res->data.oper.right->data.oper.right->data.oper.op=Pow;
-        res->data.oper.right->data.oper.right->data.oper.left=TreeCreate();
-        res->data.oper.right->data.oper.right->data.oper.right=TreeCreate();
-        TreeCpy(res->data.oper.right->data.oper.right->data.oper.left, 
-		t->data.func.right);
-        res->data.oper.right->data.oper.right->data.oper.right->tag=Konst;
-        res->data.oper.right->data.oper.right->data.oper.right->data.value=2.0;
-        break;
-      case Tan:
+      case Asinh:     /* u'/(u^2+1)^0.5 */
 	res->data.oper.op=Div;
-        TreeDerive(res->data.oper.left, t->data.oper.right, name);
-	res->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.op=Pow;
-	res->data.oper.right->data.oper.right=TreeCreate();
-	res->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.left->tag=Func;
-	res->data.oper.right->data.func.fun=Cos;
-	res->data.oper.right->data.func.right=TreeCreate();
-	TreeCpy(res->data.oper.right->data.func.right, t->data.func.right);
-	res->data.oper.right->data.oper.right->tag=Konst;
-	res->data.oper.right->data.oper.right->data.value=2.0;
+	res->data.oper.right=Op(Pow, Op(Add, Op(Pow, Copy(u), Const(2.0)),
+					Const(1.0)), Const(0.5));
 	break;
-      case Tanh:
-        res->data.oper.op=Div;
-        TreeDerive(res->data.oper.left, t->data.oper.right, name);
-        res->data.oper.right->tag=Oper;
-        res->data.oper.right->data.oper.op=Pow;
-        res->data.oper.right->data.oper.right=TreeCreate();
-        res->data.oper.right->data.oper.left=TreeCreate();
-        res->data.oper.right->data.oper.left->tag=Func;
-        res->data.oper.right->data.func.fun=Cosh;
-        res->data.oper.right->data.func.right=TreeCreate();
-        TreeCpy(res->data.oper.right->data.func.right, t->data.func.right);
-        res->data.oper.right->data.oper.right->tag=Konst;
-        res->data.oper.right->data.oper.right->data.value=2.0;
-	break;
-      case Asin:
+      case Acosh:     /* u'/(u^2-1)^0.5 */
 	res->data.oper.op=Div;
-	res->data.oper.left=TreeCreate();
-	res->data.oper.right=TreeCreate();
-	TreeDerive(res->data.oper.left, t->data.func.right, name);
-	res->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.op=Pow;
-	res->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.right=TreeCreate();
-	res->data.oper.right->data.oper.left->tag=Oper;
-	res->data.oper.right->data.oper.left->data.oper.op=Sub;
-	res->data.oper.right->data.oper.left->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.left->data.oper.right=TreeCreate();
-	res->data.oper.right->data.oper.left->data.oper.left->tag=Konst;
-	res->data.oper.right->data.oper.left->data.oper.left->data.value=1.0;
-	res->data.oper.right->data.oper.left->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.left->data.oper.right->data.oper.op=Pow;
-	res->data.oper.right->data.oper.left->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.left->data.oper.right->data.oper.right=TreeCreate();
-	TreeCpy(res->data.oper.right->data.oper.left->data.oper.right->data.oper.left, t->data.func.right);
-	res->data.oper.right->data.oper.left->data.oper.right->data.oper.right->tag=Konst;
-	res->data.oper.right->data.oper.left->data.oper.right->data.oper.right->data.value=2.0;
-	res->data.oper.right->data.oper.right->tag=Konst;
-	res->data.oper.right->data.oper.right->data.value=0.5;
+	res->data.oper.right=Op(Pow, Op(Sub, Op(Pow, Copy(u), Const(2.0)),
+					Const(1.0)), Const(0.5));
 	break;
-      case Acos:
+      case Tan:       /* u'/cos(u)^2 */
 	res->data.oper.op=Div;
-	res->data.oper.left=TreeCreate();
-	res->data.oper.right=TreeCreate();
-	res->data.oper.left->tag=NegSign;
-	TreeDerive(res->data.oper.left->data.right, t->data.func.right, name);
-	res->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.op=Pow;
-	res->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.right=TreeCreate();
-	res->data.oper.right->data.oper.left->tag=Oper;
-	res->data.oper.right->data.oper.left->data.oper.op=Sub;
-	res->data.oper.right->data.oper.left->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.left->data.oper.right=TreeCreate();
-	res->data.oper.right->data.oper.left->data.oper.left->tag=Konst;
-	res->data.oper.right->data.oper.left->data.oper.left->data.value=1.0;
-	res->data.oper.right->data.oper.left->data.oper.right->tag=Oper;
-	res->data.oper.right->data.oper.left->data.oper.right->data.oper.op=Pow;
-	res->data.oper.right->data.oper.left->data.oper.right->data.oper.left=TreeCreate();
-	res->data.oper.right->data.oper.left->data.oper.right->data.oper.right=TreeCreate();
-	TreeCpy(res->data.oper.right->data.oper.left->data.oper.right->data.oper.left, t->data.func.right);
-	res->data.oper.right->data.oper.left->data.oper.right->data.oper.right->tag=Konst;
-	res->data.oper.right->data.oper.left->data.oper.right->data.oper.right->data.value=2.0;
-	res->data.oper.right->data.oper.right->tag=Konst;
-	res->data.oper.right->data.oper.right->data.value=0.5;
+	res->data.oper.right=Op(Pow, Fun(Cos, Copy(u)), Const(2.0));
 	break;
-      case Acosh:
-	fprintf(stderr, "TreeDerive: dAcosh/dx not implemented\n");
-	tree_error=4;
+      case Tanh:      /* u'/cosh(u)^2 */
+	res->data.oper.op=Div;
+	res->data.oper.right=Op(Pow, Fun(Cosh, Copy(u)), Const(2.0));
+	break;
+      case Asin:      /* u'/(1-u^2)^0.5 */
+	res->data.oper.op=Div;
+	res->data.oper.right=Op(Pow, Op(Sub, Const(1.0),
+					Op(Pow, Copy(u), Const(2.0))), Const(0.5));
+	break;
+      case Acos:      /* -u'/(1-u^2)^0.5 */
+	res->data.oper.op=Div;
+	res->data.oper.left=Neg(res->data.oper.left);
+	res->data.oper.right=Op(Pow, Op(Sub, Const(1.0),
+					Op(Pow, Copy(u), Const(2.0))), Const(0.5));
 	break;
       case Ln:
 	res->data.oper.right->tag=Oper;
