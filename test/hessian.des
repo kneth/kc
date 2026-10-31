@@ -1,0 +1,16 @@
+/* Second and third derivatives (mode 5) with respect to species and a
+   dynamical variable. */
+k1 = 1.0;
+k2 = 2.0;
+
+#parameter k1 = 1.0, 0.0, 10.0, 1.0E-2, 0.0001, 1.0;
+#parameter k2 = 2.0, 0.0, 10.0, 1.0E-2, 0.0001, 1.0;
+
+1: A -> B; k> = k1;
+2: B -> A; v> = k2*z*z*[B];
+
+z' = -z*[A]*[B];
+
+[A](0) = 1.0;
+[B](0) = 0.5;
+z(0) = 1.0;

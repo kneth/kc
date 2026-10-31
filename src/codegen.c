@@ -375,9 +375,9 @@ void GenerateHessian(void) {
       } /* for l */
       for(l=1; l<=NumOfDynVar(); l++) {
 	GetDynVarNo(l, name);
-	hess[i][j][i+NoOfSpec()-NumOfConstraint()-1]=TreeCreate();
-	TreeDerive(hess[i][j][i+NoOfSpec()-NumOfConstraint()-1], jacobi[i][j],
-		   name);
+	hess[i][j][dyn]=TreeCreate();
+	TreeDerive(hess[i][j][dyn], jacobi[i][j], name);
+	dyn++;
       } /* for l */
     } /* for j */
   StringFree(name);
@@ -423,7 +423,7 @@ void EvalJacobian(double *x, double **jac) {
     } /* if */
   } /* for i */
   StringFree(name);
-  StringFree(name);
+  StringFree(rename);
 } /* EvalJacobian */
 
 
@@ -455,9 +455,9 @@ void GenerateKeldian(void) {
 	} /* for l */
 	for(l=1; l<=NumOfDynVar(); l++) {
 	  GetDynVarNo(l, name);
-	  keld[i][j][k][i+NoOfSpec()-NumOfConstraint()-1]=TreeCreate();
-	  TreeDerive(keld[i][j][k][i+NoOfSpec()-NumOfConstraint()-1], 
-		     hess[i][j][k], name);
+	  keld[i][j][k][dyn]=TreeCreate();
+	  TreeDerive(keld[i][j][k][dyn], hess[i][j][k], name);
+	  dyn++;
 	} /* for l */
       } /* for k */
   StringFree(name);
