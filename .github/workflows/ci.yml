@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os }} / ${{ matrix.cc }} / C${{ matrix.std }}
+    name: ${{ matrix.os }} / ${{ matrix.cc }} / C${{ matrix.std }}${{ matrix.sanitize && ' / sanitizers' || '' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -17,6 +17,7 @@ jobs:
           - { os: ubuntu-latest, cc: gcc, std: 23 }
           - { os: macos-latest, cc: clang, std: 17 }
           - { os: macos-latest, cc: gcc-14, std: 17 }
+          - { os: ubuntu-latest, cc: clang, std: 17, sanitize: ON }
     env:
       CC: ${{ matrix.cc }}
     steps:
@@ -25,7 +26,7 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y flex bison
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_STANDARD=${{ matrix.std }} -DCMAKE_C_FLAGS=-Werror
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_STANDARD=${{ matrix.std }} -DCMAKE_C_FLAGS=-Werror -DKC_SANITIZE=${{ matrix.sanitize || 'OFF' }}
       - name: Build
         run: cmake --build build -j4
       - name: Test
@@ -34,5 +35,5 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-work-${{ matrix.os }}-${{ matrix.cc }}-c${{ matrix.std }}
+          name: test-work-${{ matrix.os }}-${{ matrix.cc }}-c${{ matrix.std }}${{ matrix.sanitize && '-sanitize' || '' }}
           path: build/test-work

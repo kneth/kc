@@ -1,0 +1,17 @@
+dt......= 2.000000e+00
+L.......= 1.000000e+02
+prefix..= test
+max_t...= 2.000000e+02
+pt1.....= 100
+pt2.....= 100
+period..= 1.000000e+01
+init-val= 2.850550e-07
+init-val= 1.427450e-06
+init-val= 2.847920e-06
+init-val= 6.135490e-06
+init-val= 3.090640e-08
+init-val= 4.202800e-08
+init-val= 1.209770e-03
+init-val= 3.984550e-09
+init-val= 2.470100e-01
+noise...= 1.000000e-03

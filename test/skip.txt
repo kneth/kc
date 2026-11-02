@@ -14,28 +14,5 @@ test4.des.m1
 test7.des.m1
 zhab.des.m1
 
-# Mode 2 writes uninitialized initial values (init-val) to in.dat.
-burst-2par.des.m2/in.dat
-burst.des.m2/in.dat
-burst.kcd.m2/in.dat
-burst3.13.m2/in.dat
-burst3.des.m2/in.dat
-glyco.des.m2/in.dat
-gs.des.m2/in.dat
-gtf.des.m2/in.dat
-hbry1.des.m2/in.dat
-hbry2.des.m2/in.dat
-hsn90.des.m2/in.dat
-knwang.des.m2/in.dat
-op.des.m2/in.dat
-open.des.m2/in.dat
-ore.kc.m2/in.dat
-ore1.kc.m2/in.dat
-ore2.des.m2/in.dat
-reak.m2/in.dat
-real.des.m2/in.dat
-shn90.des.m2/in.dat
-split.des.m2/in.dat
-
 # Lorenz is chaotic: the end state of the simulation depends on the compiler.
 lorenz.des.m3/sim.last

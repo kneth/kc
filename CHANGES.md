@@ -21,6 +21,13 @@ current C compilers, and an automated test suite has been added.
   depend on the compiler or CPU.
 * Legacy material (retired generators, DOS copies, platform Makefiles,
   site-specific scripts) has been removed. It remains in git history.
+* Expression trees are immutable and allocated from an arena: every
+  operation returns a new tree that shares its arguments instead of
+  copying them. This removes the memory leaks of the old copying API
+  and shrinks `symbmath.c` by about 600 lines. The generated code is
+  unchanged.
+* The CMake option `KC_SANITIZE` builds kc with AddressSanitizer and
+  UndefinedBehaviorSanitizer.
 
 ### Tests
 
@@ -29,6 +36,10 @@ current C compilers, and an automated test suite has been added.
   mode 3 simulations. Models that kc must reject are tested too.
 * GitHub Actions runs the suite on Linux (GCC, clang, C23) and macOS
   (clang, GCC 14).
+  One more Linux job runs it with sanitizers.
+* New test models cover the derivatives of all functions
+  (`derivatives1`, `derivatives2`) and second and third derivatives by
+  dynamical variables in mode 5 (`hessian`).
 
 ### Changed results
 
@@ -37,6 +48,11 @@ current C compilers, and an automated test suite has been added.
   reported a failure in `hqr2`, and D3 printed all-zero eigenvectors.
   The eigenvector output (mostly normalization and sign) changes for
   16 models.
+* Reducing `f+(-g)` and `f-(-g)` kept the negation, so the sign of `g`
+  flipped every time the expression was reduced. Single Jacobian
+  entries of gtf and shn90 had the wrong value, which changes their
+  mode 1 eigenvalues and mode 3 end states. In other models only the
+  printed form changes, e.g. `x+(-(y))` is now `x-y`.
 
 ### Bug fixes
 
@@ -64,3 +80,14 @@ current C compilers, and an automated test suite has been added.
   result of `TreeEval` and table lookups of unknown names.
 * The warning for an unknown command-line option printed the wrong
   character.
+* Derivatives of functions: ln gave 0, tan and tanh gave `u'/(u*2)`,
+  asinh gave `u'`, acosh was not implemented and acos crashed kc.
+* `asinh`, `acosh` and `atanh` of constants evaluated to their
+  argument.
+* Mode 2: the initial values in `in.dat` were shifted by one species;
+  the first one was read out of bounds.
+* Mode 5: second and third derivatives by dynamical variables were
+  stored in the wrong slot, which made kc crash on models with two
+  parameters and a dynamical variable. The `djacobian` procedure
+  assigned the wrong variables, with a division by zero in models
+  without constraints.

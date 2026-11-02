@@ -35,8 +35,6 @@ void KnCont(FILE *pcode, FILE *hcode) {
   int    NumbOfParams, NumbOfDynVars;
   int    need_dd_jac=0, BfErrorCode;
 
-  name=StringAlloc();
-  rename=StringAlloc();
   timer=time(&timer);
   NumbOfParams=NumOfParameter();
   NumbOfDynVars=NoOfSpec()-NumOfConstraint()+NumOfDynVar();
@@ -44,6 +42,9 @@ void KnCont(FILE *pcode, FILE *hcode) {
     fprintf(stderr, "KNCont: Wrong number of parameters - should be either 1 or 2.\n");
     return;
   } /* if */
+
+  name=StringAlloc();
+  rename=StringAlloc();
 
   InitCodeGenVar(NoOfSpec()+NumOfDynVar()-NumOfConstraint(),
 		 NumOfConstraint(), NoOfReact());
@@ -109,8 +110,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
     } /* for i */
     for(i=1; i<=NumOfDynVar(); i++) {
       GetDynVarNo(i, name);
-      fprintf(pcode, "%s:=xx_[%d];\n", rename,
-	      i+NoOfSpec()/NumOfConstraint());
+      fprintf(pcode, "%s:=xx_[%d];\n", name, i+NoOfSpec()-NumOfConstraint());
     } /* for i */
     need_dd_jac=0;
 
@@ -363,12 +363,10 @@ void KnCont(FILE *pcode, FILE *hcode) {
     else
       RenameSpec(rename, name, charge);
     for(j=0; j<NumbOfDynVars; j++) {
-      tmp=TreeCreate();
-      TreeDerive(tmp, v[j], rename);
+      tmp=TreeDerive(v[j], rename);
       fprintf(pcode, "gg_[%d, n1]:=", j+1);
       TreePrint(tmp, 2, pcode);
       fprintf(pcode, ";\n");
-      TreeKill(tmp);
     } /* for j */
     fprintf(pcode, "END;\nEND; (* sp_dalfa *)\n\n");
     /* End of printing sp_dalfa */
@@ -562,12 +560,10 @@ void KnCont(FILE *pcode, FILE *hcode) {
     else
       strcpy(rename, name);
     for(j=0; j<NumbOfDynVars; j++) {
-      tmp=TreeCreate();
-      TreeDerive(tmp, v[j], rename);
+      tmp=TreeDerive(v[j], rename);
       fprintf(pcode, "gg_[%d, n1]:=", j+1);
       TreePrint(tmp, 2, pcode);
       fprintf(pcode, ";\n");
-      TreeKill(tmp);
     } /* for j */
     fprintf(pcode, "END;\nEND\nELSE BEGIN\n");
     for(i=NumbOfParams; i>=1; i--) {
@@ -585,12 +581,10 @@ void KnCont(FILE *pcode, FILE *hcode) {
     else
       strcpy(rename, name);
     for(j=0; j<NumbOfDynVars; j++) {
-      tmp=TreeCreate();
-      TreeDerive(tmp, v[j], rename);
+      tmp=TreeDerive(v[j], rename);
       fprintf(pcode, "gg_[%d, n1]:=", j+1);
       TreePrint(tmp, 2, pcode);
       fprintf(pcode, ";\n");
-      TreeKill(tmp);
     } /* for i */
     fprintf(pcode, "END;\nEND;\nEND; (* hf_dalfa *)\n\n");
 

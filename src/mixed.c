@@ -99,117 +99,107 @@ void Mixed(void) {
 
   for(i=0; i<num_of_spec; i++) {
     for(j=0; j<num_of_spec; j++) {
-      tmp=TreeCreate();
-      TreeCpy(tmp, jacobi[i][j]);
+      tmp=jacobi[i][j];
       for(l=1; l<=NoOfSpec(); l++) {
 	GetSpecNo(l, name, &charge);
 	if (IsSpecInConstraint(name, charge)==0) {
 	  RenameSpec(rename, name, charge);
-	  TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
+	  tmp=TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
 	} /* if */
       } /* for l  */
       for(l=1; l<=NumOfDynVar(); l++) {
 	GetDynVarNo(l, name);
-	TreeSubstVar(tmp, name, GetInitValue(name));
+	tmp=TreeSubstVar(tmp, name, GetInitValue(name));
       } /* for l */
       jac_num[i][j]=TreeEval(tmp);
       if (TreeGetError()==NoEval) {
 	no_eval=1;
 	fprintf(stderr, "WARNING: Was not able to evaluate element (%d, %d) of Jacobian matrix.\n", i+1 , j+1);
       } /* if */
-      TreeKill(tmp);
     } /* for j */
   } /* for i */
 
   for(i=0; i<num_of_reac; i++) {
-    tmp=TreeCreate();
-    TreeCpy(tmp, rfw[i]);
+    tmp=rfw[i];
     for(l=1; l<=NoOfSpec(); l++) {
       GetSpecNo(l, name, &charge);
       if (IsSpecInConstraint(name, charge)==0) {
         RenameSpec(rename, name, charge);
-        TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
+        tmp=TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
       } /* if */
     } /* for l  */
     for(l=1; l<=NumOfDynVar(); l++) {
       GetDynVarNo(l, name);
-      TreeSubstVar(tmp, name, GetInitValue(name));
+      tmp=TreeSubstVar(tmp, name, GetInitValue(name));
     } /* for l */
     reacfw_[i]=TreeEval(tmp);
     if (TreeGetError()==NoEval) {
      no_eval=1;
      fprintf(stderr, "WARNING: Was not able to evaluate element (%d) of foreward reaction vector.\n", i+1 );
       } /* if */
-      TreeKill(tmp);
   } /* for i */
  
   for(i=0; i<num_of_reac; i++) {
-    tmp=TreeCreate();
-    TreeCpy(tmp, rrv[i]);
+    tmp=rrv[i];
     for(l=1; l<=NoOfSpec(); l++) {
       GetSpecNo(l, name, &charge);
       if (IsSpecInConstraint(name, charge)==0) {
         RenameSpec(rename, name, charge);
-        TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
+        tmp=TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
       } /* if */
     } /* for l  */
     for(l=1; l<=NumOfDynVar(); l++) {
       GetDynVarNo(l, name);
-      TreeSubstVar(tmp, name, GetInitValue(name));
+      tmp=TreeSubstVar(tmp, name, GetInitValue(name));
     } /* for l */
     reacrv_[i]=TreeEval(tmp);
     if (TreeGetError()==NoEval) {
      no_eval=1;
      fprintf(stderr, "WARNING: Was not able to evaluate element (%d) of reverse reaction vector.\n", i+1 );
       } /* if */
-      TreeKill(tmp);
   } /* for i */
 
   for(i=0; i<num_of_reac; i++) {
     for(j=0; j<num_of_spec; j++) {
-      tmp=TreeCreate();
-      TreeCpy(tmp, rfwds[i][j]);
+      tmp=rfwds[i][j];
       for(l=1; l<=NoOfSpec(); l++) {
 	GetSpecNo(l, name, &charge);
 	if (IsSpecInConstraint(name, charge)==0) {
 	  RenameSpec(rename, name, charge);
-	  TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
+	  tmp=TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
 	} /* if */
       } /* for l  */
       for(l=1; l<=NumOfDynVar(); l++) {
 	GetDynVarNo(l, name);
-	TreeSubstVar(tmp, name, GetInitValue(name));
+	tmp=TreeSubstVar(tmp, name, GetInitValue(name));
       } /* for l */
       reacfwds_[i][j]=TreeEval(tmp);
       if (TreeGetError()==NoEval) {
 	no_eval=1;
 	fprintf(stderr, "WARNING: Was not able to evaluate element (%d, %d) of flow reaction  matrix.\n", i+1 , j+1);
       } /* if */
-      TreeKill(tmp);
     } /* for j */
   } /* for i */
  
   for(i=0; i<num_of_reac; i++) {
     for(j=0; j<num_of_spec; j++) {
-      tmp=TreeCreate();
-      TreeCpy(tmp, rrvds[i][j]);
+      tmp=rrvds[i][j];
       for(l=1; l<=NoOfSpec(); l++) {
 	GetSpecNo(l, name, &charge);
 	if (IsSpecInConstraint(name, charge)==0) {
 	  RenameSpec(rename, name, charge);
-	  TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
+	  tmp=TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
 	} /* if */
       } /* for l  */
       for(l=1; l<=NumOfDynVar(); l++) {
 	GetDynVarNo(l, name);
-	TreeSubstVar(tmp, name, GetInitValue(name));
+	tmp=TreeSubstVar(tmp, name, GetInitValue(name));
       } /* for l */
       reacrvds_[i][j]=TreeEval(tmp);
       if (TreeGetError()==NoEval) {
 	no_eval=1;
 	fprintf(stderr, "WARNING: Was not able to evaluate element (%d, %d) of flow reaction  matrix.\n", i+1 , j+1);
       } /* if */
-      TreeKill(tmp);
     } /* for j */
   } /* for i */
 
@@ -376,4 +366,6 @@ void Mixed(void) {
     MatrixFree(num_of_reac,reacfwds_);
     MatrixFree(num_of_reac,reacrvds_);
   }
+  StringFree(name);
+  StringFree(rename);
 } /* Mixed */

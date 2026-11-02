@@ -42,7 +42,6 @@ typedef struct Strnum {
 double     coeff, charge, value, temp, temp1, temp2;
 char       flag, name[STRING_LENGTH], string[STRING_LENGTH];
 int        i, j, side, lineno=1;
-Tree       tmp;
 
 int yylex(void);
 int yyerror(char *);
@@ -180,10 +179,7 @@ system    : {
 	      } /* if */
 	      if (IsNonAutoSystem()==1) {
 		NewDynVar("time");
-		tmp=TreeCreate();
-		TreeAssignConst(tmp, 1.0);
-		NewExpr("time", tmp);
-		TreeKill(tmp);
+		NewExpr("time", TreeConst(1.0));
 	      } /* if */
 	    };
 declars   : declars declar
@@ -206,7 +202,6 @@ strnumb   : expr semicolon
 		$$.flag=1;
 		$$.numb=temp;
 	      }
-	      TreeKill($1);
 	    }
 	    | quotation names quotation semicolon
 	    { $$.flag=2;
@@ -226,31 +221,25 @@ pentry    : names equal expr comma expr comma expr comma expr comma expr comma e
 	      else {
 		NewParameter($1, temp);
 	      }
-	      TreeKill($3); 
 	      temp=TreeEval($5);
 	      if (TreeGetError()==NoEval)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
 	      else
 		NewDeltaParam($1, temp);
-	      TreeKill($5);
 	      temp1=TreeEval($7);
 	      if (TreeGetError()==NoEval)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n" , lineno);
-	      TreeKill($7);
 	      temp2=TreeEval($11);
 	      if (TreeGetError()==NoEval)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n" , lineno);
-	      TreeKill($11);
 	      NewLowHighPrefParam($1, temp, temp1, temp2);
 	      temp=TreeEval($13);
 	      if (TreeGetError()==NoEval)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
-	      TreeKill($13);
 	      NewDirectForParam($1, (int)temp);
 	      temp=TreeEval($9);
 	      if (TreeGetError()==NoEval)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
-	      TreeKill($9);
 	      NewDeltaParam($1, temp);
 	    }
 	    | conc equal expr comma expr comma expr comma expr comma expr comma expr
@@ -262,26 +251,20 @@ pentry    : names equal expr comma expr comma expr comma expr comma expr comma e
 	      temp=TreeEval($5);
 	      if (TreeGetError()==NoEval)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
-	      TreeKill($3);
-	      TreeKill($5);
 	      temp1=TreeEval($7);
 	      if (TreeGetError()==NoEval)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n" , lineno);
-	      TreeKill($7);
 	      temp2=TreeEval($11);
 	      if (TreeGetError()==NoEval)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n" , lineno);
-	      TreeKill($11);
 	      NewLowHighPrefConc($1.name, $1.charge, temp, temp1, temp2);
 	      temp=TreeEval($13);
 	      if (TreeGetError()==NoEval)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
-	      TreeKill($9);
 	      NewDirectForConc($1.name, $1.charge, (int)temp);
 	      temp=TreeEval($9);
 	      if (TreeGetError()==NoEval)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
-	      TreeKill($9);
 	      NewDeltaConc($1.name, $1.charge, temp);
 	    };
 reactions : reaction
@@ -309,7 +292,6 @@ reaction  : numbers
 	    | names prime equal expr semicolon 
 	    { NewExpr($1, $4);
 	      NewDynVar($1);
-	      TreeKill($4);
 	    };
 reackonst : powconsts semicolon rateconsts  
 	    | rateconsts;
@@ -325,7 +307,6 @@ powconst  : names leftpar subst rightpar equal expr
 		else
 		  NewPowerConst(GetCurrentReaction(), $3.name, $3.charge, temp, side); 
 	      }; /* else */
-	      TreeKill($6);
 	    };
 rateconsts: leftarr equal expr  
 	    { if (strcmp($1, "k")==0) {  
@@ -336,7 +317,6 @@ rateconsts: leftarr equal expr
 		  NewRateExpr(GetCurrentReaction(), -1, $3);
 		else
 		  fprintf(stderr, "Syntax error: v or k expected in line %d.\n", lineno);
-	      TreeKill($3);               
 	    } 
 	    semicolon ropt
 	    | names equal expr 
@@ -345,7 +325,6 @@ rateconsts: leftarr equal expr
 	      else {
 		NewRateConst(GetCurrentReaction(), 0, $3);
 	      }; /* else */
-	      TreeKill($3); 
 	    };
 ropt      : { if (GetReactKind(GetCurrentReaction())==bi) (void) fprintf(stderr, "The reaction in line %d is two-ways.\n", lineno);
 	    }
@@ -361,7 +340,6 @@ ropt      : { if (GetReactKind(GetCurrentReaction())==bi) (void) fprintf(stderr,
 		    else
 		      fprintf(stderr, "Syntax error: v or k expected in line %d.\n", lineno);
 	      }; /* else */
-	      TreeKill($3);
 	    };
 kind      : oneway { $$='>'; } 
 	    | twoways { $$='<'; }
@@ -432,7 +410,6 @@ const     : conc timeopt equal expr semicolon
 		NewConstraint($1.name, $1.charge, $4);
 		break;
 	      };
-	      TreeKill($4);
 	    }
 	    | names leftpar subst rightpar equal expr semicolon
 	    { temp=TreeEval($6);
@@ -440,7 +417,6 @@ const     : conc timeopt equal expr semicolon
 	      if (GetError()==NotFound) 
 		if ($3.charge==0.0) 
 		  NewDynVarConst($3.name, $1, temp);
-	      TreeKill($6);
 	    };
 	    | names timeopt equal expr semicolon
 	    { temp=TreeEval($4);
@@ -449,97 +425,56 @@ const     : conc timeopt equal expr semicolon
 	      else {
 		if ($2==1) {
 		  NewInitValue($1, temp);
-		  TreeKill($4);
 		} else
 		  yyerror("(0) expected");
 	      }
 	    }
 expr      : minus expr %prec UMINUS
-	    { $$=TreeCreate();
-	      TreeCpy($$, $2);
-	      TreeSign($$);
-	      TreeKill($2);
-	    }
+	    { $$=TreeSign($2); }
 	    | expr plus expr
-	    { $$=TreeCreate(); 
-	      TreeAdd($1, $3);
-	      TreeCpy($$, $1);
-	      TreeKill($3);
-	      TreeKill($1);
-	    }
+	    { $$=TreeAdd($1, $3); }
 	    | expr minus expr
-	    { $$=TreeCreate(); 
-	      TreeSub($1, $3);
-	      TreeCpy($$, $1);
-	      TreeKill($3);
-	      TreeKill($1);
-	    }
+	    { $$=TreeSub($1, $3); }
 	    | expr multi expr
-	    {
-	      $$=TreeCreate();
-	      TreeMul($1, $3);
-	      TreeCpy($$, $1);
-	      TreeKill($1);
-	      TreeKill($3);
-	    }
+	    { $$=TreeMul($1, $3); }
 	    | expr pdiv expr
-	    {
-	      $$=TreeCreate();
-	      TreeDiv($1, $3);
-	      TreeCpy($$, $1);
-	      TreeKill($1);
-	      TreeKill($3);
-	    }
+	    { $$=TreeDiv($1, $3); }
 	    | expr powop expr
-	    { $$=TreeCreate();
-	      TreeCpy($$, $1);
-	      TreePow($$, $3);
-	      TreeKill($1);
-	      TreeKill($3);
-	    }
+	    { $$=TreePow($1, $3); }
 	    | leftpar expr rightpar 
-	    { $$=TreeCreate();
-	      TreeCpy($$, $2); 
-	      TreeKill($2);
-	    }
+	    { $$=$2; }
 	    | names 
 	    {
-	     $$=TreeCreate();
 	     temp=GetConstant($1); 
 	     if (GetError()==NotFound) {
-	       TreeAssignVar($$, $1); 
+	       $$=TreeVar($1); 
 	       if (strcmp($1, "time")==0)
 		 NonAutoSystem();
 	     } else
-	       TreeAssignConst($$, temp);
+	       $$=TreeConst(temp);
 	    } 
 	    | numbers 
-	    { $$=TreeCreate();
-	      TreeAssignConst($$, $1);
-	    }
+	    { $$=TreeConst($1); }
 	    | conc timeopt
 	    {  
-	      $$=TreeCreate(); 
 	      if ($2==1) {
 		temp=GetBeginConc($1.name, $1.charge);
 		if (GetError()==NoError)
-		  TreeAssignConst($$, temp);
-		else
+		  $$=TreeConst(temp);
+		else {
 		  fprintf(stderr, "[%s(%e)] not found.\n", $1.name, $1.charge);
+		  $$=TreeConst(0.0);
+		}
 		flag='1';
 	      } /* if */
 	      else { 
 		flag='0';
 		RenameSpec(name, $1.name, $1.charge);
-		TreeAssignVar($$, name);
+		$$=TreeVar(name);
 	      }; /* else */
 	    }
 	    | function leftpar expr rightpar
-	    { $$=TreeCreate();
-	      TreeCpy($$, $3);
-	      TreeApplyFunc(&$$, $1);
-	      TreeKill($3);
-	    };
+	    { $$=TreeApplyFunc($1, $3); };
 function  : fun_exp     { $$=Exp; }
 	    | fun_ln    { $$=Ln; }
 	    | fun_log   { $$=Log; }

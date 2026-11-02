@@ -34,8 +34,6 @@ void ConIS(FILE *fcode) {
   int    i, j, constraint, dyn, form;
   int    NumbOfParams, NumbOfDynVars;
 
-  name=StringAlloc();
-  rename=StringAlloc();
   timer=time(&timer);
   NumbOfParams=NumOfParameter();
   NumbOfDynVars=NoOfSpec()-NumOfConstraint()+NumOfDynVar();
@@ -43,6 +41,9 @@ void ConIS(FILE *fcode) {
     fprintf(stderr, "Continuation program aborted: Wrong number of parameters - should be between 2 and 40.\n");
     return;
   } /* if */
+
+  name=StringAlloc();
+  rename=StringAlloc();
   
   InitCodeGenVar(NoOfSpec()+NumOfDynVar()-NumOfConstraint(),
 		 NumOfConstraint(), NoOfReact());
@@ -149,12 +150,10 @@ void ConIS(FILE *fcode) {
   else
     RenameSpec(rename, name, charge);
   for(j=0; j<NumbOfDynVars; j++) {
-    tmp=TreeCreate();
-    TreeDerive(tmp, v[j], rename);
+    tmp=TreeDerive(v[j], rename);
     fprintf(fcode, "      gvar(%d,%d) = ", j+1,NumbOfDynVars+1);
     TreePrint(tmp, 1, fcode);
     fprintf(fcode, "\n");
-    TreeKill(tmp);
   } /* for j */
   fprintf(fcode, "\n\n");
   
@@ -164,12 +163,10 @@ void ConIS(FILE *fcode) {
   else
     strcpy(rename, name);
   for(j=0; j<NumbOfDynVars; j++) {
-    tmp=TreeCreate();
-    TreeDerive(tmp, v[j], rename);
+    tmp=TreeDerive(v[j], rename);
     fprintf(fcode, "      gvar(%d,%d) = ", j+1, NumbOfDynVars+1);
     TreePrint(tmp, 1, fcode);
     fprintf(fcode, "\n");
-    TreeKill(tmp);
   } /* for j */
   fprintf(fcode, "\n");
   GetParamNo(2, name, &charge, &form);
@@ -178,12 +175,10 @@ void ConIS(FILE *fcode) {
   else
     strcpy(rename, name);
   for(j=0; j<NumbOfDynVars; j++) {
-    tmp=TreeCreate();
-    TreeDerive(tmp, v[j], rename);
+    tmp=TreeDerive(v[j], rename);
     fprintf(fcode, "      gvar(%d,%d) = ", j+1, NumbOfDynVars+2);
     TreePrint(tmp, 1, fcode);
     fprintf(fcode, "\n");
-    TreeKill(tmp);
   } /* for i */
   fprintf(fcode, "\n\n");
   fprintf(fcode, "      return\n");
