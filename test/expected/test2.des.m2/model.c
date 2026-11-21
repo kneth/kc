@@ -12,7 +12,7 @@ double reac(double* S, int l) {
   A=S[0];
   P=S[1];
   switch (l) {
-  case 0: return ((-1.000000e+00*A));
+  case 0: return ((-(A)));
 break;
   case 1: return (A);
 break;
@@ -25,7 +25,7 @@ void eval(double S[equa], double F[equa]) {
   A=S[0];
   if (S[1]<0.0) S[1]=0.0;
   P=S[1];
-  F[0] = (-1.000000e+00*A);
+  F[0] = (-(A));
   F[1] = A;
 } /* eval */
 void calc_jac(double S[equa], double tk, double R[equa], double Jac[equa+1][equa+1]) 
@@ -48,7 +48,7 @@ double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) 
   P=S[1];
 switch (l) {
 case 1:
-return (tk*((-1.000000e+00*A))-S[0]*(1+4*R[0])+K[0]);
+return (tk*((-(A)))-S[0]*(1+4*R[0])+K[0]);
 break;
 case 2:
 return (tk*(A)-S[1]*(1+4*R[1])+K[1]);

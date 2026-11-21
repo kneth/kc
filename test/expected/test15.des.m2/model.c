@@ -32,10 +32,10 @@ void calc_jac(double S[equa], double tk, double R[equa], double Jac[equa+1][equa
  double y;
   x=S[0];
   y=S[1];
-Jac[1][1]=tk*(((pow(x,1.100000e+00))*2.100000e+00))-(1+4*R[0]);
+Jac[1][1]=tk*((2.100000e+00*(pow(x,1.100000e+00))))-(1+4*R[0]);
 Jac[1][2]=tk*(0.000000e+00);
 Jac[2][1]=tk*(0.000000e+00);
-Jac[2][2]=tk*((y*2.000000e+00))-(1+4*R[1]);
+Jac[2][2]=tk*((2.000000e+00*y))-(1+4*R[1]);
 }
 double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double x;
@@ -57,8 +57,8 @@ double x;
 double y;
 x=S[0];
 y=S[1];
-Jac[0][0]=((pow(x,1.100000e+00))*2.100000e+00);
+Jac[0][0]=(2.100000e+00*(pow(x,1.100000e+00)));
 Jac[0][1]=0.000000e+00;
 Jac[1][0]=0.000000e+00;
-Jac[1][1]=(y*2.000000e+00);
+Jac[1][1]=(2.000000e+00*y);
 }

@@ -22,9 +22,9 @@ double y;
 x=S_[0];
 y=S_[1];
 jacobi_matx[0][0]=(-((y*y*y)));
-jacobi_matx[0][1]=(-((x*((y*y)*3.000000e+00))));
+jacobi_matx[0][1]=(-3.000000e+00*(x*(y*y)));
 jacobi_matx[1][0]=(3.000000e-01*(y*y*y));
-jacobi_matx[1][1]=(3.000000e-01*((x*((y*y)*3.000000e+00))-1.000000e+00
+jacobi_matx[1][1]=(3.000000e-01*((3.000000e+00*(x*(y*y)))-1.000000e+00
 ));
 }
 void InitValues(void) {

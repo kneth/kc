@@ -12,7 +12,7 @@ double A;
 double P;
 A=S_[0];
 P=S_[1];
-v_[0]=((-1.000000e+00*A));
+v_[0]=((-(A)));
 v_[1]=(A);
 }
 void jacobi(double *S_){

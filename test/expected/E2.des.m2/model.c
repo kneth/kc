@@ -14,7 +14,7 @@ double reac(double* S, int l) {
   switch (l) {
   case 0: return (y2);
 break;
-  case 1: return ((((5.000000e+00*(1.000000e+00-(y1*y1)))*y2)-
+  case 1: return (((5.000000e+00*((1.000000e+00-(y1*y1))*y2))-
 y1));
 break;
   } /* switch */
@@ -25,7 +25,7 @@ void eval(double S[equa], double F[equa]) {
   y1=S[0];
   y2=S[1];
   F[0] = y2;
-  F[1] = (((5.000000e+00*(1.000000e+00-(y1*y1)))*y2)-
+  F[1] = ((5.000000e+00*((1.000000e+00-(y1*y1))*y2))-
 y1);
 } /* eval */
 void calc_jac(double S[equa], double tk, double R[equa], double Jac[equa+1][equa+1]) 
@@ -36,8 +36,7 @@ void calc_jac(double S[equa], double tk, double R[equa], double Jac[equa+1][equa
   y2=S[1];
 Jac[1][1]=tk*(0.000000e+00)-(1+4*R[0]);
 Jac[1][2]=tk*(1.000000e+00);
-Jac[2][1]=tk*((((5.000000e+00*(-((y1*2.000000e+00))))*y2)-1.000000e+00
-));
+Jac[2][1]=tk*(((-1.000000e+01*(y1*y2))-1.000000e+00));
 Jac[2][2]=tk*((5.000000e+00*(1.000000e+00-(y1*y1))))-(1+4*R[1]);
 }
 double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
@@ -50,7 +49,7 @@ case 1:
 return (tk*(y2)-S[0]*(1+4*R[0])+K[0]);
 break;
 case 2:
-return (tk*((((5.000000e+00*(1.000000e+00-(y1*y1)))*y2)-
+return (tk*(((5.000000e+00*((1.000000e+00-(y1*y1))*y2))-
 y1))-S[1]*(1+4*R[1])+K[1]);
 break;
 }
@@ -63,7 +62,6 @@ y1=S[0];
 y2=S[1];
 Jac[0][0]=0.000000e+00;
 Jac[0][1]=1.000000e+00;
-Jac[1][0]=(((5.000000e+00*(-((y1*2.000000e+00))))*y2)-1.000000e+00
-);
+Jac[1][0]=((-1.000000e+01*(y1*y2))-1.000000e+00);
 Jac[1][1]=(5.000000e+00*(1.000000e+00-(y1*y1)));
 }

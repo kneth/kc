@@ -21,8 +21,8 @@ double x;
 double y;
 x=S_[0];
 y=S_[1];
-jacobi_matx[0][0]=((pow(x,1.100000e+00))*2.100000e+00);
-jacobi_matx[1][1]=(y*2.000000e+00);
+jacobi_matx[0][0]=(2.100000e+00*(pow(x,1.100000e+00)));
+jacobi_matx[1][1]=(2.000000e+00*y);
 }
 void InitValues(void) {
 FILE *infile_;

@@ -6,7 +6,7 @@ Constants declared:
 The Jacobian matrix is:
 J(1, 1) = 0.00000000000000e+00
 J(1, 2) = 0.00000000000000e+00
-J(2, 1) = -0.00000000000000e+00
+J(2, 1) = 0.00000000000000e+00
 J(2, 2) = -1.00000000000000e+00
 
 The eigenvalues are:

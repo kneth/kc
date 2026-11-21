@@ -14,11 +14,11 @@ double reac(double* S, int l) {
   B=S[1];
   z=S[3];
   switch (l) {
-  case 0: return (((-1.000000e+00*A)+(((2.000000e+00*z)*z)*B)));
+  case 0: return (((-(A))+(2.000000e+00*((z*z)*B))));
 break;
-  case 1: return ((A+(-1.000000e+00*(((2.000000e+00*z)*z)*B))));
+  case 1: return ((A-(2.000000e+00*((z*z)*B))));
 break;
-  case 2: return ((((-(z))*A)*B));
+  case 2: return ((-(((z*A)*B))));
 break;
   } /* switch */
 } /* reac */
@@ -31,9 +31,9 @@ void eval(double S[equa], double F[equa]) {
   if (S[1]<0.0) S[1]=0.0;
   B=S[1];
   z=S[2];
-  F[0] = ((-1.000000e+00*A)+(((2.000000e+00*z)*z)*B));
-  F[1] = (A+(-1.000000e+00*(((2.000000e+00*z)*z)*B)));
-  F[2] = (((-(z))*A)*B);
+  F[0] = ((-(A))+(2.000000e+00*((z*z)*B)));
+  F[1] = (A-(2.000000e+00*((z*z)*B)));
+  F[2] = (-(((z*A)*B)));
 } /* eval */
 void calc_jac(double S[equa], double tk, double R[equa], double Jac[equa+1][equa+1]) 
 {
@@ -46,15 +46,14 @@ void calc_jac(double S[equa], double tk, double R[equa], double Jac[equa+1][equa
   B=S[1];
   z=S[2];
 Jac[1][1]=tk*(-1.000000e+00)-(1+4*R[0]);
-Jac[1][2]=tk*(((2.000000e+00*z)*z));
-Jac[1][3]=tk*((((2.000000e+00*z)+(2.000000e+00*z))*B));
+Jac[1][2]=tk*((2.000000e+00*(z*z)));
+Jac[1][3]=tk*((2.000000e+00*((z+z)*B)));
 Jac[2][1]=tk*(1.000000e+00);
-Jac[2][2]=tk*((-1.000000e+00*((2.000000e+00*z)*z)))-(1+4*R[1]);
-Jac[2][3]=tk*((-1.000000e+00*(((2.000000e+00*z)+(2.000000e+00
-*z))*B)));
-Jac[3][1]=tk*(((-(z))*B));
-Jac[3][2]=tk*(((-(z))*A));
-Jac[3][3]=tk*(((-1.000000e+00*A)*B))-(1+4*R[2]);
+Jac[2][2]=tk*((-2.000000e+00*(z*z)))-(1+4*R[1]);
+Jac[2][3]=tk*((-2.000000e+00*((z+z)*B)));
+Jac[3][1]=tk*((-((z*B))));
+Jac[3][2]=tk*((-((z*A))));
+Jac[3][3]=tk*((-((A*B))))-(1+4*R[2]);
 }
 double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) {
  double A;
@@ -65,13 +64,13 @@ double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) 
   z=S[2];
 switch (l) {
 case 1:
-return (tk*(((-1.000000e+00*A)+(((2.000000e+00*z)*z)*B)))-S[0]*(1+4*R[0])+K[0]);
+return (tk*(((-(A))+(2.000000e+00*((z*z)*B))))-S[0]*(1+4*R[0])+K[0]);
 break;
 case 2:
-return (tk*((A+(-1.000000e+00*(((2.000000e+00*z)*z)*B))))-S[1]*(1+4*R[1])+K[1]);
+return (tk*((A-(2.000000e+00*((z*z)*B))))-S[1]*(1+4*R[1])+K[1]);
 break;
 case 3:
-return (tk*((((-(z))*A)*B))-S[2]*(1+4*R[2])+K[2]);
+return (tk*((-(((z*A)*B))))-S[2]*(1+4*R[2])+K[2]);
 break;
 }
 }
@@ -84,13 +83,12 @@ A=S[0];
 B=S[1];
 z=S[2];
 Jac[0][0]=-1.000000e+00;
-Jac[0][1]=((2.000000e+00*z)*z);
-Jac[0][2]=(((2.000000e+00*z)+(2.000000e+00*z))*B);
+Jac[0][1]=(2.000000e+00*(z*z));
+Jac[0][2]=(2.000000e+00*((z+z)*B));
 Jac[1][0]=1.000000e+00;
-Jac[1][1]=(-1.000000e+00*((2.000000e+00*z)*z));
-Jac[1][2]=(-1.000000e+00*(((2.000000e+00*z)+(2.000000e+00
-*z))*B));
-Jac[2][0]=((-(z))*B);
-Jac[2][1]=((-(z))*A);
-Jac[2][2]=((-1.000000e+00*A)*B);
+Jac[1][1]=(-2.000000e+00*(z*z));
+Jac[1][2]=(-2.000000e+00*((z+z)*B));
+Jac[2][0]=(-((z*B)));
+Jac[2][1]=(-((z*A)));
+Jac[2][2]=(-((A*B)));
 }

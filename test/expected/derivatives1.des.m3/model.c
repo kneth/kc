@@ -33,8 +33,8 @@ u3=S_[2];
 u4=S_[3];
 jacobi_matx[0][0]=(1.000000e+00/u1);
 jacobi_matx[1][1]=(4.342945e-01/u2);
-jacobi_matx[2][2]=((((exp(u3)*sin(u3))+(exp(u3)*cos(u3)))*cos(u3))+(
-(exp(u3)*sin(u3))*(-(sin(u3)))));
+jacobi_matx[2][2]=((((exp(u3)*sin(u3))+(exp(u3)*cos(u3)))*cos(u3))-(
+(exp(u3)*sin(u3))*sin(u3)));
 jacobi_matx[3][0]=((pow(u1,(u2-1.000000e+00)))*u2);
 jacobi_matx[3][1]=((pow(u1,u2))*log(u1));
 }

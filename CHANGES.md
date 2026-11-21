@@ -26,6 +26,9 @@ current C compilers, and an automated test suite has been added.
   copying them. This removes the memory leaks of the old copying API
   and shrinks `symbmath.c` by about 600 lines. The generated code is
   unchanged.
+* The expression reducer looks only at each new node instead of
+  reducing whole trees again at every level of derivatives and
+  substitutions. The generated code is unchanged.
 * The CMake option `KC_SANITIZE` builds kc with AddressSanitizer and
   UndefinedBehaviorSanitizer.
 
@@ -40,6 +43,8 @@ current C compilers, and an automated test suite has been added.
 * New test models cover the derivatives of all functions
   (`derivatives1`, `derivatives2`) and second and third derivatives by
   dynamical variables in mode 5 (`hessian`).
+* A new test model covers the rules of the expression reducer
+  (`reduce1`).
 
 ### Changed results
 
@@ -53,6 +58,14 @@ current C compilers, and an automated test suite has been added.
   entries of gtf and shn90 had the wrong value, which changes their
   mode 1 eigenvalues and mode 3 end states. In other models only the
   printed form changes, e.g. `x+(-(y))` is now `x-y`.
+* Expressions are reduced further, so rate expressions and Jacobians
+  are shorter: constants are folded through products (`(2*y)*3` is now
+  `6*y`), signs and constant factors move out of products and
+  quotients, `-1*f` becomes `-f`, negative constants and factors turn
+  `+` into `-`, and constants are never `-0`. The generated C code of
+  the test models is about 9% smaller. Regrouped floating-point
+  operations change mode 3 end states by at most 2.2e-4 relative,
+  apart from values that are numerically zero.
 
 ### Bug fixes
 
