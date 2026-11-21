@@ -32,12 +32,12 @@ y1=S_[0];
 y2=S_[1];
 y3=S_[2];
 y4=S_[3];
-jacobi_matx[0][1]=(y2*2.000000e+00);
-jacobi_matx[0][2]=(y3*2.000000e+00);
-jacobi_matx[0][3]=(y4*2.000000e+00);
-jacobi_matx[1][2]=(1.000000e+01*(y3*2.000000e+00));
-jacobi_matx[1][3]=(1.000000e+01*(y4*2.000000e+00));
-jacobi_matx[2][3]=(4.000000e+01*(y4*2.000000e+00));
+jacobi_matx[0][1]=(2.000000e+00*y2);
+jacobi_matx[0][2]=(2.000000e+00*y3);
+jacobi_matx[0][3]=(2.000000e+00*y4);
+jacobi_matx[1][2]=(2.000000e+01*y3);
+jacobi_matx[1][3]=(2.000000e+01*y4);
+jacobi_matx[2][3]=(8.000000e+01*y4);
 }
 void InitValues(void) {
 FILE *infile_;

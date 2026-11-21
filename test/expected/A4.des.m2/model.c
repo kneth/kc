@@ -28,7 +28,7 @@ double reac(double* S, int l) {
   y9=S[9];
   y10=S[10];
   switch (l) {
-  case 0: return ((-1.000000e+00*y1));
+  case 0: return ((-(y1)));
 break;
   case 1: return ((-3.200000e+01*y2));
 break;
@@ -71,7 +71,7 @@ void eval(double S[equa], double F[equa]) {
   y8=S[7];
   y9=S[8];
   y10=S[9];
-  F[0] = (-1.000000e+00*y1);
+  F[0] = (-(y1));
   F[1] = (-3.200000e+01*y2);
   F[2] = (-2.430000e+02*y3);
   F[3] = (-1.024000e+03*y4);
@@ -228,7 +228,7 @@ double reac_F(double S[equa], double K[equa], double R[equa], double tk, int l) 
   y10=S[9];
 switch (l) {
 case 1:
-return (tk*((-1.000000e+00*y1))-S[0]*(1+4*R[0])+K[0]);
+return (tk*((-(y1)))-S[0]*(1+4*R[0])+K[0]);
 break;
 case 2:
 return (tk*((-3.200000e+01*y2))-S[1]*(1+4*R[1])+K[1]);

@@ -14,7 +14,7 @@ double reac(double* S, int l) {
   switch (l) {
   case 0: return ((((-1.000000e-01*x)+((x*y)*y))-y));
 break;
-  case 1: return (((x+(-1.000000e-01*y))-(x*x)));
+  case 1: return (((x-(1.000000e-01*y))-(x*x)));
 break;
   } /* switch */
 } /* reac */
@@ -24,7 +24,7 @@ void eval(double S[equa], double F[equa]) {
   x=S[0];
   y=S[1];
   F[0] = (((-1.000000e-01*x)+((x*y)*y))-y);
-  F[1] = ((x+(-1.000000e-01*y))-(x*x));
+  F[1] = ((x-(1.000000e-01*y))-(x*x));
 } /* eval */
 void calc_jac(double S[equa], double tk, double R[equa], double Jac[equa+1][equa+1]) 
 {
@@ -47,7 +47,7 @@ case 1:
 return (tk*((((-1.000000e-01*x)+((x*y)*y))-y))-S[0]*(1+4*R[0])+K[0]);
 break;
 case 2:
-return (tk*(((x+(-1.000000e-01*y))-(x*x)))-S[1]*(1+4*R[1])+K[1]);
+return (tk*(((x-(1.000000e-01*y))-(x*x)))-S[1]*(1+4*R[1])+K[1]);
 break;
 }
 }

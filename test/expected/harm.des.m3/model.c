@@ -48,7 +48,7 @@ debug_=1;
 (void) strcpy(species[0], "x");
 (void) strcpy(species[1], "y");
 (void) strcpy(datafilename_,"kinwrkda");
-jacobi_matx[0][0]=-0.000000e+00;
+jacobi_matx[0][0]=0.000000e+00;
 jacobi_matx[0][1]=-1.000000e+00;
 jacobi_matx[1][0]=1.000000e+00;
 jacobi_matx[1][1]=0.000000e+00;

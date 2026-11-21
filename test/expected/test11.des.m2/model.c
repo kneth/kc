@@ -32,7 +32,7 @@ void calc_jac(double S[equa], double tk, double R[equa], double Jac[equa+1][equa
  double y;
   x=S[0];
   y=S[1];
-Jac[1][1]=tk*(((x*x*x*x)*5.000000e+00))-(1+4*R[0]);
+Jac[1][1]=tk*((5.000000e+00*(x*x*x*x)))-(1+4*R[0]);
 Jac[1][2]=tk*(0.000000e+00);
 Jac[2][1]=tk*(((pow(x,(y-1.000000e+00)))*y));
 Jac[2][2]=tk*(((pow(x,y))*log(x)))-(1+4*R[1]);
@@ -57,7 +57,7 @@ double x;
 double y;
 x=S[0];
 y=S[1];
-Jac[0][0]=((x*x*x*x)*5.000000e+00);
+Jac[0][0]=(5.000000e+00*(x*x*x*x));
 Jac[0][1]=0.000000e+00;
 Jac[1][0]=((pow(x,(y-1.000000e+00)))*y);
 Jac[1][1]=((pow(x,y))*log(x));

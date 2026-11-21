@@ -38,9 +38,9 @@ The eigenvectors are:
 
 No. 0,REAL part: Left 0.000000e+00,  Right 0.000000e+00, Diff. 0.000000e+00
 No. 0,IM   part: Left 0.000000e+00,  Right 0.000000e+00, Diff 0.000000e+00
-No. 1,REAL part: Left -6.062723e-16,  Right 0.000000e+00, Diff. -6.062723e-16
+No. 1,REAL part: Left -3.552714e-15,  Right 0.000000e+00, Diff. -3.552714e-15
 No. 1,IM   part: Left 0.000000e+00,  Right 0.000000e+00, Diff 0.000000e+00
-No. 2,REAL part: Left 2.999999e-07,  Right 2.999999e-07, Diff. 3.196336e-15
+No. 2,REAL part: Left 2.999999e-07,  Right 2.999999e-07, Diff. 6.464318e-15
 No. 2,IM   part: Left 0.000000e+00,  Right 0.000000e+00, Diff 0.000000e+00
 
 The eigenvalues 

@@ -32,7 +32,7 @@ void calc_jac(double S[equa], double tk, double R[equa], double Jac[equa+1][equa
  double y;
   x=S[0];
   y=S[1];
-Jac[1][1]=tk*(-0.000000e+00)-(1+4*R[0]);
+Jac[1][1]=tk*(0.000000e+00)-(1+4*R[0]);
 Jac[1][2]=tk*(-1.000000e+00);
 Jac[2][1]=tk*(1.000000e+00);
 Jac[2][2]=tk*(0.000000e+00)-(1+4*R[1]);
@@ -57,7 +57,7 @@ double x;
 double y;
 x=S[0];
 y=S[1];
-Jac[0][0]=-0.000000e+00;
+Jac[0][0]=0.000000e+00;
 Jac[0][1]=-1.000000e+00;
 Jac[1][0]=1.000000e+00;
 Jac[1][1]=0.000000e+00;

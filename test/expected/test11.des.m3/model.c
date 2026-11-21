@@ -21,7 +21,7 @@ double x;
 double y;
 x=S_[0];
 y=S_[1];
-jacobi_matx[0][0]=((x*x*x*x)*5.000000e+00);
+jacobi_matx[0][0]=(5.000000e+00*(x*x*x*x));
 jacobi_matx[1][0]=((pow(x,(y-1.000000e+00)))*y);
 jacobi_matx[1][1]=((pow(x,y))*log(x));
 }

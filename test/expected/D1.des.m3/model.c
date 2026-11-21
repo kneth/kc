@@ -28,7 +28,7 @@ y1=S_[0];
 y2=S_[1];
 y3=S_[2];
 jacobi_matx[1][1]=(-((6.000000e+01-(1.250000e-01*y3))));
-jacobi_matx[1][2]=((-((-1.250000e-01*y2)))+1.250000e-01);
+jacobi_matx[1][2]=((1.250000e-01*y2)+1.250000e-01);
 }
 void InitValues(void) {
 FILE *infile_;

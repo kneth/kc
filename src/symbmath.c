@@ -81,11 +81,12 @@ static Tree Op(TreeOper op, Tree left, Tree right) {
   return t;
 } /* Op */
 
+/* Constants are never -0, which C prints as -0.000000e+00. */
 static Tree Const(double value) {
 
   TreeNode *t=NewNode(Konst);
 
-  t->data.value=value;
+  t->data.value=(value==0.0) ? 0.0 : value;
   return t;
 } /* Const */
 
@@ -125,10 +126,34 @@ static int SameVar(Tree a, Tree b) {
   constant.
 *****************************************************************************/
 
+static Tree MulR(Tree l, Tree r);
+static Tree SubR(Tree l, Tree r);
+
+/* Is t of the form K*f? MulR keeps constant factors on the left. */
+static int IsScaled(Tree t) {
+
+  return (t->tag==Oper) && (t->data.oper.op==Mul)
+    && (t->data.oper.left->tag==Konst);
+} /* IsScaled */
+
+static double Factor(Tree t) {
+
+  return t->data.oper.left->data.value;
+} /* Factor */
+
+/* Is t of the form -f, K or K*f with K<0? */
+static int IsNegative(Tree t) {
+
+  return (t->tag==NegSign) || ((t->tag==Konst) && (t->data.value<0.0))
+    || (IsScaled(t) && (Factor(t)<0.0));
+} /* IsNegative */
+
 static Tree NegR(Tree r) {
 
   if (r->tag==NegSign) return r->data.right;     /* -(-f) -> f */
   if (r->tag==Konst) return Const(-r->data.value); /* -(K) -> (-K) */
+  if (IsScaled(r))                               /* -(K*f) -> (-K)*f */
+    return MulR(Const(-Factor(r)), r->data.oper.right);
   return Neg(r);
 } /* NegR */
 
@@ -138,8 +163,8 @@ static Tree AddR(Tree l, Tree r) {
     return Const(l->data.value+r->data.value);
   if (IsConst(r, 0.0)) return l;                 /* f+0 -> f */
   if (IsConst(l, 0.0)) return r;                 /* 0+f -> f */
-  if (r->tag==NegSign)                           /* f+(-g) -> f-g */
-    return Op(Sub, l, r->data.right);
+  if (IsNegative(r))                   /* f+(-g) -> f-g, see IsNegative */
+    return SubR(l, NegR(r));
   return Op(Add, l, r);
 } /* AddR */
 
@@ -148,12 +173,12 @@ static Tree SubR(Tree l, Tree r) {
   if ((l->tag==Konst) && (r->tag==Konst))        /* K1-K2 -> K3 */
     return Const(l->data.value-r->data.value);
   if (IsConst(r, 0.0)) return l;                 /* f-0 -> f */
-  if (IsConst(l, 0.0)) return Neg(r);            /* 0-f -> -f */
+  if (IsConst(l, 0.0)) return NegR(r);           /* 0-f -> -f */
   if (SameVar(l, r)) return Const(0.0);          /* x-x -> 0 */
-  if (r->tag==NegSign)                           /* f-(-g) -> f+g */
-    return Op(Add, l, r->data.right);
+  if (IsNegative(r))                   /* f-(-g) -> f+g, see IsNegative */
+    return AddR(l, NegR(r));
   if (l->tag==NegSign)                           /* (-f)-g -> -(f+g) */
-    return Neg(Op(Add, l->data.right, r));
+    return NegR(AddR(l->data.right, r));
   return Op(Sub, l, r);
 } /* SubR */
 
@@ -161,10 +186,21 @@ static Tree MulR(Tree l, Tree r) {
 
   if ((l->tag==Konst) && (r->tag==Konst))        /* K1*K2 -> K3 */
     return Const(l->data.value*r->data.value);
-  if (IsConst(r, 0.0)) return Const(0.0);        /* f*0 -> 0 */
-  if (IsConst(r, 1.0)) return l;                 /* f*1 -> f */
-  if (IsConst(l, 0.0)) return Const(0.0);        /* 0*f -> 0 */
+  if (IsConst(l, 0.0) || IsConst(r, 0.0))        /* 0*f, f*0 -> 0 */
+    return Const(0.0);
+  if (r->tag==Konst) return MulR(r, l);          /* f*K -> K*f */
   if (IsConst(l, 1.0)) return r;                 /* 1*f -> f */
+  if (IsConst(l, -1.0)) return NegR(r);          /* -1*f -> -f */
+  if ((l->tag==Konst) && IsScaled(r))            /* K1*(K2*f) -> K3*f */
+    return MulR(Const(l->data.value*Factor(r)), r->data.oper.right);
+  if (IsScaled(l))                               /* (K*f)*g -> K*(f*g) */
+    return MulR(l->data.oper.left, MulR(l->data.oper.right, r));
+  if (IsScaled(r))                               /* f*(K*g) -> K*(f*g) */
+    return MulR(r->data.oper.left, MulR(l, r->data.oper.right));
+  if (l->tag==NegSign)                           /* (-f)*g -> -(f*g) */
+    return NegR(MulR(l->data.right, r));
+  if (r->tag==NegSign)                           /* f*(-g) -> -(f*g) */
+    return NegR(MulR(l, r->data.right));
   return Op(Mul, l, r);
 } /* MulR */
 

@@ -12,7 +12,7 @@ double x;
 double y;
 x=S_[0];
 y=S_[1];
-v_[0]=(((2.000000e+00*x)*y));
+v_[0]=((2.000000e+00*(x*y)));
 v_[1]=((-(y)));
 }
 void jacobi(double *S_){
@@ -50,6 +50,6 @@ debug_=1;
 (void) strcpy(species[0], "x");
 (void) strcpy(species[1], "y");
 (void) strcpy(datafilename_,"kinwrkda");
-jacobi_matx[1][0]=-0.000000e+00;
+jacobi_matx[1][0]=0.000000e+00;
 jacobi_matx[1][1]=-1.000000e+00;
 }
