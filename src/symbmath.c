@@ -118,11 +118,78 @@ static int SameVar(Tree a, Tree b) {
 } /* SameVar */
 
 /****************************************************************************
-  Reduce returns a simpler tree with the same value. It reduces the
-  subtrees, then applies the first matching rule below to the node. The
-  notation f, g stands for any expression, K for a constant.
+  Reduction rules. Each function takes reduced operands and returns a
+  reduced tree, applying the first matching rule. Rules that build new
+  nodes call these functions, never Reduce, so reduced subtrees are not
+  walked again. The notation f, g stands for any expression, K for a
+  constant.
 *****************************************************************************/
 
+static Tree NegR(Tree r) {
+
+  if (r->tag==NegSign) return r->data.right;     /* -(-f) -> f */
+  if (r->tag==Konst) return Const(-r->data.value); /* -(K) -> (-K) */
+  return Neg(r);
+} /* NegR */
+
+static Tree AddR(Tree l, Tree r) {
+
+  if ((l->tag==Konst) && (r->tag==Konst))        /* K1+K2 -> K3 */
+    return Const(l->data.value+r->data.value);
+  if (IsConst(r, 0.0)) return l;                 /* f+0 -> f */
+  if (IsConst(l, 0.0)) return r;                 /* 0+f -> f */
+  if (r->tag==NegSign)                           /* f+(-g) -> f-g */
+    return Op(Sub, l, r->data.right);
+  return Op(Add, l, r);
+} /* AddR */
+
+static Tree SubR(Tree l, Tree r) {
+
+  if ((l->tag==Konst) && (r->tag==Konst))        /* K1-K2 -> K3 */
+    return Const(l->data.value-r->data.value);
+  if (IsConst(r, 0.0)) return l;                 /* f-0 -> f */
+  if (IsConst(l, 0.0)) return Neg(r);            /* 0-f -> -f */
+  if (SameVar(l, r)) return Const(0.0);          /* x-x -> 0 */
+  if (r->tag==NegSign)                           /* f-(-g) -> f+g */
+    return Op(Add, l, r->data.right);
+  if (l->tag==NegSign)                           /* (-f)-g -> -(f+g) */
+    return Neg(Op(Add, l->data.right, r));
+  return Op(Sub, l, r);
+} /* SubR */
+
+static Tree MulR(Tree l, Tree r) {
+
+  if ((l->tag==Konst) && (r->tag==Konst))        /* K1*K2 -> K3 */
+    return Const(l->data.value*r->data.value);
+  if (IsConst(r, 0.0)) return Const(0.0);        /* f*0 -> 0 */
+  if (IsConst(r, 1.0)) return l;                 /* f*1 -> f */
+  if (IsConst(l, 0.0)) return Const(0.0);        /* 0*f -> 0 */
+  if (IsConst(l, 1.0)) return r;                 /* 1*f -> f */
+  return Op(Mul, l, r);
+} /* MulR */
+
+static Tree DivR(Tree l, Tree r) {
+
+  if ((l->tag==Konst) && (r->tag==Konst))        /* K1/K2 -> K3 */
+    return Const(l->data.value/r->data.value);
+  if (IsConst(r, 1.0)) return l;                 /* f/1 -> f */
+  if (IsConst(r, 0.0)) return Const(0.0);        /* f/0 -> 0 (sic) */
+  if (SameVar(l, r)) return Const(1.0);          /* x/x -> 1 */
+  if (IsConst(l, 0.0)) return Const(0.0);        /* 0/f -> 0 */
+  return Op(Div, l, r);
+} /* DivR */
+
+static Tree PowR(Tree l, Tree r) {
+
+  if ((l->tag==Konst) && (r->tag==Konst))        /* K1^K2 -> K3 */
+    return Const(pow(l->data.value, r->data.value));
+  if (IsConst(r, 1.0)) return l;                 /* f^1 -> f */
+  if (IsConst(r, 0.0)) return Const(1.0);        /* f^0 -> 1 */
+  return Op(Pow, l, r);
+} /* PowR */
+
+/* Reduce returns a simpler tree with the same value: it reduces the
+   subtrees, then applies the rules of the node. */
 static Tree Reduce(Tree t) {
 
   Tree l, r;
@@ -136,54 +203,15 @@ static Tree Reduce(Tree t) {
     l=Reduce(t->data.oper.left);
     r=Reduce(t->data.oper.right);
     switch (t->data.oper.op) {
-    case Add:
-      if ((l->tag==Konst) && (r->tag==Konst))      /* K1+K2 -> K3 */
-	return Const(l->data.value+r->data.value);
-      if (IsConst(r, 0.0)) return l;               /* f+0 -> f */
-      if (IsConst(l, 0.0)) return r;               /* 0+f -> f */
-      if (r->tag==NegSign)                         /* f+(-g) -> f-g */
-	return Op(Sub, l, r->data.right);
-      break;
-    case Sub:
-      if ((l->tag==Konst) && (r->tag==Konst))      /* K1-K2 -> K3 */
-	return Const(l->data.value-r->data.value);
-      if (IsConst(r, 0.0)) return l;               /* f-0 -> f */
-      if (IsConst(l, 0.0)) return Neg(r);          /* 0-f -> -f */
-      if (SameVar(l, r)) return Const(0.0);        /* x-x -> 0 */
-      if (r->tag==NegSign)                         /* f-(-g) -> f+g */
-	return Op(Add, l, r->data.right);
-      if (l->tag==NegSign)                         /* (-f)-g -> -(f+g) */
-	return Neg(Op(Add, l->data.right, r));
-      break;
-    case Mul:
-      if ((l->tag==Konst) && (r->tag==Konst))      /* K1*K2 -> K3 */
-	return Const(l->data.value*r->data.value);
-      if (IsConst(r, 0.0)) return Const(0.0);      /* f*0 -> 0 */
-      if (IsConst(r, 1.0)) return l;               /* f*1 -> f */
-      if (IsConst(l, 0.0)) return Const(0.0);      /* 0*f -> 0 */
-      if (IsConst(l, 1.0)) return r;               /* 1*f -> f */
-      break;
-    case Div:
-      if ((l->tag==Konst) && (r->tag==Konst))      /* K1/K2 -> K3 */
-	return Const(l->data.value/r->data.value);
-      if (IsConst(r, 1.0)) return l;               /* f/1 -> f */
-      if (IsConst(r, 0.0)) return Const(0.0);      /* f/0 -> 0 (sic) */
-      if (SameVar(l, r)) return Const(1.0);        /* x/x -> 1 */
-      if (IsConst(l, 0.0)) return Const(0.0);      /* 0/f -> 0 */
-      break;
-    case Pow:
-      if ((l->tag==Konst) && (r->tag==Konst))      /* K1^K2 -> K3 */
-	return Const(pow(l->data.value, r->data.value));
-      if (IsConst(r, 1.0)) return l;               /* f^1 -> f */
-      if (IsConst(r, 0.0)) return Const(1.0);      /* f^0 -> 1 */
-      break;
+    case Add: return AddR(l, r);
+    case Sub: return SubR(l, r);
+    case Mul: return MulR(l, r);
+    case Div: return DivR(l, r);
+    case Pow: return PowR(l, r);
     }
-    return Op(t->data.oper.op, l, r);
+    return t;
   case NegSign:
-    r=Reduce(t->data.right);
-    if (r->tag==NegSign) return r->data.right;     /* -(-f) -> f */
-    if (r->tag==Konst) return Const(-r->data.value); /* -(K) -> (-K) */
-    return Neg(r);
+    return NegR(Reduce(t->data.right));
   case Func:
     return Fun(t->data.func.fun, Reduce(t->data.func.right));
   default:
