@@ -120,10 +120,11 @@ static int SameVar(Tree a, Tree b) {
 
 /****************************************************************************
   Reduction rules. Each function takes reduced operands and returns a
-  reduced tree, applying the first matching rule. Rules that build new
-  nodes call these functions, never Reduce, so reduced subtrees are not
-  walked again. The notation f, g stands for any expression, K for a
-  constant.
+  reduced tree, applying the first matching rule. Every tree outside this
+  file is reduced, since nodes are only built here and every exported
+  routine goes through these rules; so a new node needs only its own
+  rules, and reduced subtrees are never walked again. The notation f, g
+  stands for any expression, K for a constant.
 *****************************************************************************/
 
 static Tree MulR(Tree l, Tree r);
@@ -228,36 +229,17 @@ static Tree PowR(Tree l, Tree r) {
   return Op(Pow, l, r);
 } /* PowR */
 
-/* Reduce returns a simpler tree with the same value: it reduces the
-   subtrees, then applies the rules of the node. */
-static Tree Reduce(Tree t) {
+static Tree OpR(TreeOper op, Tree l, Tree r) {
 
-  Tree l, r;
-
-  if (t==NULL) {
-    fprintf(stderr, "ERROR in TreeReduce: NULL pointer.\nAborting kc - sorry.\n");
-    exit(-1);
+  switch (op) {
+  case Add: return AddR(l, r);
+  case Sub: return SubR(l, r);
+  case Mul: return MulR(l, r);
+  case Div: return DivR(l, r);
+  case Pow: return PowR(l, r);
   }
-  switch (t->tag) {
-  case Oper:
-    l=Reduce(t->data.oper.left);
-    r=Reduce(t->data.oper.right);
-    switch (t->data.oper.op) {
-    case Add: return AddR(l, r);
-    case Sub: return SubR(l, r);
-    case Mul: return MulR(l, r);
-    case Div: return DivR(l, r);
-    case Pow: return PowR(l, r);
-    }
-    return t;
-  case NegSign:
-    return NegR(Reduce(t->data.right));
-  case Func:
-    return Fun(t->data.func.fun, Reduce(t->data.func.right));
-  default:
-    return t;
-  }
-} /* Reduce */
+  return Op(op, l, r);
+} /* OpR */
 
 
 static void LineBreak(FILE *out, int mode) {
@@ -303,50 +285,42 @@ Tree TreeVar(const char *name) {
   return t;
 } /* TreeVar */
 
-static Tree Reduced(Tree t) {
+Tree TreeAdd(Tree a, Tree b) { tree_error=0; return AddR(a, b); }
+Tree TreeSub(Tree a, Tree b) { tree_error=0; return SubR(a, b); }
+Tree TreeMul(Tree a, Tree b) { tree_error=0; return MulR(a, b); }
+Tree TreeDiv(Tree a, Tree b) { tree_error=0; return DivR(a, b); }
+Tree TreePow(Tree a, Tree b) { tree_error=0; return PowR(a, b); }
+Tree TreeSign(Tree a) { tree_error=0; return NegR(a); }
+Tree TreeApplyFunc(Function fun, Tree a) { tree_error=0; return Fun(fun, a); }
 
-  t=Reduce(t);
-  tree_error=0;
-  return t;
-} /* Reduced */
-
-Tree TreeAdd(Tree a, Tree b) { return Reduced(Op(Add, a, b)); }
-Tree TreeSub(Tree a, Tree b) { return Reduced(Op(Sub, a, b)); }
-Tree TreeMul(Tree a, Tree b) { return Reduced(Op(Mul, a, b)); }
-Tree TreeDiv(Tree a, Tree b) { return Reduced(Op(Div, a, b)); }
-Tree TreePow(Tree a, Tree b) { return Reduced(Op(Pow, a, b)); }
-Tree TreeSign(Tree a) { return Reduced(Neg(a)); }
-Tree TreeApplyFunc(Function fun, Tree a) { return Reduced(Fun(fun, a)); }
-
-/* Replaces the variable name by value. Like the original implementation,
-   it reduces at every level of the tree. */
+/* Replaces the variable name by value. Subtrees without name are
+   shared, not copied. */
 Tree TreeSubstTree(Tree t, const char *name, Tree value) {
 
-  Tree res;
+  Tree l, r;
 
   if (t==NULL) {
     tree_error=1;
     return NULL;
   }
+  tree_error=0;
   switch (t->tag) {
   case Var:
-    res=(strcmp(t->data.name, name)==0) ? value : t;
-    break;
+    return (strcmp(t->data.name, name)==0) ? value : t;
   case Oper:
-    res=Op(t->data.oper.op, TreeSubstTree(t->data.oper.left, name, value),
-	   TreeSubstTree(t->data.oper.right, name, value));
-    break;
+    l=TreeSubstTree(t->data.oper.left, name, value);
+    r=TreeSubstTree(t->data.oper.right, name, value);
+    if ((l==t->data.oper.left) && (r==t->data.oper.right)) return t;
+    return OpR(t->data.oper.op, l, r);
   case Func:
-    res=Fun(t->data.func.fun, TreeSubstTree(t->data.func.right, name, value));
-    break;
+    r=TreeSubstTree(t->data.func.right, name, value);
+    return (r==t->data.func.right) ? t : Fun(t->data.func.fun, r);
   case NegSign:
-    res=Neg(TreeSubstTree(t->data.right, name, value));
-    break;
+    r=TreeSubstTree(t->data.right, name, value);
+    return (r==t->data.right) ? t : NegR(r);
   default:
-    res=t;
-    break;
+    return t;
   }
-  return Reduced(res);
 } /* TreeSubstTree */
 
 Tree TreeSubstVar(Tree t, const char *name, double value) {
@@ -354,83 +328,66 @@ Tree TreeSubstVar(Tree t, const char *name, double value) {
   return TreeSubstTree(t, name, Const(value));
 } /* TreeSubstVar */
 
-/* Derivative of t with respect to name. Every level is reduced once. */
+static Tree Sq(Tree t) { return PowR(t, Const(2.0)); }
+static Tree Sqrt(Tree t) { return PowR(t, Const(0.5)); }
+
+/* Derivative of t with respect to name. */
 Tree TreeDerive(Tree t, const char *name) {
 
-  Tree res=NULL, f, g, u, du;
+  Tree f, g, u, du;
 
   tree_error=0;
   if (t==NULL)
     return Const(0.0);
   switch (t->tag) {
-  case Konst:
-    res=Const(0.0);
-    break;
   case Var:
-    res=Const((strcmp(t->data.name, name)==0) ? 1.0 : 0.0);
-    break;
+    return Const((strcmp(t->data.name, name)==0) ? 1.0 : 0.0);
   case Oper:
     f=t->data.oper.left;
     g=t->data.oper.right;
     switch (t->data.oper.op) {
     case Add:
-      res=Op(Add, TreeDerive(f, name), TreeDerive(g, name));
-      break;
+      return AddR(TreeDerive(f, name), TreeDerive(g, name));
     case Sub:
-      res=Op(Sub, TreeDerive(f, name), TreeDerive(g, name));
-      break;
+      return SubR(TreeDerive(f, name), TreeDerive(g, name));
     case Mul:                    /* f'*g + f*g' */
-      res=Op(Add, Op(Mul, TreeDerive(f, name), g),
-	     Op(Mul, f, TreeDerive(g, name)));
-      break;
+      return AddR(MulR(TreeDerive(f, name), g), MulR(f, TreeDerive(g, name)));
     case Div:                    /* (g*f' - f*g')/g^2 */
-      res=Op(Div, Op(Sub, Op(Mul, g, TreeDerive(f, name)),
-		     Op(Mul, f, TreeDerive(g, name))), Op(Pow, g, Const(2.0)));
-      break;
+      return DivR(SubR(MulR(g, TreeDerive(f, name)),
+		       MulR(f, TreeDerive(g, name))), Sq(g));
     case Pow:                    /* g*f^(g-1)*f' + f^g*ln(f)*g' */
-      res=TreeAdd(TreeMul(TreeMul(TreePow(f, TreeSub(g, Const(1.0))),
-				  TreeDerive(f, name)), g),
-		  TreeMul(TreeMul(TreePow(f, g), TreeApplyFunc(Ln, f)),
-			  TreeDerive(g, name)));
-      break;
+      return AddR(MulR(MulR(PowR(f, SubR(g, Const(1.0))),
+			    TreeDerive(f, name)), g),
+		  MulR(MulR(PowR(f, g), Fun(Ln, f)), TreeDerive(g, name)));
     }
     break;
   case Func:
     u=t->data.func.right;
     du=TreeDerive(u, name);
     switch (t->data.func.fun) {
-    case Exp:   res=Op(Mul, du, Fun(Exp, u)); break;
-    case Sin:   res=Op(Mul, du, Fun(Cos, u)); break;
-    case Cos:   res=Op(Mul, du, Neg(Fun(Sin, u))); break;
-    case Sinh:  res=Op(Mul, du, Fun(Cosh, u)); break;
-    case Cosh:  res=Op(Mul, du, Fun(Sinh, u)); break;
-    case Ln:    res=Op(Mul, du, Op(Div, Const(1.0), u)); break;
-    case Log:   res=Op(Mul, du, Op(Div, Const(0.4342944819), u)); break;
-    case Tan:   res=Op(Div, du, Op(Pow, Fun(Cos, u), Const(2.0))); break;
-    case Tanh:  res=Op(Div, du, Op(Pow, Fun(Cosh, u), Const(2.0))); break;
-    case Atan:  res=Op(Div, du, Op(Add, Const(1.0), Op(Pow, u, Const(2.0))));
-      break;
-    case Atanh: res=Op(Div, du, Op(Sub, Const(1.0), Op(Pow, u, Const(2.0))));
-      break;
-    case Asinh: res=Op(Div, du, Op(Pow, Op(Add, Op(Pow, u, Const(2.0)),
-					  Const(1.0)), Const(0.5)));
-      break;
-    case Acosh: res=Op(Div, du, Op(Pow, Op(Sub, Op(Pow, u, Const(2.0)),
-					  Const(1.0)), Const(0.5)));
-      break;
-    case Asin:  res=Op(Div, du, Op(Pow, Op(Sub, Const(1.0),
-					  Op(Pow, u, Const(2.0))), Const(0.5)));
-      break;
-    case Acos:  res=Op(Div, Neg(du), Op(Pow, Op(Sub, Const(1.0),
-					       Op(Pow, u, Const(2.0))), Const(0.5)));
-      break;
+    case Exp:   return MulR(du, t);
+    case Sin:   return MulR(du, Fun(Cos, u));
+    case Cos:   return MulR(du, NegR(Fun(Sin, u)));
+    case Sinh:  return MulR(du, Fun(Cosh, u));
+    case Cosh:  return MulR(du, Fun(Sinh, u));
+    case Ln:    return MulR(du, DivR(Const(1.0), u));
+    case Log:   return MulR(du, DivR(Const(0.4342944819), u));
+    case Tan:   return DivR(du, Sq(Fun(Cos, u)));
+    case Tanh:  return DivR(du, Sq(Fun(Cosh, u)));
+    case Atan:  return DivR(du, AddR(Const(1.0), Sq(u)));
+    case Atanh: return DivR(du, SubR(Const(1.0), Sq(u)));
+    case Asinh: return DivR(du, Sqrt(AddR(Sq(u), Const(1.0))));
+    case Acosh: return DivR(du, Sqrt(SubR(Sq(u), Const(1.0))));
+    case Asin:  return DivR(du, Sqrt(SubR(Const(1.0), Sq(u))));
+    case Acos:  return DivR(NegR(du), Sqrt(SubR(Const(1.0), Sq(u))));
     }
     break;
   case NegSign:
-    res=Neg(TreeDerive(t->data.right, name));
+    return NegR(TreeDerive(t->data.right, name));
+  default:
     break;
   }
-  return Reduce(res);
+  return Const(0.0);
 } /* TreeDerive */
 
 double TreeEval(Tree t) {
