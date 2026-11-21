@@ -29,6 +29,9 @@ current C compilers, and an automated test suite has been added.
 * The expression reducer looks only at each new node instead of
   reducing whole trees again at every level of derivatives and
   substitutions. The generated code is unchanged.
+* Only `TreeEval` sets the error status that `TreeGetError` returns,
+  and evaluating an empty tree now reports `NoTree` instead of a stale
+  status. The generated code is unchanged.
 * The CMake option `KC_SANITIZE` builds kc with AddressSanitizer and
   UndefinedBehaviorSanitizer.
 
