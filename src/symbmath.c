@@ -391,99 +391,97 @@ double TreeEval(Tree t) {
   if (t==NULL) {
     tree_error=NoTree;
     return 0.0;
-  } else {
-    switch (t->tag) {
-    case Var:
-      tree_error=NoEval;
-      res=0.0;
-      break;
-    case Konst:
-      res=t->data.value;
-      tree_error=TreeNoError;
-      break;
-    case Oper: 
-      c1=TreeEval(t->data.oper.left);
+  }
+  switch (t->tag) {
+  case Var:
+    tree_error=NoEval;
+    res=0.0;
+    break;
+  case Konst:
+    res=t->data.value;
+    tree_error=TreeNoError;
+    break;
+  case Oper: 
+    c1=TreeEval(t->data.oper.left);
+    if (tree_error==TreeNoError) {
+      c2=TreeEval(t->data.oper.right);
       if (tree_error==TreeNoError) {
-	c2=TreeEval(t->data.oper.right);
-	if (tree_error==TreeNoError) {
-	  switch (t->data.oper.op) {
-	  case Add: 
-	    res=c1+c2; 
-	    break;
-	  case Sub: 
-	    res=c1-c2; 
-	    break;
-	  case Mul: 
-	    res=c1*c2; 
-	    break;
-	  case Div: 
-	    res=c1/c2; 
-	    break;
-	  case Pow: 
-	    res=pow(c1, c2); 
-	    break;
-	  }; /* switch */
-	  tree_error=TreeNoError;
-	} /* if */
+	switch (t->data.oper.op) {
+	case Add: 
+	  res=c1+c2; 
+	  break;
+	case Sub: 
+	  res=c1-c2; 
+	  break;
+	case Mul: 
+	  res=c1*c2; 
+	  break;
+	case Div: 
+	  res=c1/c2; 
+	  break;
+	case Pow: 
+	  res=pow(c1, c2); 
+	  break;
+	}; /* switch */
       } /* if */
-      break;
-    case NegSign:
-      res=-TreeEval(t->data.right);
-      break;
-    case Func:
-      res=TreeEval(t->data.func.right);
-      if (tree_error==TreeNoError) {
-	switch (t->data.func.fun) {
-	case Exp:
-	  res=exp(res);
-	  break;
-	case Ln:
-	  res=log(res);
-	  break;
-	case Log:
-	  res=log10(res);
-	  break;
-	case Sin:
-	  res=sin(res);
-	  break;
-	case Cos:
-	  res=cos(res);
-	  break;
-	case Tan:
-	  res=tan(res);
-	  break;
-	case Sinh:
-	  res=sinh(res);
-	  break;
-	case Cosh:
-	  res=cosh(res);
-	  break;
-	case Tanh:
-	  res=tanh(res);
-	  break;
-	case Asin:
-	  res=asin(res);
-	  break;
-	case Acos:
-	  res=acos(res);
-	  break;
-	case Atan:
-	  res=atan(res);
-	  break;
-	case Asinh:
-	  res=asinh(res);
-	  break;
-	case Acosh:
-	  res=acosh(res);
-	  break;
-	case Atanh:
-	  res=atanh(res);
-	  break;
-	} /* switch */
-      } /* if */
-      break;
-    } /* switch */
-  } /* else */
+    } /* if */
+    break;
+  case NegSign:
+    res=-TreeEval(t->data.right);
+    break;
+  case Func:
+    res=TreeEval(t->data.func.right);
+    if (tree_error==TreeNoError) {
+      switch (t->data.func.fun) {
+      case Exp:
+	res=exp(res);
+	break;
+      case Ln:
+	res=log(res);
+	break;
+      case Log:
+	res=log10(res);
+	break;
+      case Sin:
+	res=sin(res);
+	break;
+      case Cos:
+	res=cos(res);
+	break;
+      case Tan:
+	res=tan(res);
+	break;
+      case Sinh:
+	res=sinh(res);
+	break;
+      case Cosh:
+	res=cosh(res);
+	break;
+      case Tanh:
+	res=tanh(res);
+	break;
+      case Asin:
+	res=asin(res);
+	break;
+      case Acos:
+	res=acos(res);
+	break;
+      case Atan:
+	res=atan(res);
+	break;
+      case Asinh:
+	res=asinh(res);
+	break;
+      case Acosh:
+	res=acosh(res);
+	break;
+      case Atanh:
+	res=atanh(res);
+	break;
+      } /* switch */
+    } /* if */
+    break;
+  } /* switch */
  return res;
 } /* TreeEval */
 
