@@ -212,6 +212,10 @@ static Tree DivR(Tree l, Tree r) {
   if (IsConst(r, 0.0)) return Const(0.0);        /* f/0 -> 0 (sic) */
   if (SameVar(l, r)) return Const(1.0);          /* x/x -> 1 */
   if (IsConst(l, 0.0)) return Const(0.0);        /* 0/f -> 0 */
+  if (l->tag==NegSign)                           /* (-f)/g -> -(f/g) */
+    return NegR(DivR(l->data.right, r));
+  if (IsScaled(l))                               /* (K*f)/g -> K*(f/g) */
+    return MulR(l->data.oper.left, DivR(l->data.oper.right, r));
   return Op(Div, l, r);
 } /* DivR */
 
