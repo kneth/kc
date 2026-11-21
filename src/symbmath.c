@@ -272,7 +272,6 @@ int TreeGetError(void) {
 
 Tree TreeConst(double value) {
 
-  tree_error=0;
   return Const(value);
 } /* TreeConst */
 
@@ -281,17 +280,16 @@ Tree TreeVar(const char *name) {
   TreeNode *t=NewNode(Var);
 
   (void) strcpy(t->data.name, name);
-  tree_error=0;
   return t;
 } /* TreeVar */
 
-Tree TreeAdd(Tree a, Tree b) { tree_error=0; return AddR(a, b); }
-Tree TreeSub(Tree a, Tree b) { tree_error=0; return SubR(a, b); }
-Tree TreeMul(Tree a, Tree b) { tree_error=0; return MulR(a, b); }
-Tree TreeDiv(Tree a, Tree b) { tree_error=0; return DivR(a, b); }
-Tree TreePow(Tree a, Tree b) { tree_error=0; return PowR(a, b); }
-Tree TreeSign(Tree a) { tree_error=0; return NegR(a); }
-Tree TreeApplyFunc(Function fun, Tree a) { tree_error=0; return Fun(fun, a); }
+Tree TreeAdd(Tree a, Tree b) { return AddR(a, b); }
+Tree TreeSub(Tree a, Tree b) { return SubR(a, b); }
+Tree TreeMul(Tree a, Tree b) { return MulR(a, b); }
+Tree TreeDiv(Tree a, Tree b) { return DivR(a, b); }
+Tree TreePow(Tree a, Tree b) { return PowR(a, b); }
+Tree TreeSign(Tree a) { return NegR(a); }
+Tree TreeApplyFunc(Function fun, Tree a) { return Fun(fun, a); }
 
 /* Replaces the variable name by value. Subtrees without name are
    shared, not copied. */
@@ -299,11 +297,8 @@ Tree TreeSubstTree(Tree t, const char *name, Tree value) {
 
   Tree l, r;
 
-  if (t==NULL) {
-    tree_error=1;
+  if (t==NULL)
     return NULL;
-  }
-  tree_error=0;
   switch (t->tag) {
   case Var:
     return (strcmp(t->data.name, name)==0) ? value : t;
@@ -336,7 +331,6 @@ Tree TreeDerive(Tree t, const char *name) {
 
   Tree f, g, u, du;
 
-  tree_error=0;
   if (t==NULL)
     return Const(0.0);
   switch (t->tag) {
@@ -394,9 +388,10 @@ double TreeEval(Tree t) {
  
   double c1, c2, res=0.0;
 
-  if (t==NULL) 
+  if (t==NULL) {
+    tree_error=NoTree;
     return 0.0;
-  else {
+  } else {
     switch (t->tag) {
     case Var:
       tree_error=NoEval;

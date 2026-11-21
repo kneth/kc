@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include "config.h"
 
+/* Status of the last TreeEval, returned by TreeGetError. */
 #define TreeNoError 1
 #define NoEval  2
 #define NoTree  3
