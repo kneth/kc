@@ -179,7 +179,7 @@ system    : {
 	      } /* if */
 	      if (IsNonAutoSystem()==1) {
 		NewDynVar("time");
-		NewExpr("time", TreeConst(1.0));
+		NewExpr("time", expr_const(1.0));
 	      } /* if */
 	    };
 declars   : declars declar
@@ -195,8 +195,8 @@ constant  : names equal strnumb
 	      }
 	    };
 strnumb   : expr semicolon
-	    { temp=TreeEval($1);
-	      if (TreeGetError()==NoEval) 
+	    { temp=expr_eval($1);
+	      if (expr_get_error()==EXPR_NO_EVAL) 
 		fprintf(stderr, "Unable to evaluate expression in line %d.\n", lineno);
 	      else {
 		$$.flag=1;
@@ -215,55 +215,55 @@ prn_entry : names
 	    { NewPrintConc($1.name, $1.charge); }; 
 parameter : param pentry semicolon;
 pentry    : names equal expr comma expr comma expr comma expr comma expr comma expr
-	    { temp=TreeEval($3);
-	      if (TreeGetError()==NoEval)
+	    { temp=expr_eval($3);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
 	      else {
 		NewParameter($1, temp);
 	      }
-	      temp=TreeEval($5);
-	      if (TreeGetError()==NoEval)
+	      temp=expr_eval($5);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
 	      else
 		NewDeltaParam($1, temp);
-	      temp1=TreeEval($7);
-	      if (TreeGetError()==NoEval)
+	      temp1=expr_eval($7);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n" , lineno);
-	      temp2=TreeEval($11);
-	      if (TreeGetError()==NoEval)
+	      temp2=expr_eval($11);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n" , lineno);
 	      NewLowHighPrefParam($1, temp, temp1, temp2);
-	      temp=TreeEval($13);
-	      if (TreeGetError()==NoEval)
+	      temp=expr_eval($13);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
 	      NewDirectForParam($1, (int)temp);
-	      temp=TreeEval($9);
-	      if (TreeGetError()==NoEval)
+	      temp=expr_eval($9);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
 	      NewDeltaParam($1, temp);
 	    }
 	    | conc equal expr comma expr comma expr comma expr comma expr comma expr
-	    { temp=TreeEval($3);
-	      if (TreeGetError()==NoEval)
+	    { temp=expr_eval($3);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
 	      else
 		NewParamConc($1.name, $1.charge, temp);
-	      temp=TreeEval($5);
-	      if (TreeGetError()==NoEval)
+	      temp=expr_eval($5);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
-	      temp1=TreeEval($7);
-	      if (TreeGetError()==NoEval)
+	      temp1=expr_eval($7);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n" , lineno);
-	      temp2=TreeEval($11);
-	      if (TreeGetError()==NoEval)
+	      temp2=expr_eval($11);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n" , lineno);
 	      NewLowHighPrefConc($1.name, $1.charge, temp, temp1, temp2);
-	      temp=TreeEval($13);
-	      if (TreeGetError()==NoEval)
+	      temp=expr_eval($13);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
 	      NewDirectForConc($1.name, $1.charge, (int)temp);
-	      temp=TreeEval($9);
-	      if (TreeGetError()==NoEval)
+	      temp=expr_eval($9);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", lineno);
 	      NewDeltaConc($1.name, $1.charge, temp);
 	    };
@@ -301,8 +301,8 @@ powconst  : names leftpar subst rightpar equal expr
 	    { if (strcmp($1, "c")!=0) 
 		fprintf(stderr, "c expected!\n");
 	      else {
-		temp=TreeEval($6);
-		if (TreeGetError()==NoEval) 
+		temp=expr_eval($6);
+		if (expr_get_error()==EXPR_NO_EVAL) 
 		  fprintf(stderr, "Unable to evaluate expression in line %d.\n", lineno);
 		else
 		  NewPowerConst(GetCurrentReaction(), $3.name, $3.charge, temp, side); 
@@ -398,10 +398,10 @@ coeff     : numbers
 constants : const  
 	    | constants const;
 const     : conc timeopt equal expr semicolon
-	    { temp=TreeEval($4); 
+	    { temp=expr_eval($4); 
 	      switch ($2) {
 	      case 1: 
-		if (TreeGetError()==NoEval) 
+		if (expr_get_error()==EXPR_NO_EVAL) 
 		  fprintf(stderr, "Unable to evaluate expression.\n");
 		else  
 		  NewBeginConc($1.name, $1.charge, temp); 
@@ -412,15 +412,15 @@ const     : conc timeopt equal expr semicolon
 	      };
 	    }
 	    | names leftpar subst rightpar equal expr semicolon
-	    { temp=TreeEval($6);
+	    { temp=expr_eval($6);
 	      NewSpecConst($3.name, $3.charge, $1, temp);
 	      if (GetError()==NotFound) 
 		if ($3.charge==0.0) 
 		  NewDynVarConst($3.name, $1, temp);
 	    };
 	    | names timeopt equal expr semicolon
-	    { temp=TreeEval($4);
-	      if (TreeGetError()==NoEval)
+	    { temp=expr_eval($4);
+	      if (expr_get_error()==EXPR_NO_EVAL)
 		yyerror("Unable to evaluate expression");
 	      else {
 		if ($2==1) {
@@ -430,51 +430,51 @@ const     : conc timeopt equal expr semicolon
 	      }
 	    }
 expr      : minus expr %prec UMINUS
-	    { $$=TreeSign($2); }
+	    { $$=expr_neg($2); }
 	    | expr plus expr
-	    { $$=TreeAdd($1, $3); }
+	    { $$=expr_add($1, $3); }
 	    | expr minus expr
-	    { $$=TreeSub($1, $3); }
+	    { $$=expr_sub($1, $3); }
 	    | expr multi expr
-	    { $$=TreeMul($1, $3); }
+	    { $$=expr_mul($1, $3); }
 	    | expr pdiv expr
-	    { $$=TreeDiv($1, $3); }
+	    { $$=expr_div($1, $3); }
 	    | expr powop expr
-	    { $$=TreePow($1, $3); }
+	    { $$=expr_pow($1, $3); }
 	    | leftpar expr rightpar 
 	    { $$=$2; }
 	    | names 
 	    {
 	     temp=GetConstant($1); 
 	     if (GetError()==NotFound) {
-	       $$=TreeVar($1); 
+	       $$=expr_var($1); 
 	       if (strcmp($1, "time")==0)
 		 NonAutoSystem();
 	     } else
-	       $$=TreeConst(temp);
+	       $$=expr_const(temp);
 	    } 
 	    | numbers 
-	    { $$=TreeConst($1); }
+	    { $$=expr_const($1); }
 	    | conc timeopt
 	    {  
 	      if ($2==1) {
 		temp=GetBeginConc($1.name, $1.charge);
 		if (GetError()==NoError)
-		  $$=TreeConst(temp);
+		  $$=expr_const(temp);
 		else {
 		  fprintf(stderr, "[%s(%e)] not found.\n", $1.name, $1.charge);
-		  $$=TreeConst(0.0);
+		  $$=expr_const(0.0);
 		}
 		flag='1';
 	      } /* if */
 	      else { 
 		flag='0';
 		RenameSpec(name, $1.name, $1.charge);
-		$$=TreeVar(name);
+		$$=expr_var(name);
 	      }; /* else */
 	    }
 	    | function leftpar expr rightpar
-	    { $$=TreeApplyFunc($1, $3); };
+	    { $$=expr_apply_func($1, $3); };
 function  : fun_exp     { $$=Exp; }
 	    | fun_ln    { $$=Ln; }
 	    | fun_log   { $$=Log; }

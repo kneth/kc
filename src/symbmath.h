@@ -13,7 +13,7 @@
 
   Expression trees are immutable: every operation returns a new tree and
   shares the subtrees of its arguments. All nodes are allocated from one
-  arena, which TreeFreeAll releases; there is no per-tree free.
+  arena, which expr_free_all releases; there is no per-tree free.
 ****************************************************************************/
 
 #ifndef _SYMBMATH_
@@ -21,10 +21,10 @@
 #include <stdio.h>
 #include "config.h"
 
-/* Status of the last TreeEval, returned by TreeGetError. */
-#define TreeNoError 1
-#define NoEval  2
-#define NoTree  3
+/* Status of the last expr_eval, returned by expr_get_error. */
+#define EXPR_OK      1
+#define EXPR_NO_EVAL 2
+#define EXPR_NO_EXPR 3
 
 typedef enum {Konst, Var, Oper, Func, NegSign} expr_tag_t;
 typedef enum {Add, Sub, Mul, Div, Pow} expr_op_t;
@@ -50,20 +50,20 @@ struct expr_node {
 typedef struct expr_node expr_node_t;
 typedef const expr_node_t *expr_t;
 
-extern int    TreeGetError(void);
-extern expr_t TreeConst(double);
-extern expr_t TreeVar(const char *);
-extern expr_t TreeAdd(expr_t, expr_t);
-extern expr_t TreeSub(expr_t, expr_t);
-extern expr_t TreeMul(expr_t, expr_t);
-extern expr_t TreeDiv(expr_t, expr_t);
-extern expr_t TreePow(expr_t, expr_t);
-extern expr_t TreeSign(expr_t);
-extern expr_t TreeApplyFunc(expr_func_t, expr_t);
-extern expr_t TreeSubstVar(expr_t, const char *, double);
-extern expr_t TreeSubstTree(expr_t, const char *, expr_t);
-extern expr_t TreeDerive(expr_t, const char *);
-extern double TreeEval(expr_t);
-extern void   TreePrint(expr_t, int, FILE *);
-extern void   TreeFreeAll(void);
+extern int    expr_get_error(void);
+extern expr_t expr_const(double);
+extern expr_t expr_var(const char *);
+extern expr_t expr_add(expr_t, expr_t);
+extern expr_t expr_sub(expr_t, expr_t);
+extern expr_t expr_mul(expr_t, expr_t);
+extern expr_t expr_div(expr_t, expr_t);
+extern expr_t expr_pow(expr_t, expr_t);
+extern expr_t expr_neg(expr_t);
+extern expr_t expr_apply_func(expr_func_t, expr_t);
+extern expr_t expr_subst_var(expr_t, const char *, double);
+extern expr_t expr_subst_expr(expr_t, const char *, expr_t);
+extern expr_t expr_derive(expr_t, const char *);
+extern double expr_eval(expr_t);
+extern void   expr_print(expr_t, int, FILE *);
+extern void   expr_free_all(void);
 #endif

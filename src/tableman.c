@@ -344,7 +344,7 @@ void NewPowerConst(int react_no, char *name, double charge,
    left behind. */
 static expr_t OrZero(expr_t t) {
 
-  return (t!=NULL) ? t : TreeConst(0.0);
+  return (t!=NULL) ? t : expr_const(0.0);
 } /* OrZero */
 
 void NewRateConst(int react, int direct, expr_t value) {

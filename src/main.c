@@ -70,5 +70,5 @@ int main(int argc, char *argv[]) {
     } /* switch */
   (void) yyparse();
   CodeGenCall(mode);
-  TreeFreeAll();
+  expr_free_all();
 } 

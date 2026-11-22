@@ -104,15 +104,15 @@ void Mixed(void) {
 	GetSpecNo(l, name, &charge);
 	if (IsSpecInConstraint(name, charge)==0) {
 	  RenameSpec(rename, name, charge);
-	  tmp=TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
+	  tmp=expr_subst_var(tmp, rename, GetBeginConc(name, charge));
 	} /* if */
       } /* for l  */
       for(l=1; l<=NumOfDynVar(); l++) {
 	GetDynVarNo(l, name);
-	tmp=TreeSubstVar(tmp, name, GetInitValue(name));
+	tmp=expr_subst_var(tmp, name, GetInitValue(name));
       } /* for l */
-      jac_num[i][j]=TreeEval(tmp);
-      if (TreeGetError()==NoEval) {
+      jac_num[i][j]=expr_eval(tmp);
+      if (expr_get_error()==EXPR_NO_EVAL) {
 	no_eval=1;
 	fprintf(stderr, "WARNING: Was not able to evaluate element (%d, %d) of Jacobian matrix.\n", i+1 , j+1);
       } /* if */
@@ -125,15 +125,15 @@ void Mixed(void) {
       GetSpecNo(l, name, &charge);
       if (IsSpecInConstraint(name, charge)==0) {
         RenameSpec(rename, name, charge);
-        tmp=TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
+        tmp=expr_subst_var(tmp, rename, GetBeginConc(name, charge));
       } /* if */
     } /* for l  */
     for(l=1; l<=NumOfDynVar(); l++) {
       GetDynVarNo(l, name);
-      tmp=TreeSubstVar(tmp, name, GetInitValue(name));
+      tmp=expr_subst_var(tmp, name, GetInitValue(name));
     } /* for l */
-    reacfw_[i]=TreeEval(tmp);
-    if (TreeGetError()==NoEval) {
+    reacfw_[i]=expr_eval(tmp);
+    if (expr_get_error()==EXPR_NO_EVAL) {
      no_eval=1;
      fprintf(stderr, "WARNING: Was not able to evaluate element (%d) of foreward reaction vector.\n", i+1 );
       } /* if */
@@ -145,15 +145,15 @@ void Mixed(void) {
       GetSpecNo(l, name, &charge);
       if (IsSpecInConstraint(name, charge)==0) {
         RenameSpec(rename, name, charge);
-        tmp=TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
+        tmp=expr_subst_var(tmp, rename, GetBeginConc(name, charge));
       } /* if */
     } /* for l  */
     for(l=1; l<=NumOfDynVar(); l++) {
       GetDynVarNo(l, name);
-      tmp=TreeSubstVar(tmp, name, GetInitValue(name));
+      tmp=expr_subst_var(tmp, name, GetInitValue(name));
     } /* for l */
-    reacrv_[i]=TreeEval(tmp);
-    if (TreeGetError()==NoEval) {
+    reacrv_[i]=expr_eval(tmp);
+    if (expr_get_error()==EXPR_NO_EVAL) {
      no_eval=1;
      fprintf(stderr, "WARNING: Was not able to evaluate element (%d) of reverse reaction vector.\n", i+1 );
       } /* if */
@@ -166,15 +166,15 @@ void Mixed(void) {
 	GetSpecNo(l, name, &charge);
 	if (IsSpecInConstraint(name, charge)==0) {
 	  RenameSpec(rename, name, charge);
-	  tmp=TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
+	  tmp=expr_subst_var(tmp, rename, GetBeginConc(name, charge));
 	} /* if */
       } /* for l  */
       for(l=1; l<=NumOfDynVar(); l++) {
 	GetDynVarNo(l, name);
-	tmp=TreeSubstVar(tmp, name, GetInitValue(name));
+	tmp=expr_subst_var(tmp, name, GetInitValue(name));
       } /* for l */
-      reacfwds_[i][j]=TreeEval(tmp);
-      if (TreeGetError()==NoEval) {
+      reacfwds_[i][j]=expr_eval(tmp);
+      if (expr_get_error()==EXPR_NO_EVAL) {
 	no_eval=1;
 	fprintf(stderr, "WARNING: Was not able to evaluate element (%d, %d) of flow reaction  matrix.\n", i+1 , j+1);
       } /* if */
@@ -188,15 +188,15 @@ void Mixed(void) {
 	GetSpecNo(l, name, &charge);
 	if (IsSpecInConstraint(name, charge)==0) {
 	  RenameSpec(rename, name, charge);
-	  tmp=TreeSubstVar(tmp, rename, GetBeginConc(name, charge));
+	  tmp=expr_subst_var(tmp, rename, GetBeginConc(name, charge));
 	} /* if */
       } /* for l  */
       for(l=1; l<=NumOfDynVar(); l++) {
 	GetDynVarNo(l, name);
-	tmp=TreeSubstVar(tmp, name, GetInitValue(name));
+	tmp=expr_subst_var(tmp, name, GetInitValue(name));
       } /* for l */
-      reacrvds_[i][j]=TreeEval(tmp);
-      if (TreeGetError()==NoEval) {
+      reacrvds_[i][j]=expr_eval(tmp);
+      if (expr_get_error()==EXPR_NO_EVAL) {
 	no_eval=1;
 	fprintf(stderr, "WARNING: Was not able to evaluate element (%d, %d) of flow reaction  matrix.\n", i+1 , j+1);
       } /* if */

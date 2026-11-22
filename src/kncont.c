@@ -117,10 +117,10 @@ void KnCont(FILE *pcode, FILE *hcode) {
 /*
     for(i=0; i<NumbOfDynVars; i++) {
       fprintf(pcode, "dS_[%d,%d,%d]:=", i+1, i+1, i+1);
-      temp=TreeEval(hess[i][i][i]);
-      if (TreeGetError()==NoEval) {
+      temp=expr_eval(hess[i][i][i]);
+      if (expr_get_error()==EXPR_NO_EVAL) {
 	need_dd_jac=1;
-	TreePrint(hess[i][i][i], 2, pcode);
+	expr_print(hess[i][i][i], 2, pcode);
       } else
 	fprintf(pcode, "%e", temp);
       fprintf(pcode, ";\n");
@@ -133,10 +133,10 @@ void KnCont(FILE *pcode, FILE *hcode) {
 	*/
 	for(l=0; l<NumbOfDynVars; l++) {
 	  fprintf(pcode, "dS_[%d,%d,%d]:=", i+1, j+1, l+1);
-	  temp=TreeEval(hess[i][j][l]);
-	  if (TreeGetError()==NoEval) {
+	  temp=expr_eval(hess[i][j][l]);
+	  if (expr_get_error()==EXPR_NO_EVAL) {
 	    need_dd_jac=1;
-	    TreePrint(hess[i][j][l], 2, pcode);
+	    expr_print(hess[i][j][l], 2, pcode);
 	  } else
 	    fprintf(pcode, "%e", temp);
 	  fprintf(pcode, ";\n");
@@ -178,7 +178,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
     /*
     for(i=0; i<NumbOfDynVars; i++) {
       fprintf(pcode, "dds_[%d,%d,%d,%d]:=", i+1, i+1, i+1, i+1);
-      TreePrint(keld[i][i][i][i], 2, pcode);
+      expr_print(keld[i][i][i][i], 2, pcode);
       fprintf(pcode, ";\n");
     }*/ /* i */
 
@@ -191,7 +191,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
 	  */
 	  for(k=0; k<NumbOfDynVars; k++) {
 	    fprintf(pcode, "dds_[%d,%d,%d,%d]:=", i+1, j+1, l+1, k+1);
-	    TreePrint(keld[i][j][l][k], 2, pcode);
+	    expr_print(keld[i][j][l][k], 2, pcode);
 	    fprintf(pcode, ";\n");
 	    /*
 	    fprintf(pcode, "dds_[%d,%d,%d,%d]:=ddS_[%d,%d,%d,%d];\n",
@@ -237,24 +237,24 @@ void KnCont(FILE *pcode, FILE *hcode) {
     constraint=IsSpecInConstraint(name, charge);
     if (constraint>0) {
       fprintf(pcode, "%s:=", rename);
-      TreePrint(con[constraint-1], 2, pcode);
+      expr_print(con[constraint-1], 2, pcode);
       fprintf(pcode, ";\n");
     }; /* if */
   }; /* for i */
 
   for(i=1; i<=NumbOfDynVars; i++) {
     fprintf(pcode, "vv_[%d]:=", i);
-    TreePrint(v[i-1], 2, pcode);
+    expr_print(v[i-1], 2, pcode);
     fprintf(pcode, ";\n");
   } /* for i */
   fprintf(pcode, "IF bj_ THEN BEGIN\n");
 
   for(i=1; i<=NumbOfDynVars; i++) {
     for(j=1; j<=NumbOfDynVars; j++) {
-      temp=TreeEval(jacobi[i-1][j-1]);
-      if (TreeGetError()==NoEval) {
+      temp=expr_eval(jacobi[i-1][j-1]);
+      if (expr_get_error()==EXPR_NO_EVAL) {
 	fprintf(pcode, "jj_[%d, %d]:=", i, j);
-	TreePrint(jacobi[i-1][j-1], 2, pcode);
+	expr_print(jacobi[i-1][j-1], 2, pcode);
 	fprintf(pcode, ";\n");
       } /* if */
     } /* for j */
@@ -317,8 +317,8 @@ void KnCont(FILE *pcode, FILE *hcode) {
   /* constant elements of the Jacobian matrix */
   for(i=1; i<=NumbOfDynVars; i++) {
     for(j=1; j<=NumbOfDynVars; j++) {
-      temp=TreeEval(jacobi[i-1][j-1]);
-      if (TreeGetError()==TreeNoError) {
+      temp=expr_eval(jacobi[i-1][j-1]);
+      if (expr_get_error()==EXPR_OK) {
 	fprintf(pcode, "jacobi[%d, %d]:= %e;\n", i, j, temp);
       } /* if */
     } /* for j */
@@ -363,9 +363,9 @@ void KnCont(FILE *pcode, FILE *hcode) {
     else
       RenameSpec(rename, name, charge);
     for(j=0; j<NumbOfDynVars; j++) {
-      tmp=TreeDerive(v[j], rename);
+      tmp=expr_derive(v[j], rename);
       fprintf(pcode, "gg_[%d, n1]:=", j+1);
-      TreePrint(tmp, 2, pcode);
+      expr_print(tmp, 2, pcode);
       fprintf(pcode, ";\n");
     } /* for j */
     fprintf(pcode, "END;\nEND; (* sp_dalfa *)\n\n");
@@ -560,9 +560,9 @@ void KnCont(FILE *pcode, FILE *hcode) {
     else
       strcpy(rename, name);
     for(j=0; j<NumbOfDynVars; j++) {
-      tmp=TreeDerive(v[j], rename);
+      tmp=expr_derive(v[j], rename);
       fprintf(pcode, "gg_[%d, n1]:=", j+1);
-      TreePrint(tmp, 2, pcode);
+      expr_print(tmp, 2, pcode);
       fprintf(pcode, ";\n");
     } /* for j */
     fprintf(pcode, "END;\nEND\nELSE BEGIN\n");
@@ -581,9 +581,9 @@ void KnCont(FILE *pcode, FILE *hcode) {
     else
       strcpy(rename, name);
     for(j=0; j<NumbOfDynVars; j++) {
-      tmp=TreeDerive(v[j], rename);
+      tmp=expr_derive(v[j], rename);
       fprintf(pcode, "gg_[%d, n1]:=", j+1);
-      TreePrint(tmp, 2, pcode);
+      expr_print(tmp, 2, pcode);
       fprintf(pcode, ";\n");
     } /* for i */
     fprintf(pcode, "END;\nEND;\nEND; (* hf_dalfa *)\n\n");

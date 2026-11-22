@@ -21,11 +21,11 @@
 #include "symbmath.h" 
 #include "misc.h"
 
-static int tree_error, len;
+static int expr_error, len;
 
 /****************************************************************************
   Node arena. Nodes are never freed one by one: trees share subtrees, and
-  kc builds them for a single run. TreeFreeAll releases all of them.
+  kc builds them for a single run. expr_free_all releases all of them.
 *****************************************************************************/
 
 #define BlockSize 4096
@@ -58,14 +58,14 @@ static expr_node_t *NewNode(expr_tag_t tag) {
   return t;
 } /* NewNode */
 
-void TreeFreeAll(void) {
+void expr_free_all(void) {
 
   while (blocks!=NULL) {
     Block *next=blocks->next;
     free(blocks);
     blocks=next;
   }
-} /* TreeFreeAll */
+} /* expr_free_all */
 
 /****************************************************************************
   Unreduced node builders.
@@ -265,35 +265,35 @@ static void LineBreak(FILE *out, int mode) {
   The following routines are exported.
 *************************************************************************** */
 
-int TreeGetError(void) {
+int expr_get_error(void) {
 
-  return tree_error;
-} /* TreeGetError */
+  return expr_error;
+} /* expr_get_error */
 
-expr_t TreeConst(double value) {
+expr_t expr_const(double value) {
 
   return Const(value);
-} /* TreeConst */
+} /* expr_const */
 
-expr_t TreeVar(const char *name) {
+expr_t expr_var(const char *name) {
 
   expr_node_t *t=NewNode(Var);
 
   (void) strcpy(t->data.name, name);
   return t;
-} /* TreeVar */
+} /* expr_var */
 
-expr_t TreeAdd(expr_t a, expr_t b) { return AddR(a, b); }
-expr_t TreeSub(expr_t a, expr_t b) { return SubR(a, b); }
-expr_t TreeMul(expr_t a, expr_t b) { return MulR(a, b); }
-expr_t TreeDiv(expr_t a, expr_t b) { return DivR(a, b); }
-expr_t TreePow(expr_t a, expr_t b) { return PowR(a, b); }
-expr_t TreeSign(expr_t a) { return NegR(a); }
-expr_t TreeApplyFunc(expr_func_t fun, expr_t a) { return Fun(fun, a); }
+expr_t expr_add(expr_t a, expr_t b) { return AddR(a, b); }
+expr_t expr_sub(expr_t a, expr_t b) { return SubR(a, b); }
+expr_t expr_mul(expr_t a, expr_t b) { return MulR(a, b); }
+expr_t expr_div(expr_t a, expr_t b) { return DivR(a, b); }
+expr_t expr_pow(expr_t a, expr_t b) { return PowR(a, b); }
+expr_t expr_neg(expr_t a) { return NegR(a); }
+expr_t expr_apply_func(expr_func_t fun, expr_t a) { return Fun(fun, a); }
 
 /* Replaces the variable name by value. Subtrees without name are
    shared, not copied. */
-expr_t TreeSubstTree(expr_t t, const char *name, expr_t value) {
+expr_t expr_subst_expr(expr_t t, const char *name, expr_t value) {
 
   expr_t l, r;
 
@@ -303,31 +303,31 @@ expr_t TreeSubstTree(expr_t t, const char *name, expr_t value) {
   case Var:
     return (strcmp(t->data.name, name)==0) ? value : t;
   case Oper:
-    l=TreeSubstTree(t->data.oper.left, name, value);
-    r=TreeSubstTree(t->data.oper.right, name, value);
+    l=expr_subst_expr(t->data.oper.left, name, value);
+    r=expr_subst_expr(t->data.oper.right, name, value);
     if ((l==t->data.oper.left) && (r==t->data.oper.right)) return t;
     return OpR(t->data.oper.op, l, r);
   case Func:
-    r=TreeSubstTree(t->data.func.right, name, value);
+    r=expr_subst_expr(t->data.func.right, name, value);
     return (r==t->data.func.right) ? t : Fun(t->data.func.fun, r);
   case NegSign:
-    r=TreeSubstTree(t->data.right, name, value);
+    r=expr_subst_expr(t->data.right, name, value);
     return (r==t->data.right) ? t : NegR(r);
   default:
     return t;
   }
-} /* TreeSubstTree */
+} /* expr_subst_expr */
 
-expr_t TreeSubstVar(expr_t t, const char *name, double value) {
+expr_t expr_subst_var(expr_t t, const char *name, double value) {
 
-  return TreeSubstTree(t, name, Const(value));
-} /* TreeSubstVar */
+  return expr_subst_expr(t, name, Const(value));
+} /* expr_subst_var */
 
 static expr_t Sq(expr_t t) { return PowR(t, Const(2.0)); }
 static expr_t Sqrt(expr_t t) { return PowR(t, Const(0.5)); }
 
 /* Derivative of t with respect to name. */
-expr_t TreeDerive(expr_t t, const char *name) {
+expr_t expr_derive(expr_t t, const char *name) {
 
   expr_t f, g, u, du;
 
@@ -341,23 +341,23 @@ expr_t TreeDerive(expr_t t, const char *name) {
     g=t->data.oper.right;
     switch (t->data.oper.op) {
     case Add:
-      return AddR(TreeDerive(f, name), TreeDerive(g, name));
+      return AddR(expr_derive(f, name), expr_derive(g, name));
     case Sub:
-      return SubR(TreeDerive(f, name), TreeDerive(g, name));
+      return SubR(expr_derive(f, name), expr_derive(g, name));
     case Mul:                    /* f'*g + f*g' */
-      return AddR(MulR(TreeDerive(f, name), g), MulR(f, TreeDerive(g, name)));
+      return AddR(MulR(expr_derive(f, name), g), MulR(f, expr_derive(g, name)));
     case Div:                    /* (g*f' - f*g')/g^2 */
-      return DivR(SubR(MulR(g, TreeDerive(f, name)),
-		       MulR(f, TreeDerive(g, name))), Sq(g));
+      return DivR(SubR(MulR(g, expr_derive(f, name)),
+		       MulR(f, expr_derive(g, name))), Sq(g));
     case Pow:                    /* g*f^(g-1)*f' + f^g*ln(f)*g' */
       return AddR(MulR(MulR(PowR(f, SubR(g, Const(1.0))),
-			    TreeDerive(f, name)), g),
-		  MulR(MulR(PowR(f, g), Fun(Ln, f)), TreeDerive(g, name)));
+			    expr_derive(f, name)), g),
+		  MulR(MulR(PowR(f, g), Fun(Ln, f)), expr_derive(g, name)));
     }
     break;
   case Func:
     u=t->data.func.right;
-    du=TreeDerive(u, name);
+    du=expr_derive(u, name);
     switch (t->data.func.fun) {
     case Exp:   return MulR(du, t);
     case Sin:   return MulR(du, Fun(Cos, u));
@@ -377,35 +377,35 @@ expr_t TreeDerive(expr_t t, const char *name) {
     }
     break;
   case NegSign:
-    return NegR(TreeDerive(t->data.right, name));
+    return NegR(expr_derive(t->data.right, name));
   default:
     break;
   }
   return Const(0.0);
-} /* TreeDerive */
+} /* expr_derive */
 
-double TreeEval(expr_t t) {
+double expr_eval(expr_t t) {
  
   double c1, c2, res=0.0;
 
   if (t==NULL) {
-    tree_error=NoTree;
+    expr_error=EXPR_NO_EXPR;
     return 0.0;
   }
   switch (t->tag) {
   case Var:
-    tree_error=NoEval;
+    expr_error=EXPR_NO_EVAL;
     res=0.0;
     break;
   case Konst:
     res=t->data.value;
-    tree_error=TreeNoError;
+    expr_error=EXPR_OK;
     break;
   case Oper: 
-    c1=TreeEval(t->data.oper.left);
-    if (tree_error==TreeNoError) {
-      c2=TreeEval(t->data.oper.right);
-      if (tree_error==TreeNoError) {
+    c1=expr_eval(t->data.oper.left);
+    if (expr_error==EXPR_OK) {
+      c2=expr_eval(t->data.oper.right);
+      if (expr_error==EXPR_OK) {
 	switch (t->data.oper.op) {
 	case Add: 
 	  res=c1+c2; 
@@ -427,11 +427,11 @@ double TreeEval(expr_t t) {
     } /* if */
     break;
   case NegSign:
-    res=-TreeEval(t->data.right);
+    res=-expr_eval(t->data.right);
     break;
   case Func:
-    res=TreeEval(t->data.func.right);
-    if (tree_error==TreeNoError) {
+    res=expr_eval(t->data.func.right);
+    if (expr_error==EXPR_OK) {
       switch (t->data.func.fun) {
       case Exp:
 	res=exp(res);
@@ -483,11 +483,11 @@ double TreeEval(expr_t t) {
     break;
   } /* switch */
  return res;
-} /* TreeEval */
+} /* expr_eval */
 
 /* The following procedure is 'internal' */
 
-static void TreePrintXtra(expr_t t, int mode, FILE *output) {
+static void expr_print_xtra(expr_t t, int mode, FILE *output) {
 
 /* Mode:  1 - (HP) Fortran 77 */
 /*	  2 - (HP) Pascal     */
@@ -502,7 +502,7 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
       fprintf(output, "("); 
       len++;
       LineBreak(output, mode);
-      TreePrintXtra(t->data.oper.left, mode, output);
+      expr_print_xtra(t->data.oper.left, mode, output);
       switch (t->data.oper.op) {
       case Add: 
 	fprintf(output, "+"); 
@@ -530,7 +530,7 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
 	LineBreak(output, mode); 
 	break;
       }; /* switch */
-      TreePrintXtra(t->data.oper.right, mode, output);
+      expr_print_xtra(t->data.oper.right, mode, output);
       fprintf(output, ")"); 
       len++;
       LineBreak(output, mode);
@@ -595,7 +595,7 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
 	break;
       } /* switch */
       LineBreak(output, mode);
-      TreePrintXtra(t->data.func.right, mode, output);
+      expr_print_xtra(t->data.func.right, mode, output);
       fprintf(output, ")");
       len++;
       LineBreak(output, mode);
@@ -604,7 +604,7 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
       fprintf(output, "(-(");
       len+=2;
       LineBreak(output, mode);
-      TreePrintXtra(t->data.right, mode, output);
+      expr_print_xtra(t->data.right, mode, output);
       fprintf(output, "))");
       len++;
       LineBreak(output, mode);
@@ -619,40 +619,40 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
       LineBreak(output, mode);
       switch (t->data.oper.op) {
       case Add: 
-	TreePrintXtra(t->data.oper.left, mode, output);
+	expr_print_xtra(t->data.oper.left, mode, output);
 	fprintf(output, "+");
 	len++;
 	LineBreak(output, mode);
-	TreePrintXtra(t->data.oper.right, mode, output);
+	expr_print_xtra(t->data.oper.right, mode, output);
 	break;
       case Sub: 
-	TreePrintXtra(t->data.oper.left, mode, output);
+	expr_print_xtra(t->data.oper.left, mode, output);
 	fprintf(output, "-"); 
 	len++;
 	LineBreak(output, mode);
-	TreePrintXtra(t->data.oper.right, mode, output);
+	expr_print_xtra(t->data.oper.right, mode, output);
 	break;
       case Div: 
-	TreePrintXtra(t->data.oper.left, mode, output);
+	expr_print_xtra(t->data.oper.left, mode, output);
 	fprintf(output, "/"); 
 	len++;
 	LineBreak(output, mode);
-	TreePrintXtra(t->data.oper.right, mode, output);
+	expr_print_xtra(t->data.oper.right, mode, output);
 	break;
       case Mul: 
-	TreePrintXtra(t->data.oper.left, mode, output);
+	expr_print_xtra(t->data.oper.left, mode, output);
 	fprintf(output, "*"); 
 	len++;
 	LineBreak(output, mode);
-	TreePrintXtra(t->data.oper.right, mode, output);
+	expr_print_xtra(t->data.oper.right, mode, output);
 	break;
       case Pow: 
 	if (t->data.oper.right->tag==Konst) {
 	  if (ceil(t->data.oper.right->data.value)==floor(t->data.oper.right->data.value)) {
-	    TreePrintXtra(t->data.oper.left, mode, output);
+	    expr_print_xtra(t->data.oper.left, mode, output);
 	    for(i=1; i<((int)(t->data.oper.right->data.value)); i++) {
 	      fprintf(output, "*");
-	      TreePrintXtra(t->data.oper.left, mode, output);
+	      expr_print_xtra(t->data.oper.left, mode, output);
 	      len++;
 	      LineBreak(output, mode);
 	    }
@@ -660,11 +660,11 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
 	    fprintf(output, "EXP("); /* Pascal has no power operator!! */ 
 	    len+=4;
 	    LineBreak(output, mode);
-	    TreePrintXtra(t->data.oper.right, mode, output);
+	    expr_print_xtra(t->data.oper.right, mode, output);
 	    fprintf(output, "*LOG(");
 	    len+=5;
 	    LineBreak(output, mode);
-	    TreePrintXtra(t->data.oper.left, mode, output);
+	    expr_print_xtra(t->data.oper.left, mode, output);
 	    fprintf(output, "))");
 	    len+=2;
 	    LineBreak(output, mode);
@@ -673,11 +673,11 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
 	  fprintf(output, "EXP("); /* Pascal has no power operator!! */ 
 	  len+=4;
 	  LineBreak(output, mode);
-	  TreePrintXtra(t->data.oper.right, mode, output);
+	  expr_print_xtra(t->data.oper.right, mode, output);
 	  fprintf(output, "*LOG(");
 	  len+=5;
 	  LineBreak(output, mode);
-	  TreePrintXtra(t->data.oper.left, mode, output);
+	  expr_print_xtra(t->data.oper.left, mode, output);
 	  fprintf(output, "))");
 	  len+=2;
 	  LineBreak(output, mode);
@@ -767,7 +767,7 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
         break;
       } /* switch */
       LineBreak(output, mode);
-      TreePrintXtra(t->data.func.right, mode, output);
+      expr_print_xtra(t->data.func.right, mode, output);
       fprintf(output, ")");
       len++;
       LineBreak(output, mode);
@@ -776,7 +776,7 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
       fprintf(output, "(-(");
       len+=2;
       LineBreak(output, mode);
-      TreePrintXtra(t->data.right, mode, output);
+      expr_print_xtra(t->data.right, mode, output);
       fprintf(output, "))");
       len++;
       LineBreak(output, mode);
@@ -801,52 +801,52 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
       LineBreak(output, mode);
       switch (t->data.oper.op) {
       case Div: 
-	TreePrintXtra(t->data.oper.left, mode, output);
+	expr_print_xtra(t->data.oper.left, mode, output);
 	fprintf(output, "/");
 	len++;
 	LineBreak(output, mode);
-	TreePrintXtra(t->data.oper.right, mode, output);
+	expr_print_xtra(t->data.oper.right, mode, output);
 	break;
       case Mul: 
-	TreePrintXtra(t->data.oper.left, mode, output);
+	expr_print_xtra(t->data.oper.left, mode, output);
 	fprintf(output, "*");
 	len++;
 	LineBreak(output, mode);
-	TreePrintXtra(t->data.oper.right, mode, output);
+	expr_print_xtra(t->data.oper.right, mode, output);
 	break;
       case Add: 
-	TreePrintXtra(t->data.oper.left, mode, output);
+	expr_print_xtra(t->data.oper.left, mode, output);
 	fprintf(output, "+");
 	len++;
 	LineBreak(output, mode);
-	TreePrintXtra(t->data.oper.right, mode, output);
+	expr_print_xtra(t->data.oper.right, mode, output);
 	break;
       case Sub:
-	TreePrintXtra(t->data.oper.left, mode, output);
+	expr_print_xtra(t->data.oper.left, mode, output);
 	fprintf(output, "-");
 	len++;
 	LineBreak(output, mode);
-	TreePrintXtra(t->data.oper.right, mode, output);
+	expr_print_xtra(t->data.oper.right, mode, output);
 	break;
       case Pow:
 	if (t->data.oper.right->tag==Konst) {
 	  if (ceil(t->data.oper.right->data.value)==floor(t->data.oper.right->data.value)) {
-	    TreePrintXtra(t->data.oper.left, mode, output);
+	    expr_print_xtra(t->data.oper.left, mode, output);
 	    for(i=1; i<((int)(ceil(t->data.oper.right->data.value))); i++) {
 	      fprintf(output, "*");
 	      len++;
 	      LineBreak(output, mode);
-	      TreePrintXtra(t->data.oper.left, mode, output);
+	      expr_print_xtra(t->data.oper.left, mode, output);
 	    } /* for i */
 	  } else {
 	    fprintf(output, "pow(");
 	    len+=4;
 	    LineBreak(output, mode);
-	    TreePrintXtra(t->data.oper.left, mode, output);
+	    expr_print_xtra(t->data.oper.left, mode, output);
 	    fprintf(output, ",");
 	    len++;
 	    LineBreak(output, mode);
-	    TreePrintXtra(t->data.oper.right, mode, output);
+	    expr_print_xtra(t->data.oper.right, mode, output);
 	    fprintf(output, ")");
 	    len++;
 	    LineBreak(output, mode);
@@ -855,11 +855,11 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
 	  fprintf(output, "pow(");
 	  len+=4;
 	  LineBreak(output, mode);
-	  TreePrintXtra(t->data.oper.left, mode, output);
+	  expr_print_xtra(t->data.oper.left, mode, output);
 	  fprintf(output, ",");
 	  len++;
 	  LineBreak(output, mode);
-	  TreePrintXtra(t->data.oper.right, mode, output);
+	  expr_print_xtra(t->data.oper.right, mode, output);
 	  fprintf(output, ")");
 	  len++;
 	  LineBreak(output, mode);
@@ -934,7 +934,7 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
 	break;
       } /* switch */
       LineBreak(output, mode);
-      TreePrintXtra(t->data.func.right, mode, output);
+      expr_print_xtra(t->data.func.right, mode, output);
       fprintf(output, ")");
       len++;
       LineBreak(output, mode);
@@ -943,7 +943,7 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
       fprintf(output, "(-(");
       len+=2;
       LineBreak(output, mode);
-      TreePrintXtra(t->data.right, mode, output);
+      expr_print_xtra(t->data.right, mode, output);
       fprintf(output, "))");
       len++;
       LineBreak(output, mode);
@@ -951,11 +951,11 @@ static void TreePrintXtra(expr_t t, int mode, FILE *output) {
     }; /* switch tag */
     break; /* mode 3 */   
   }; /* switch */
-} /* TreePrintXtra */
+} /* expr_print_xtra */
 
 
-void TreePrint(expr_t t, int mode, FILE *output) {
+void expr_print(expr_t t, int mode, FILE *output) {
 
   len=10;
-  TreePrintXtra(t, mode, output);
-} /* TreePrint */
+  expr_print_xtra(t, mode, output);
+} /* expr_print */

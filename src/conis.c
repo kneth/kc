@@ -122,7 +122,7 @@ void ConIS(FILE *fcode) {
     constraint=IsSpecInConstraint(name, charge);
     if (constraint>0) {
       fprintf(fcode, "      %s = ", rename);
-      TreePrint(con[constraint-1], 1, fcode);
+      expr_print(con[constraint-1], 1, fcode);
       fprintf(fcode, "\n");
     } /* if */
   } /* for i */
@@ -130,16 +130,16 @@ void ConIS(FILE *fcode) {
   
   for(i=1; i<=NumbOfDynVars; i++) {
     fprintf(fcode, "      fvar(%d) = ", i);
-    TreePrint(v[i-1], 1, fcode);
+    expr_print(v[i-1], 1, fcode);
     fprintf(fcode, "\n");
   } /* for i */
   fprintf(fcode, "\n");
   
   for(i=1; i<=NumbOfDynVars; i++) {
     for(j=1; j<=NumbOfDynVars; j++) {
-      (void) TreeEval(jacobi[i-1][j-1]);
+      (void) expr_eval(jacobi[i-1][j-1]);
       fprintf(fcode, "      gvar(%d,%d) = ", i, j);
-      TreePrint(jacobi[i-1][j-1], 1, fcode);
+      expr_print(jacobi[i-1][j-1], 1, fcode);
       fprintf(fcode, "\n");
     } /* for j */
     fprintf(fcode, "\n");
@@ -150,9 +150,9 @@ void ConIS(FILE *fcode) {
   else
     RenameSpec(rename, name, charge);
   for(j=0; j<NumbOfDynVars; j++) {
-    tmp=TreeDerive(v[j], rename);
+    tmp=expr_derive(v[j], rename);
     fprintf(fcode, "      gvar(%d,%d) = ", j+1,NumbOfDynVars+1);
-    TreePrint(tmp, 1, fcode);
+    expr_print(tmp, 1, fcode);
     fprintf(fcode, "\n");
   } /* for j */
   fprintf(fcode, "\n\n");
@@ -163,9 +163,9 @@ void ConIS(FILE *fcode) {
   else
     strcpy(rename, name);
   for(j=0; j<NumbOfDynVars; j++) {
-    tmp=TreeDerive(v[j], rename);
+    tmp=expr_derive(v[j], rename);
     fprintf(fcode, "      gvar(%d,%d) = ", j+1, NumbOfDynVars+1);
-    TreePrint(tmp, 1, fcode);
+    expr_print(tmp, 1, fcode);
     fprintf(fcode, "\n");
   } /* for j */
   fprintf(fcode, "\n");
@@ -175,9 +175,9 @@ void ConIS(FILE *fcode) {
   else
     strcpy(rename, name);
   for(j=0; j<NumbOfDynVars; j++) {
-    tmp=TreeDerive(v[j], rename);
+    tmp=expr_derive(v[j], rename);
     fprintf(fcode, "      gvar(%d,%d) = ", j+1, NumbOfDynVars+2);
-    TreePrint(tmp, 1, fcode);
+    expr_print(tmp, 1, fcode);
     fprintf(fcode, "\n");
   } /* for i */
   fprintf(fcode, "\n\n");
