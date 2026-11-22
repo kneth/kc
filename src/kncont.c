@@ -30,7 +30,7 @@ void KnCont(FILE *pcode, FILE *hcode) {
   double charge, temp, temp1, temp2;
   char   *name, *rename;
   time_t timer;
-  Tree   tmp;
+  expr_t tmp;
   int    i, j, k, l, constraint, dyn, form;
   int    NumbOfParams, NumbOfDynVars;
   int    need_dd_jac=0, BfErrorCode;

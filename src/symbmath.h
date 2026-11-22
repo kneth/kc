@@ -26,44 +26,44 @@
 #define NoEval  2
 #define NoTree  3
 
-typedef enum {Konst, Var, Oper, Func, NegSign} TreeTag;
-typedef enum {Add, Sub, Mul, Div, Pow} TreeOper;
+typedef enum {Konst, Var, Oper, Func, NegSign} expr_tag_t;
+typedef enum {Add, Sub, Mul, Div, Pow} expr_op_t;
 typedef enum {Exp, Sin, Cos, Tan, Ln, Log, Cosh, Sinh, Tanh, Asin,
-		Acos, Atan, Acosh, Asinh, Atanh} Function;
+		Acos, Atan, Acosh, Asinh, Atanh} expr_func_t;
 
-struct TreeCell {
-	  TreeTag   tag;
+struct expr_node {
+	  expr_tag_t tag;
 	  union {
 	    double value;    /* constant */
 	    char name[STRING_LENGTH];       /* variable */
             struct {
-	      TreeOper op;
-	      const struct TreeCell *left, *right;
+	      expr_op_t op;
+	      const struct expr_node *left, *right;
 	    } oper;          /* operation */
 	    struct {
-	      Function fun;
-	      const struct TreeCell *right;
+	      expr_func_t fun;
+	      const struct expr_node *right;
 	    } func;
-	    const struct TreeCell *right;      /* negative sign */
+	    const struct expr_node *right;      /* negative sign */
           } data;
 };
-typedef struct TreeCell TreeNode;
-typedef const TreeNode *Tree;
+typedef struct expr_node expr_node_t;
+typedef const expr_node_t *expr_t;
 
 extern int    TreeGetError(void);
-extern Tree   TreeConst(double);
-extern Tree   TreeVar(const char *);
-extern Tree   TreeAdd(Tree, Tree);
-extern Tree   TreeSub(Tree, Tree);
-extern Tree   TreeMul(Tree, Tree);
-extern Tree   TreeDiv(Tree, Tree);
-extern Tree   TreePow(Tree, Tree);
-extern Tree   TreeSign(Tree);
-extern Tree   TreeApplyFunc(Function, Tree);
-extern Tree   TreeSubstVar(Tree, const char *, double);
-extern Tree   TreeSubstTree(Tree, const char *, Tree);
-extern Tree   TreeDerive(Tree, const char *);
-extern double TreeEval(Tree);
-extern void   TreePrint(Tree, int, FILE *);
+extern expr_t TreeConst(double);
+extern expr_t TreeVar(const char *);
+extern expr_t TreeAdd(expr_t, expr_t);
+extern expr_t TreeSub(expr_t, expr_t);
+extern expr_t TreeMul(expr_t, expr_t);
+extern expr_t TreeDiv(expr_t, expr_t);
+extern expr_t TreePow(expr_t, expr_t);
+extern expr_t TreeSign(expr_t);
+extern expr_t TreeApplyFunc(expr_func_t, expr_t);
+extern expr_t TreeSubstVar(expr_t, const char *, double);
+extern expr_t TreeSubstTree(expr_t, const char *, expr_t);
+extern expr_t TreeDerive(expr_t, const char *);
+extern double TreeEval(expr_t);
+extern void   TreePrint(expr_t, int, FILE *);
 extern void   TreeFreeAll(void);
 #endif

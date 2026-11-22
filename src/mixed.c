@@ -30,7 +30,7 @@ void Mixed(void) {
   
   double  charge, temp;
   char    *name, *rename;
-  Tree    tmp;
+  expr_t  tmp;
   int     i, j, l, k, no_eval, ref;
   int     num_of_spec, max_iter,num_of_reac;
   double  angle,eps, sum_left, sum_right, sumfw, sumrv,sumfw_im,sumrv_im;

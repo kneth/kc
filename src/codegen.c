@@ -24,15 +24,15 @@
 #include <stdlib.h>
 
 /* Global variables which can be used by the code generators. */
-Tree *v;
-Tree *con;
-Tree **jacobi;
-Tree ***hess;
-Tree ****keld;
-Tree *rfw;
-Tree *rrv;
-Tree **rfwds;
-Tree **rrvds;
+expr_t *v;
+expr_t *con;
+expr_t **jacobi;
+expr_t ***hess;
+expr_t ****keld;
+expr_t *rfw;
+expr_t *rrv;
+expr_t **rfwds;
+expr_t **rrvds;
 
 /***************************************************************************** 
   Code generator independent routines (exported).
@@ -43,42 +43,42 @@ void InitCodeGenVar(int n, int m, int r) {
 
   int i, j, k;
 
-  v=(Tree *)calloc(n, sizeof(Tree));
-  con=(Tree *)calloc(m, sizeof(Tree));
-  jacobi=(Tree **)calloc(n, sizeof(Tree *));
+  v=(expr_t *)calloc(n, sizeof(expr_t));
+  con=(expr_t *)calloc(m, sizeof(expr_t));
+  jacobi=(expr_t **)calloc(n, sizeof(expr_t *));
   for(i=0; i<n; i++) 
-    jacobi[i]=(Tree *)calloc(n, sizeof(Tree));
-  hess=(Tree ***)calloc(n, sizeof(Tree **));
+    jacobi[i]=(expr_t *)calloc(n, sizeof(expr_t));
+  hess=(expr_t ***)calloc(n, sizeof(expr_t **));
   for(i=0; i<n; i++) {
-    hess[i]=(Tree **)calloc(n, sizeof(Tree *));
+    hess[i]=(expr_t **)calloc(n, sizeof(expr_t *));
     for(j=0; j<n; j++)
-      hess[i][j]=(Tree *)calloc(n, sizeof(Tree));
+      hess[i][j]=(expr_t *)calloc(n, sizeof(expr_t));
   } /* for i */
-  keld=(Tree ****)calloc(n, sizeof(Tree ***));
+  keld=(expr_t ****)calloc(n, sizeof(expr_t ***));
   for(i=0; i<n; i++) {
-    keld[i]=(Tree ***)calloc(n, sizeof(Tree **));
+    keld[i]=(expr_t ***)calloc(n, sizeof(expr_t **));
     for(j=0; j<n; j++) {
-      keld[i][j]=(Tree **)calloc(n, sizeof(Tree *));
+      keld[i][j]=(expr_t **)calloc(n, sizeof(expr_t *));
       for(k=0; k<n; k++)
-	keld[i][j][k]=(Tree *)calloc(n, sizeof(Tree));
+	keld[i][j][k]=(expr_t *)calloc(n, sizeof(expr_t));
     } /* for j */
   } /* for i */
-  rfw=(Tree *)calloc(r, sizeof(Tree));
-  rrv=(Tree *)calloc(r, sizeof(Tree));
+  rfw=(expr_t *)calloc(r, sizeof(expr_t));
+  rrv=(expr_t *)calloc(r, sizeof(expr_t));
   if(r>n) {
-    rfwds=(Tree **)calloc(r, sizeof(Tree *));
+    rfwds=(expr_t **)calloc(r, sizeof(expr_t *));
     for(i=0; i<r; i++) 
-      rfwds[i]=(Tree *)calloc(r, sizeof(Tree));
-    rrvds=(Tree **)calloc(r, sizeof(Tree *));
+      rfwds[i]=(expr_t *)calloc(r, sizeof(expr_t));
+    rrvds=(expr_t **)calloc(r, sizeof(expr_t *));
     for(i=0; i<r; i++) 
-      rrvds[i]=(Tree *)calloc(r, sizeof(Tree));
+      rrvds[i]=(expr_t *)calloc(r, sizeof(expr_t));
   } else {
-    rfwds=(Tree **)calloc(n, sizeof(Tree *));
+    rfwds=(expr_t **)calloc(n, sizeof(expr_t *));
     for(i=0; i<n; i++) 
-      rfwds[i]=(Tree *)calloc(n, sizeof(Tree));
-    rrvds=(Tree **)calloc(n, sizeof(Tree *));
+      rfwds[i]=(expr_t *)calloc(n, sizeof(expr_t));
+    rrvds=(expr_t **)calloc(n, sizeof(expr_t *));
     for(i=0; i<n; i++) 
-      rrvds[i]=(Tree *)calloc(n, sizeof(Tree));
+      rrvds[i]=(expr_t *)calloc(n, sizeof(expr_t));
   }
 } /* InitCodeGenVar */
 
@@ -87,12 +87,12 @@ void GenerateRateExpr(void) {
 
   double charge, temp, coeff;
   char   *name, *rename;
-  Tree   v_temp, tmp;
-  Tree   *v_store, *r;
+  expr_t v_temp, tmp;
+  expr_t *v_store, *r;
   int    i, j, react_no, finished, constraint, dyn;
 
-  v_store=(Tree *)calloc(NoOfSpec()-NumOfConstraint()+NumOfDynVar(), sizeof(Tree));
-  r=(Tree *)calloc((ExprSize+SymSize), sizeof(Tree));
+  v_store=(expr_t *)calloc(NoOfSpec()-NumOfConstraint()+NumOfDynVar(), sizeof(expr_t));
+  r=(expr_t *)calloc((ExprSize+SymSize), sizeof(expr_t));
   name=StringAlloc();
   rename=StringAlloc();
 
@@ -327,7 +327,7 @@ void GenerateHessian(void) {
 void EvalJacobian(double *x, double **jac) {
 
   int     dyn, dyn2, i, j, l;
-  Tree    tmp;
+  expr_t  tmp;
   double  charge;
   char    *name, *rename;
 

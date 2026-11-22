@@ -90,13 +90,13 @@ typedef struct ReactEntry {
   SpecCoeff  species[MaxSpec]; 
   Direc      react_tag;
   int        sel1, sel2; /* selx=1 <=> const, selx=2 <=> rate expr */
-  Tree       t1, t2;
+  expr_t     t1, t2;
 } ReactEntry; /* reaction matrix */
 
 typedef struct ConstrainEntry {
   char   name[STRING_LENGTH];
   double charge;
-  Tree   expr;
+  expr_t expr;
 } ConstrainEntry;
 
 typedef struct DynEntry {
@@ -106,7 +106,7 @@ typedef struct DynEntry {
   
 typedef struct ExprEntry {
   char        name[STRING_LENGTH]; 
-  Tree        expr;
+  expr_t      expr;
   double      init_value;
 } ExprEntry;
 
@@ -156,8 +156,8 @@ extern void         SetupTableMan(void);
 extern TableErrors  GetError(void);
 extern void         NewSpecie(char *, double);
 extern void         NewConstant(char *, double);
-extern void         NewRateConst(int, int, Tree);
-extern void         NewRateExpr(int, int, Tree);
+extern void         NewRateConst(int, int, expr_t);
+extern void         NewRateExpr(int, int, expr_t);
 extern void         NewBeginConc(char *, double, double);
 extern void         SpecieInReaction(int, char *, double);
 extern void         NewReaction(int);
@@ -175,8 +175,8 @@ extern double       GetCoeffInReact(int, char *, double, int);
 extern double       GetPowConstInReact(int, char *, double, int);
 extern void         GetSpecNo(int, char *, double *);
 extern Direc        GetReactKind(int);
-extern Tree         GetRateConst(int, Direc, int);
-extern Tree         GetRateExpr(int, Direc, int);
+extern expr_t       GetRateConst(int, Direc, int);
+extern expr_t       GetRateExpr(int, Direc, int);
 extern int          GetRateKind(int, Direc, int);
 extern int          NoOfReact(void);
 extern void         NewCoeff(int, char *, double, double, int);
@@ -187,14 +187,14 @@ extern int          GetSpecNumber(char *, double);
 extern void         NewDynVar(char *);
 extern int          NumOfDynVar(void);
 extern void         GetDynVarNo(int, char *);
-extern void         NewExpr(char *, Tree);
+extern void         NewExpr(char *, expr_t);
 extern int          NumOfExpr(void);
-extern Tree         GetExprNo(int, char *);
+extern expr_t       GetExprNo(int, char *);
 extern int          IsVarParameter(char *);
 extern void         NewPowerConst(int, char *, double, double, int);
-extern void         NewConstraint(char *, double, Tree);
+extern void         NewConstraint(char *, double, expr_t);
 extern int          NumOfConstraint(void);
-extern Tree         GetConstraintNo(int, char *, double *);
+extern expr_t       GetConstraintNo(int, char *, double *);
 extern int          IsSpecInConstraint(char *, double);
 extern void         NewSpecConst(char *, double, char *, double);
 extern double       GetSpecConst(char *, double, char *);

@@ -53,8 +53,8 @@ int yyerror(char *);
   char        name[STRING_LENGTH];
   compound    comp;
   char        flag;
-  Tree        tree;
-  Function    func;
+  expr_t      tree;
+  expr_func_t func;
   Strnum      strnum;
 }
 

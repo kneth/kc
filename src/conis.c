@@ -30,7 +30,7 @@ void ConIS(FILE *fcode) {
   double charge;
   char   *name, *rename;
   time_t timer;
-  Tree   tmp;
+  expr_t tmp;
   int    i, j, constraint, dyn, form;
   int    NumbOfParams, NumbOfDynVars;
 
