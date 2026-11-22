@@ -115,7 +115,7 @@ void KGode(FILE* ccode, FILE *hcode) {
   dyn=0;
   for(i=1; i<=(NoOfSpec()+NumOfDynVar()-NumOfConstraint()); i++) {
     fprintf(ccode, "v_[%d]=(", i-1);
-    TreePrint(v[i-1], 3, ccode);
+    expr_print(v[i-1], 3, ccode);
     fprintf(ccode, ");\n");
   } /* for i */
   fprintf(ccode, "}\n");
@@ -152,10 +152,10 @@ void KGode(FILE* ccode, FILE *hcode) {
   } /* for i */
   for(i=0; i<NoOfSpec()+NumOfDynVar()-NumOfConstraint(); i++)
     for(j=0; j<NoOfSpec()+NumOfDynVar()-NumOfConstraint(); j++) {
-      temp=TreeEval(jacobi[i][j]);
-      if (TreeGetError()==NoEval) {
+      temp=expr_eval(jacobi[i][j]);
+      if (expr_get_error()==EXPR_NO_EVAL) {
 	fprintf(ccode, "jacobi_matx[%d][%d]=", i, j);
-	TreePrint(jacobi[i][j], 3, ccode);
+	expr_print(jacobi[i][j], 3, ccode);
 	fprintf(ccode, ";\n");
       } /* if */
     } /* for j */
@@ -266,8 +266,8 @@ void KGode(FILE* ccode, FILE *hcode) {
   /* constant elements of the jacobi */
   for(i=0; i<NoOfSpec()+NumOfDynVar()-NumOfConstraint(); i++)
     for(j=0; j<NoOfSpec()+NumOfDynVar()-NumOfConstraint(); j++) {
-      temp=TreeEval(jacobi[i][j]);
-      if (TreeGetError()==TreeNoError) 
+      temp=expr_eval(jacobi[i][j]);
+      if (expr_get_error()==EXPR_OK) 
 	fprintf(ccode, "jacobi_matx[%d][%d]=%e;\n", i, j, temp);
     } /* for j */  
 

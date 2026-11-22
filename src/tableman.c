@@ -342,12 +342,12 @@ void NewPowerConst(int react_no, char *name, double charge,
 
 /* A missing tree reads as 0, like the empty node the old copying API
    left behind. */
-static Tree OrZero(Tree t) {
+static expr_t OrZero(expr_t t) {
 
-  return (t!=NULL) ? t : TreeConst(0.0);
+  return (t!=NULL) ? t : expr_const(0.0);
 } /* OrZero */
 
-void NewRateConst(int react, int direct, Tree value) {
+void NewRateConst(int react, int direct, expr_t value) {
  
 /* For direct: -1 = >, 0 = =, 1 = < */
 
@@ -397,7 +397,7 @@ void NewRateConst(int react, int direct, Tree value) {
   } /* while */
 } /* NewRateConst */
 
-void NewRateExpr(int react, int direct, Tree value) {
+void NewRateExpr(int react, int direct, expr_t value) {
  
 /* For direct: -1 = >, 0 = =, 1 = < */
 
@@ -787,7 +787,7 @@ Direc GetReactKind(int react_no) {
   return reacttable[i].react_tag;
 } /* GetReactKind */
 
-Tree GetRateConst(int react_no, Direc direct, int way) {
+expr_t GetRateConst(int react_no, Direc direct, int way) {
 
 /****
   way is only used when direct==bi, 
@@ -811,7 +811,7 @@ Tree GetRateConst(int react_no, Direc direct, int way) {
   return OrZero(reacttable[i].t1);
 } /* GetRateConst */     
 
-Tree GetRateExpr(int react_no, Direc direct, int way) {
+expr_t GetRateExpr(int react_no, Direc direct, int way) {
 
 /****
   way is only used when direct==bi, 
@@ -951,7 +951,7 @@ void GetDynVarNo(int i, char *name) {
   } /* else */
 } /* GetDynVarNo */
 
-void NewExpr(char *name, Tree t) {
+void NewExpr(char *name, expr_t t) {
 
   int i, found;
 
@@ -982,7 +982,7 @@ int NumOfExpr(void) {
   return expr_last;
 } /* NumOfExpr */
 
-Tree GetExprNo(int no, char *name) {
+expr_t GetExprNo(int no, char *name) {
 
   if (no>expr_last) {
     error=NotFound;
@@ -1013,7 +1013,7 @@ int IsVarParameter(char *name) {
   return found;
 } /* IsVarParameter */
 
-void NewConstraint(char *name, double charge, Tree t) {
+void NewConstraint(char *name, double charge, expr_t t) {
 
   if (con_last==ConstrainSize)  
     error=TooManyConstrain;
@@ -1031,7 +1031,7 @@ int NumOfConstraint(void) {
   return con_last;
 } /* NumOfConstraint */
 
-Tree GetConstraintNo(int no, char *name, double *charge) {
+expr_t GetConstraintNo(int no, char *name, double *charge) {
 
   if (no>con_last) { 
     error=NotFound;

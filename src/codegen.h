@@ -22,15 +22,15 @@
 #include "tableman.h"
 
 /* Global variables which can be used by the code generators. */
-extern Tree *v;
-extern Tree *con;
-extern Tree **jacobi;
-extern Tree ***hess;
-extern Tree ****keld;
-extern Tree *rfw;
-extern Tree *rrv;
-extern Tree **rfwds;
-extern Tree **rrvds;
+extern expr_t *v;
+extern expr_t *con;
+extern expr_t **jacobi;
+extern expr_t ***hess;
+extern expr_t ****keld;
+extern expr_t *rfw;
+extern expr_t *rrv;
+extern expr_t **rfwds;
+extern expr_t **rrvds;
 
 
 /* exported routines */

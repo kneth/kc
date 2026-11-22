@@ -105,7 +105,7 @@ void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
     constraint=IsSpecInConstraint(name, charge);
     if (constraint>0) {  
       fprintf(code_c, "  %s=", rename);
-      TreePrint(con[constraint-1], 3, code_c);
+      expr_print(con[constraint-1], 3, code_c);
       fprintf(code_c, ";\n");
     }; /* if */
   }; /* for i */
@@ -113,7 +113,7 @@ void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
   fprintf(code_c, "  switch (l) {\n");
   for(i=1; i<=(NoOfSpec()+NumOfDynVar()-NumOfConstraint()); i++) {
     fprintf(code_c, "  case %d: return (", i-1);
-    TreePrint(v[i-1], 3, code_c);
+    expr_print(v[i-1], 3, code_c);
     fprintf(code_c, ");\nbreak;\n");
   }; /* for i */
   fprintf(code_c, "  } /* switch */\n");
@@ -155,7 +155,7 @@ void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
     constraint=IsSpecInConstraint(name, charge);
     if (constraint>0) {
       fprintf(code_c, "  %s=", rename);
-      TreePrint(con[constraint-1], 3, code_c);
+      expr_print(con[constraint-1], 3, code_c);
       fprintf(code_c, ";\n");
     }; /* if */
   }; /* for i */
@@ -163,7 +163,7 @@ void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
   dyn=0;
   for(i=1; i<=(NoOfSpec()+NumOfDynVar()-NumOfConstraint()); i++) {
     fprintf(code_c, "  F[%d] = ", i-1);
-    TreePrint(v[i-1], 3, code_c);
+    expr_print(v[i-1], 3, code_c);
     fprintf(code_c, ";\n");
   } /* for i */
   fprintf(code_c, "} /* eval */\n");
@@ -201,14 +201,14 @@ void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
     constraint=IsSpecInConstraint(name, charge);
     if (constraint>0) {
       fprintf(code_c, "  %s=", rename);
-      TreePrint(con[constraint-1], 3, code_c);
+      expr_print(con[constraint-1], 3, code_c);
       fprintf(code_c, ";\n");
     }; /* if */
   }; /* for i */
   for(i=0; i<NoOfSpec()+NumOfDynVar()-NumOfConstraint(); i++)
     for(j=0; j<NoOfSpec()+NumOfDynVar()-NumOfConstraint(); j++) {
       fprintf(code_c, "Jac[%d][%d]=tk*(", i+1, j+1);
-      TreePrint(jacobi[i][j], 3, code_c);
+      expr_print(jacobi[i][j], 3, code_c);
       fprintf(code_c, ")");
       if (i==j)
 	fprintf(code_c, "-(1+4*R[%d])", i);
@@ -248,7 +248,7 @@ void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
     constraint=IsSpecInConstraint(name, charge);
     if (constraint>0) {
       fprintf(code_c, "  %s=", rename);
-      TreePrint(con[constraint-1], 3, code_c);
+      expr_print(con[constraint-1], 3, code_c);
       fprintf(code_c, ";\n");
     }; /* if */
   }; /* for i */
@@ -256,7 +256,7 @@ void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
   for(i=1; i<=NoOfSpec()-NumOfConstraint()+NumOfDynVar(); i++) {
     fprintf(code_c, "case %d:\n", i);
     fprintf(code_c, "return (tk*(");
-    TreePrint(v[i-1], 3, code_c);
+    expr_print(v[i-1], 3, code_c);
     fprintf(code_c, ")-S[%d]*(1+4*R[%d])+K[%d]);\nbreak;\n", i-1, i-1, i-1);
   } /* for i */
   fprintf(code_c, "}\n}\n");
@@ -294,14 +294,14 @@ void Waves(FILE* code_h, FILE* code_c, FILE* code_ini) {
     constraint=IsSpecInConstraint(name, charge);
     if (constraint>0) {
       fprintf(code_c, "  %s=", rename);
-      TreePrint(con[constraint-1], 3, code_c);
+      expr_print(con[constraint-1], 3, code_c);
       fprintf(code_c, ";\n");
     }; /* if */
   }; /* for i */
   for(i=0; i<NoOfSpec()+NumOfDynVar()-NumOfConstraint(); i++)
     for(j=0; j<NoOfSpec()+NumOfDynVar()-NumOfConstraint(); j++) {
       fprintf(code_c, "Jac[%d][%d]=", i, j);
-      TreePrint(jacobi[i][j], 3, code_c);
+      expr_print(jacobi[i][j], 3, code_c);
       fprintf(code_c, ";\n");
     } /* for j */
   fprintf(code_c, "}\n");

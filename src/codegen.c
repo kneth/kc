@@ -24,15 +24,15 @@
 #include <stdlib.h>
 
 /* Global variables which can be used by the code generators. */
-Tree *v;
-Tree *con;
-Tree **jacobi;
-Tree ***hess;
-Tree ****keld;
-Tree *rfw;
-Tree *rrv;
-Tree **rfwds;
-Tree **rrvds;
+expr_t *v;
+expr_t *con;
+expr_t **jacobi;
+expr_t ***hess;
+expr_t ****keld;
+expr_t *rfw;
+expr_t *rrv;
+expr_t **rfwds;
+expr_t **rrvds;
 
 /***************************************************************************** 
   Code generator independent routines (exported).
@@ -43,42 +43,42 @@ void InitCodeGenVar(int n, int m, int r) {
 
   int i, j, k;
 
-  v=(Tree *)calloc(n, sizeof(Tree));
-  con=(Tree *)calloc(m, sizeof(Tree));
-  jacobi=(Tree **)calloc(n, sizeof(Tree *));
+  v=(expr_t *)calloc(n, sizeof(expr_t));
+  con=(expr_t *)calloc(m, sizeof(expr_t));
+  jacobi=(expr_t **)calloc(n, sizeof(expr_t *));
   for(i=0; i<n; i++) 
-    jacobi[i]=(Tree *)calloc(n, sizeof(Tree));
-  hess=(Tree ***)calloc(n, sizeof(Tree **));
+    jacobi[i]=(expr_t *)calloc(n, sizeof(expr_t));
+  hess=(expr_t ***)calloc(n, sizeof(expr_t **));
   for(i=0; i<n; i++) {
-    hess[i]=(Tree **)calloc(n, sizeof(Tree *));
+    hess[i]=(expr_t **)calloc(n, sizeof(expr_t *));
     for(j=0; j<n; j++)
-      hess[i][j]=(Tree *)calloc(n, sizeof(Tree));
+      hess[i][j]=(expr_t *)calloc(n, sizeof(expr_t));
   } /* for i */
-  keld=(Tree ****)calloc(n, sizeof(Tree ***));
+  keld=(expr_t ****)calloc(n, sizeof(expr_t ***));
   for(i=0; i<n; i++) {
-    keld[i]=(Tree ***)calloc(n, sizeof(Tree **));
+    keld[i]=(expr_t ***)calloc(n, sizeof(expr_t **));
     for(j=0; j<n; j++) {
-      keld[i][j]=(Tree **)calloc(n, sizeof(Tree *));
+      keld[i][j]=(expr_t **)calloc(n, sizeof(expr_t *));
       for(k=0; k<n; k++)
-	keld[i][j][k]=(Tree *)calloc(n, sizeof(Tree));
+	keld[i][j][k]=(expr_t *)calloc(n, sizeof(expr_t));
     } /* for j */
   } /* for i */
-  rfw=(Tree *)calloc(r, sizeof(Tree));
-  rrv=(Tree *)calloc(r, sizeof(Tree));
+  rfw=(expr_t *)calloc(r, sizeof(expr_t));
+  rrv=(expr_t *)calloc(r, sizeof(expr_t));
   if(r>n) {
-    rfwds=(Tree **)calloc(r, sizeof(Tree *));
+    rfwds=(expr_t **)calloc(r, sizeof(expr_t *));
     for(i=0; i<r; i++) 
-      rfwds[i]=(Tree *)calloc(r, sizeof(Tree));
-    rrvds=(Tree **)calloc(r, sizeof(Tree *));
+      rfwds[i]=(expr_t *)calloc(r, sizeof(expr_t));
+    rrvds=(expr_t **)calloc(r, sizeof(expr_t *));
     for(i=0; i<r; i++) 
-      rrvds[i]=(Tree *)calloc(r, sizeof(Tree));
+      rrvds[i]=(expr_t *)calloc(r, sizeof(expr_t));
   } else {
-    rfwds=(Tree **)calloc(n, sizeof(Tree *));
+    rfwds=(expr_t **)calloc(n, sizeof(expr_t *));
     for(i=0; i<n; i++) 
-      rfwds[i]=(Tree *)calloc(n, sizeof(Tree));
-    rrvds=(Tree **)calloc(n, sizeof(Tree *));
+      rfwds[i]=(expr_t *)calloc(n, sizeof(expr_t));
+    rrvds=(expr_t **)calloc(n, sizeof(expr_t *));
     for(i=0; i<n; i++) 
-      rrvds[i]=(Tree *)calloc(n, sizeof(Tree));
+      rrvds[i]=(expr_t *)calloc(n, sizeof(expr_t));
   }
 } /* InitCodeGenVar */
 
@@ -87,12 +87,12 @@ void GenerateRateExpr(void) {
 
   double charge, temp, coeff;
   char   *name, *rename;
-  Tree   v_temp, tmp;
-  Tree   *v_store, *r;
+  expr_t v_temp, tmp;
+  expr_t *v_store, *r;
   int    i, j, react_no, finished, constraint, dyn;
 
-  v_store=(Tree *)calloc(NoOfSpec()-NumOfConstraint()+NumOfDynVar(), sizeof(Tree));
-  r=(Tree *)calloc((ExprSize+SymSize), sizeof(Tree));
+  v_store=(expr_t *)calloc(NoOfSpec()-NumOfConstraint()+NumOfDynVar(), sizeof(expr_t));
+  r=(expr_t *)calloc((ExprSize+SymSize), sizeof(expr_t));
   name=StringAlloc();
   rename=StringAlloc();
 
@@ -101,10 +101,10 @@ void GenerateRateExpr(void) {
     con[i-1]=GetConstraintNo(i, name, &charge);
     RenameSpec(rename, name, charge);
     for(j=1; j<i; j++) 
-      con[j-1]=TreeSubstTree(con[j-1], rename, con[i-1]);
+      con[j-1]=expr_subst_expr(con[j-1], rename, con[i-1]);
   } /* for i */
   for(i=1; i<=NoOfReact(); i++) {
-    r[i-1]=TreeConst(0.0);
+    r[i-1]=expr_const(0.0);
     rfw[i-1]=r[i-1];
     rrv[i-1]=r[i-1];
     react_no=GetReactNo(i-1); 
@@ -121,9 +121,9 @@ void GenerateRateExpr(void) {
 	    if (constraint>0)
 	      tmp=GetConstraintNo(constraint, name, &charge);
 	    else
-	      tmp=TreeVar(rename);
-	    tmp=TreePow(tmp, TreeConst(temp));
-	    r[i-1]=TreeMul(r[i-1], tmp);
+	      tmp=expr_var(rename);
+	    tmp=expr_pow(tmp, expr_const(temp));
+	    r[i-1]=expr_mul(r[i-1], tmp);
 	  } /* if */
 	  finished=GetNextSpecA(name, &charge, &coeff, 0);
 	} /* while */
@@ -135,12 +135,12 @@ void GenerateRateExpr(void) {
 	  constraint=IsSpecInConstraint(name, charge);
 	  if (constraint>0) {
 	    RenameSpec(rename, name, charge);
-	    r[i-1]=TreeSubstTree(r[i-1], rename, con[constraint-1]);
+	    r[i-1]=expr_subst_expr(r[i-1], rename, con[constraint-1]);
 	  } /* if */
 	} /* for j */
       } /* else */
       rfw[i-1]=r[i-1];
-      rrv[i-1]=TreeConst(0.0);
+      rrv[i-1]=expr_const(0.0);
       break; /* case uni */
     case bi:  
       if (GetRateKind(react_no, bi, 1)==1) { 
@@ -154,9 +154,9 @@ void GenerateRateExpr(void) {
 	    if (constraint>0)
 	      tmp=GetConstraintNo(constraint, name, &charge);
 	    else
-	      tmp=TreeVar(rename);
-	    tmp=TreePow(tmp, TreeConst(temp));
-	    r[i-1]=TreeMul(r[i-1], tmp);
+	      tmp=expr_var(rename);
+	    tmp=expr_pow(tmp, expr_const(temp));
+	    r[i-1]=expr_mul(r[i-1], tmp);
 	  } /* if */
 	  finished=GetNextSpecA(name, &charge, &coeff, 0);
 	} /* while */
@@ -168,7 +168,7 @@ void GenerateRateExpr(void) {
           constraint=IsSpecInConstraint(name, charge);
           if (constraint>0) {
             RenameSpec(rename, name, charge);
-            r[i-1]=TreeSubstTree(r[i-1], rename, con[constraint-1]);
+            r[i-1]=expr_subst_expr(r[i-1], rename, con[constraint-1]);
           } /* if */
         } /* for j */
       } /* else */
@@ -184,9 +184,9 @@ void GenerateRateExpr(void) {
 	    if (constraint>0) 
 	      tmp=GetConstraintNo(constraint, name, &charge);
 	    else
-	      tmp=TreeVar(rename);
-	    tmp=TreePow(tmp, TreeConst(temp));
-	    v_temp=TreeMul(v_temp, tmp);
+	      tmp=expr_var(rename);
+	    tmp=expr_pow(tmp, expr_const(temp));
+	    v_temp=expr_mul(v_temp, tmp);
 	  } /* if */
 	  finished=GetNextSpecA(name, &charge, &coeff, 1);
 	} /* while */
@@ -198,11 +198,11 @@ void GenerateRateExpr(void) {
           constraint=IsSpecInConstraint(name, charge);
           if (constraint>0) {
             RenameSpec(rename, name, charge);
-            v_temp=TreeSubstTree(v_temp, rename, con[constraint-1]);
+            v_temp=expr_subst_expr(v_temp, rename, con[constraint-1]);
           } /* if */
         } /* for j */
       } /* else */
-      r[i-1]=TreeSub(r[i-1], v_temp);
+      r[i-1]=expr_sub(r[i-1], v_temp);
       rrv[i-1]=v_temp;
       break; /* case bi */
     case equi: 
@@ -214,11 +214,11 @@ void GenerateRateExpr(void) {
   for(i=1; i<=NoOfSpec(); i++) {
     GetSpecNo(i, name, &charge);
     if (IsSpecInConstraint(name, charge)==0) {
-      tmp=TreeConst(0.0);
+      tmp=expr_const(0.0);
       for(j=1; j<=NoOfReact(); j++) {
 	if (IsSpecInReact(GetReactNo(j-1), name, charge, &coeff)==1) {
-	  v_temp=TreeMul(TreeConst(-coeff), r[j-1]);
-	  tmp=TreeAdd(tmp, v_temp);
+	  v_temp=expr_mul(expr_const(-coeff), r[j-1]);
+	  tmp=expr_add(tmp, v_temp);
 	} /* if */
       } /* for j */
       v_store[dyn]=tmp;
@@ -258,14 +258,14 @@ void GenerateJacobi(void) {
 	GetSpecNo(j, name, &charge);
 	RenameSpec(rename, name, charge);
 	if (IsSpecInConstraint(name, charge)==0) {
-	  jacobi[dyn-1][dyn2-1]=TreeDerive(v[dyn-1], rename);
-	  (void) TreeEval(jacobi[dyn-1][dyn2-1]);
+	  jacobi[dyn-1][dyn2-1]=expr_derive(v[dyn-1], rename);
+	  (void) expr_eval(jacobi[dyn-1][dyn2-1]);
 	  dyn2++;
 	} /* if */
       } /* for j */
       for(j=1; j<=NumOfDynVar(); j++) {
 	GetDynVarNo(j, name);
-	jacobi[dyn-1][j-1+NoOfSpec()-NumOfConstraint()]=TreeDerive(v[dyn-1], name);
+	jacobi[dyn-1][j-1+NoOfSpec()-NumOfConstraint()]=expr_derive(v[dyn-1], name);
       } /* for j */
     } /* if */
   } /* for i */
@@ -276,12 +276,12 @@ void GenerateJacobi(void) {
       RenameSpec(rename, name, charge);
       if (IsSpecInConstraint(name, charge)==0) {
 	dyn++;
-	jacobi[i+NoOfSpec()-NumOfConstraint()-1][dyn-1]=TreeDerive(v[i+NoOfSpec()-NumOfConstraint()-1], rename);
+	jacobi[i+NoOfSpec()-NumOfConstraint()-1][dyn-1]=expr_derive(v[i+NoOfSpec()-NumOfConstraint()-1], rename);
       } /* if */
     } /* for j */
     for(j=1; j<=NumOfDynVar(); j++) {
       GetDynVarNo(j, name);
-      jacobi[i+NoOfSpec()-NumOfConstraint()-1][j+NoOfSpec()-NumOfConstraint()-1]=TreeDerive(v[i+NoOfSpec()-NumOfConstraint()-1], name);
+      jacobi[i+NoOfSpec()-NumOfConstraint()-1][j+NoOfSpec()-NumOfConstraint()-1]=expr_derive(v[i+NoOfSpec()-NumOfConstraint()-1], name);
     } /* for j */
   } /* for i */
 
@@ -310,13 +310,13 @@ void GenerateHessian(void) {
 	GetSpecNo(l, name, &charge);
 	if (IsSpecInConstraint(name, charge)==0) {
 	  RenameSpec(rename, name, charge);
-	  hess[i][j][dyn]=TreeDerive(jacobi[i][j], rename);
+	  hess[i][j][dyn]=expr_derive(jacobi[i][j], rename);
 	  dyn++;
 	} /* if */
       } /* for l */
       for(l=1; l<=NumOfDynVar(); l++) {
 	GetDynVarNo(l, name);
-	hess[i][j][dyn]=TreeDerive(jacobi[i][j], name);
+	hess[i][j][dyn]=expr_derive(jacobi[i][j], name);
 	dyn++;
       } /* for l */
     } /* for j */
@@ -327,7 +327,7 @@ void GenerateHessian(void) {
 void EvalJacobian(double *x, double **jac) {
 
   int     dyn, dyn2, i, j, l;
-  Tree    tmp;
+  expr_t  tmp;
   double  charge;
   char    *name, *rename;
 
@@ -345,14 +345,14 @@ void EvalJacobian(double *x, double **jac) {
           for(l=1; l<=NoOfSpec(); l++) {
             GetSpecNo(l, name, &charge);
             RenameSpec(rename, name, charge);
-            tmp=TreeSubstVar(tmp, rename, x[l-1]);
+            tmp=expr_subst_var(tmp, rename, x[l-1]);
           } /* for l  */
           for(l=1; l<=NumOfDynVar(); l++) {
             GetDynVarNo(l, name);
-            tmp=TreeSubstVar(tmp, name, x[l+NoOfSpec()-NumOfConstraint()-1]);
+            tmp=expr_subst_var(tmp, name, x[l+NoOfSpec()-NumOfConstraint()-1]);
           } /* for l */
-          jac[dyn-1][dyn2-1]=TreeEval(tmp);
-          if (TreeGetError()==NoEval)
+          jac[dyn-1][dyn2-1]=expr_eval(tmp);
+          if (expr_get_error()==EXPR_NO_EVAL)
             fprintf(stderr, "WARNING: Was not able to evaluate element (%d, %d) of Jacobian.\n", dyn , dyn2);
           dyn2++;
         } /* if */
@@ -386,13 +386,13 @@ void GenerateKeldian(void) {
 	  GetSpecNo(l, name, &charge);
 	  if (IsSpecInConstraint(name, charge)==0) {
 	    RenameSpec(rename, name, charge);
-	    keld[i][j][k][dyn]=TreeDerive(hess[i][j][k], rename);
+	    keld[i][j][k][dyn]=expr_derive(hess[i][j][k], rename);
 	    dyn++;
 	  } /* if */
 	} /* for l */
 	for(l=1; l<=NumOfDynVar(); l++) {
 	  GetDynVarNo(l, name);
-	  keld[i][j][k][dyn]=TreeDerive(hess[i][j][k], name);
+	  keld[i][j][k][dyn]=expr_derive(hess[i][j][k], name);
 	  dyn++;
 	} /* for l */
       } /* for k */
@@ -417,8 +417,8 @@ void GenerateDiffReac(void) {
       GetSpecNo(j, name, &charge);
       if (IsSpecInConstraint(name, charge)==0) {
         RenameSpec(rename, name, charge);
-        rfwds[i-1][dyn]=TreeDerive(rfw[i-1], rename);
-        rrvds[i-1][dyn]=TreeDerive(rrv[i-1], rename);
+        rfwds[i-1][dyn]=expr_derive(rfw[i-1], rename);
+        rrvds[i-1][dyn]=expr_derive(rrv[i-1], rename);
 	dyn++;
       } /* if */
     } /* for j */
@@ -426,8 +426,8 @@ void GenerateDiffReac(void) {
     /*
       NumInd=j+NoOfSpec()-NumOfConstraint();
       GetDynVarNo(j, name);
-      rfwds[i][NumInd]=TreeDerive(rfw[i], name);
-      rrvds[i][NumInd]=TreeDerive(rrv[i], name);
+      rfwds[i][NumInd]=expr_derive(rfw[i], name);
+      rrvds[i][NumInd]=expr_derive(rrv[i], name);
       */
     } /* for j */
   } /* for i */
