@@ -222,7 +222,7 @@ Please note, the procedure does {\em not} return any errors
 
 \subsection{NewRateConst}
 \begin{verbatim}
-void NewRateConst(int react, int direc, Tree value)
+void NewRateConst(int react, int direc, expr_t value)
 \end{verbatim}
 
 The procedure sets a new value ({\tt value}) for the rate constant 
@@ -288,7 +288,7 @@ There is no setting of error codes in this operation.
 
 \subsection{NewConstraint}
 \begin{verbatim}
-void NewConstaint(char *name, double charge, Tree expr)
+void NewConstaint(char *name, double charge, expr_t expr)
 \end{verbatim}
 
 This procedure prepares a new constraint. The error code is 
@@ -309,7 +309,7 @@ This function returns the number of constraints defined so far.
 
 \subsection{GetConstraintNo}
 \begin{verbatim}
-void GetConstraintNo(int no, char *name, double *charge, Tree t)
+void GetConstraintNo(int no, char *name, double *charge, expr_t t)
 \end{verbatim}
 
 This function finds the constraint number {\tt no} in the constraint
@@ -439,7 +439,7 @@ and not the index of the table.
 
 \subsection{GetRateConst}
 \begin{verbatim}
-void GetRateConst(int react_no, Direc direct, int way, Tree value)
+void GetRateConst(int react_no, Direc direct, int way, expr_t value)
 \end{verbatim}
 
 The function returns the rate constant of the reaction {\tt
@@ -516,7 +516,7 @@ code is NotFound.
 
 \subsection{NewExpr}
 \begin{verbatim}
-void NewExpr(int no, Tree t)
+void NewExpr(int no, expr_t t)
 \end{verbatim}
 
 This routine inserts a new expression into the expression table. The error
@@ -538,7 +538,7 @@ into the table. No error code is set.
 
 \subsection{GetExprNo}
 \begin{verbatim} 
-void GetExprNo(int no, char *name, Tree t) 
+void GetExprNo(int no, char *name, expr_t t) 
 \end{verbatim}
 
 This function returns the expression and the associated dynamical
@@ -575,7 +575,7 @@ constrained.
 
 \subsection{NewRateExpr}
 \begin{verbatim}
-void NewRateExpr(int react, int direct, Tree value)
+void NewRateExpr(int react, int direct, expr_t value)
 \end{verbatim}
 
 The routine defines a new expression for the rate of the reaction. 
@@ -584,7 +584,7 @@ similar to NewRateKonst.
 
 \subsection{GetRateExpr}
 \begin{verbatim}
-void GetRateExpr(int react_no, Direc direct, int way, Tree t)
+void GetRateExpr(int react_no, Direc direct, int way, expr_t t)
 \end{verbatim}
 
 This function is similar to {\tt GetRateConst}, but instead it returns
@@ -802,7 +802,7 @@ called implicitly.
 
 Expressions (or trees) have to be declared by the user. Let {\tt t} 
 be the name of the tree, which have to be declared. The declaration 
-{\tt Tree t;} will be sufficient. Before
+{\tt expr\_t t;} will be sufficient. Before
 the use of the tree, the tree has to be created or allocated, see
 section \ref{treecreate}. 
 
@@ -813,9 +813,9 @@ strings of characters.
 Note, that there is no check wheather the characters are printable or
 not. 
 
-\subsection{TreeGetError}
+\subsection{expr\_get\_error}
 \begin{verbatim}
-int TreeGetError(void)
+int expr_get_error(void)
 \end{verbatim}
 
 This is the error handler routine of the library. The error codes are 
@@ -827,10 +827,10 @@ codes are defined:
 \begin{center}
 \begin{tabular}{ll}
 \hline
-  Error     & Description \\ \hline 
-  NoError   & no error    \\ 
-  NoEval    & could not evaluate tree \\ 
-  NoTree    & no tree allocated \\
+  Error           & Description \\ \hline 
+  EXPR\_OK        & no error    \\ 
+  EXPR\_NO\_EVAL  & could not evaluate tree \\ 
+  EXPR\_NO\_EXPR  & no tree allocated \\
 \hline
 \end{tabular}
 \end{center}
@@ -844,24 +844,24 @@ Tree TreeCreate(void)
 
 This operation creates a tree, \ie allocates the right portion of 
 memory and returns a pointer to it. The operation always leave a 
-NoError code.
+EXPR\_OK code.
 
-\subsection{TreeAdd, TreeSub, TreeMul, TreeDiv, and TreePow}
+\subsection{expr\_add, expr\_sub, expr\_mul, expr\_div, and expr\_pow}
 \begin{verbatim}
-void TreeAdd(Tree t1, Tree t2)
-void TreeSub(Tree t1, Tree t2)
-void TreeMul(Tree t1, Tree t2)
-void TreeDiv(Tree t1, Tree t2)
-void TreePow(Tree t1, Tree t2)
+void expr_add(expr_t t1, expr_t t2)
+void expr_sub(expr_t t1, expr_t t2)
+void expr_mul(expr_t t1, expr_t t2)
+void expr_div(expr_t t1, expr_t t2)
+void expr_pow(expr_t t1, expr_t t2)
 \end{verbatim}
 
 These five operations perform the basic five arithmetic operations, \ie 
 $t1 = t1 op t2$. 
-The error code is always set to NoError.
+The error code is always set to EXPR\_OK.
 
-\subsection{TreeSign}
+\subsection{expr\_neg}
 \begin{verbatim}
-void TreeSign(Tree t)
+void expr_neg(expr_t t)
 \end{verbatim}
 
 This operation changes the sign of the expression given by $t$, \ie $-t$.
@@ -874,7 +874,7 @@ void TreeAssignConst(Tree t, double val)
 
 This function sets a tree equal to a constant ({\tt val}). The function
 semantic is much like $t = \mbox{{\tt val}}$. The function always
-returns NoError. 
+returns EXPR\_OK. 
 
 \subsection{TreeAssignVar}
 \begin{verbatim}
@@ -885,37 +885,37 @@ The function is similar to {\tt TreeAssignConst}, see section
 \ref{treeassign}. Instead of a constant, the tree is assigned to a
 variable, \ie the semantic is $t = \mbox{{\tt name}}$.
 
-\subsection{TreeSubstVar}
+\subsection{expr\_subst\_var}
 \begin{verbatim}
-void TreeSubstVar(Tree t, char *name, double val)
+void expr_subst_var(expr_t t, char *name, double val)
 \end{verbatim}
 
 The function substitutes all occurences of the variable {\tt name} in 
 the tree {\tt t} with the value {\tt val}. If the variable is not 
 in the tree, the tree is not changed.
 
-\subsection{TreeDerive}
+\subsection{expr\_derive}
 \begin{verbatim}
-void TreeDerive(Tree res, Tree t, char *name)
+void expr_derive(expr_t res, expr_t t, char *name)
 \end{verbatim}
 
 This operation differentiates the expression with respect of the 
 variable {\tt name}. The result of the differentiation is returned 
-in {\tt res}. The function will always return NoError as error code.
+in {\tt res}. The function will always return EXPR\_OK as error code.
 
-\subsection{TreeEval}
+\subsection{expr\_eval}
 \begin{verbatim}
-double TreeEval(Tree t)
+double expr_eval(expr_t t)
 \end{verbatim}
 
 This function tries to evaluate the expression {\tt t}, \ie simplify 
 it to a constant. If it is not possible, then the error code is
-NoEval, otherwise NoError. If it was not possible
+EXPR\_NO\_EVAL, otherwise EXPR\_OK. If it was not possible
 (a variable is in the tree), the returned value is undefined.
 
-\subsection{TreePrint}
+\subsection{expr\_print}
 \begin{verbatim}
-void TreePrint(Tree t, int mode, FILE *output)
+void expr_print(expr_t t, int mode, FILE *output)
 \end{verbatim}
 
 This routine prints the tree {\tt t} to the file {\tt output}. 
@@ -953,18 +953,18 @@ void TreeKill(Tree t)
 This is the opposite of {\tt TreeCreate}. The operation deallocates a
 tree. 
 
-\subsection{TreeSubstTree}
+\subsection{expr\_subst\_expr}
 \begin{verbatim}
-void TreeSubstTree(Tree t, char *name,
-                   Tree value)
+void expr_subst_expr(expr_t t, char *name,
+                     expr_t value)
 \end{verbatim}
 
-This routine is analogue to {\tt TreeSubstVar} but instead of a value
+This routine is analogue to {\tt expr\_subst\_var} but instead of a value
 an expression is substituted.
 
-\subsection{TreeApplyFunc}
+\subsection{expr\_apply\_func}
 \begin{verbatim}
-void TreeApplyFunc(Tree *t, Function func)
+void expr_apply_func(expr_t *t, expr_func_t func)
 \end{verbatim}
 
 This function applies a given function to the expression hold by {\tt
@@ -1052,8 +1052,8 @@ grammar and the semantic actions. This union contains the following fields:
   {\tt flag}  & {\tt int}    & flag, used in various situations \\
   {\tt compound} & {\tt comp} & a compound\footnote{This is a
     structure with three fields: {\tt name}, {\tt charge}, and {\tt concs}.} \\
-  {\tt tree}  & {\tt Tree}   & expression \\
-  {\tt func}  & {\tt Function} & function \\ 
+  {\tt tree}  & {\tt expr\_t}   & expression \\
+  {\tt func}  & {\tt expr\_func\_t} & function \\ 
 \hline
 \end{tabular}
 \end{center}

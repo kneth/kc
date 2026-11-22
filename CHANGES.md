@@ -29,9 +29,13 @@ current C compilers, and an automated test suite has been added.
 * The expression reducer looks only at each new node instead of
   reducing whole trees again at every level of derivatives and
   substitutions. The generated code is unchanged.
-* Only `TreeEval` sets the error status that `TreeGetError` returns,
-  and evaluating an empty tree now reports `NoTree` instead of a stale
-  status. The generated code is unchanged.
+* Only `expr_eval` sets the error status that `expr_get_error` returns,
+  and evaluating an empty tree now reports `EXPR_NO_EXPR` instead of a
+  stale status. The generated code is unchanged.
+* The expression API in `symbmath.h` has new names: the type `Tree` is
+  now `expr_t`, the functions `TreeAdd`, `TreeEval`, ... are
+  `expr_add`, `expr_eval`, ..., and the status codes are `EXPR_OK`,
+  `EXPR_NO_EVAL` and `EXPR_NO_EXPR`. The generated code is unchanged.
 * The CMake option `KC_SANITIZE` builds kc with AddressSanitizer and
   UndefinedBehaviorSanitizer.
 
@@ -93,7 +97,7 @@ current C compilers, and an automated test suite has been added.
   written as 2147483647 or -2147483648, depending on the CPU. They are
   now written in exponent notation.
 * Several uninitialized variables have been fixed, including the
-  result of `TreeEval` and table lookups of unknown names.
+  result of `expr_eval` and table lookups of unknown names.
 * The warning for an unknown command-line option printed the wrong
   character.
 * Derivatives of functions: ln gave 0, tan and tanh gave `u'/(u*2)`,
