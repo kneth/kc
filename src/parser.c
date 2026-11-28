@@ -12,7 +12,7 @@
     side       = [ number ] species { "+" [ number ] species }
     rates      = { "c" "(" species ")" "=" expr ";" }
                  ( ( "k>" | "v>" ) "=" expr ";" [ ( "k<" | "v<" ) "=" expr ";" ]
-                 | "K" "=" expr )
+                 | "K" "=" expr ";" )
     initial    = conc [ "(0)" ] "=" expr ";"
                | name "(" species ")" "=" expr ";"
                | name "(0)" "=" expr ";"
@@ -308,6 +308,105 @@ static void expect_name(char name[STRING_LENGTH]) {
   next();
 }
 
+/*** Checks ***/
+
+typedef enum {
+  CONSTANT, PARAMETER, PARAMETER_CONC, REACTION, ODE, INITIAL_VALUE,
+  INITIAL_CONC, CONSTRAINT, SPECIES_USE
+} entry_kind_t;
+
+typedef struct {
+  entry_kind_t kind;
+  species_t    s;           /* a name, or a species if the charge matters */
+  int          line;
+} entry_t;
+
+static entry_t *entries;    /* what the model defines and which species it uses */
+static size_t   nentries, max_entries;
+static int      stmt_line;  /* line where the current statement starts */
+
+static bool recorded(entry_kind_t kind, species_t s) {
+  for (size_t i = 0; i < nentries; i++)
+    if (entries[i].kind == kind && entries[i].s.charge == s.charge &&
+        strcmp(entries[i].s.name, s.name) == 0)
+      return true;
+  return false;
+}
+
+/* Records S as KIND on the current line, unless it already was. */
+static void record(entry_kind_t kind, species_t s) {
+  if (recorded(kind, s))
+    return;
+  if (nentries == max_entries) {
+    max_entries = max_entries == 0 ? 64 : 2 * max_entries;
+    entries = realloc(entries, max_entries * sizeof *entries);
+    if (entries == NULL) {
+      perror("kc");
+      exit(EXIT_FAILURE);
+    }
+  }
+  entries[nentries++] = (entry_t) {kind, s, stmt_line};
+}
+
+/* Records that the model defines S as KIND, described by the printf-style
+   FORMAT, and reports it if it was defined before. */
+static void define(entry_kind_t kind, species_t s, const char *format, ...) {
+  char what[128];
+  va_list args;
+
+  if (!recorded(kind, s)) {
+    record(kind, s);
+    return;
+  }
+  va_start(args, format);
+  vsnprintf(what, sizeof what, format, args);
+  va_end(args);
+  report_error(stmt_line, "%s is defined twice", what);
+}
+
+static species_t named(const char *name) {
+  species_t s = {.charge = 0.0};
+
+  snprintf(s.name, sizeof s.name, "%s", name);
+  return s;
+}
+
+/* Returns the species S as it is written in a model, e.g. "[Fe(+3)]". */
+static const char *show(species_t s) {
+  static char text[STRING_LENGTH + 16];
+
+  if (s.charge == FLT_MAX)
+    snprintf(text, sizeof text, "[%s(.)]", s.name);
+  else if (s.charge == 0.0)
+    snprintf(text, sizeof text, "[%s]", s.name);
+  else
+    snprintf(text, sizeof text, "[%s(%+d)]", s.name, (int)s.charge);
+  return text;
+}
+
+/* Reports a species that is used but takes part in no reaction. Reactions
+   may follow the use, so this runs once the whole model is read. */
+static void check_species_used(void) {
+  for (size_t i = 0; i < nentries; i++)
+    if (entries[i].kind == SPECIES_USE && NoSpecInReacs(entries[i].s.name, entries[i].s.charge) == 0)
+      report_error(entries[i].line, "species %s is in no reaction", show(entries[i].s));
+}
+
+/* Evaluates E, which must be a number described by the printf-style FORMAT. */
+static double value_of(expr_t e, const char *format, ...) {
+  double value = expr_eval(e);
+  char what[128];
+  va_list args;
+
+  if (expr_get_error() == EXPR_NO_EVAL) {
+    va_start(args, format);
+    vsnprintf(what, sizeof what, format, args);
+    va_end(args);
+    report_error(stmt_line, "%s must be a number, but uses a variable", what);
+  }
+  return value;
+}
+
 /* charge = [ "(" ( "." | ( "+" | "-" ) [ number ] ) ")" ] */
 static double charge(void) {
   double q;
@@ -346,6 +445,7 @@ static species_t conc(void) {
   expect(T_LCONC);
   s = species();
   expect(T_RCONC);
+  record(SPECIES_USE, s);
   return s;
 }
 
@@ -389,11 +489,9 @@ static expr_t primary(void) {
     char name[STRING_LENGTH];
 
     if (accept(T_TIME0)) {
-      double value = GetBeginConc(s.name, s.charge);
-      if (GetError() == NoError)
-        return expr_const(value);
-      fprintf(stderr, "[%s(%e)] not found.\n", s.name, s.charge);
-      return expr_const(0.0);
+      if (!recorded(INITIAL_CONC, s))
+        report_error(tok.line, "%s(0) is used before it is defined", show(s));
+      return expr_const(GetBeginConc(s.name, s.charge));
     }
     RenameSpec(name, s.name, s.charge);
     return expr_var(name);
@@ -439,25 +537,16 @@ static expr_t expr(void) {
       return e;
 }
 
-/* Evaluates E, which must be a number; OK tells whether it was. */
-static double eval(expr_t e, bool *ok) {
-  double value = expr_eval(e);
-
-  *ok = expr_get_error() != EXPR_NO_EVAL;
-  return value;
-}
-
 /*** Declarations ***/
 
+/* name "=" ( expr | '"' name '"' ) ";" */
 static void constant(void) {
   char name[STRING_LENGTH];
-  int line;
-  bool ok;
-  double value;
   expr_t e;
 
   expect_name(name);
   expect(T_EQUAL);
+  define(CONSTANT, named(name), "constant %s", name);
   if (accept(T_QUOTE)) {
     char string[STRING_LENGTH];
 
@@ -468,22 +557,20 @@ static void constant(void) {
     return;
   }
   e = expr();
-  line = tok.line;
   expect(T_SEMI);
-  value = eval(e, &ok);
-  if (ok)
-    NewConstant(name, value);
-  else
-    fprintf(stderr, "Unable to evaluate expression in line %d.\n", line);
+  NewConstant(name, value_of(e, "constant %s", name));
 }
 
 /* "#parameter" ( name | conc ) "=" init, low, high, delta, pref, direction ";" */
 static void parameter(void) {
   enum { INIT, LOW, HIGH, DELTA, PREF, DIRECTION, FIELDS };
-  bool is_conc = tok.kind == T_LCONC, ok[FIELDS];
-  species_t s;
+  static const char *fields[] = {"initial value", "lower bound", "upper bound",
+                                 "step", "precision", "direction"};
+  bool is_conc = tok.kind == T_LCONC;
+  species_t s = {.charge = 0.0};
+  const char *shown;
+  expr_t e[FIELDS];
   double v[FIELDS];
-  int line;
 
   if (is_conc)
     s = conc();
@@ -493,21 +580,20 @@ static void parameter(void) {
   for (int i = 0; i < FIELDS; i++) {
     if (i > 0)
       expect(T_COMMA);
-    line = tok.line;
-    v[i] = eval(expr(), &ok[i]);
-    if (!ok[i])
-      fprintf(stderr, "WARNING: Could not evaluate expr in line %d\n", line);
+    e[i] = expr();
   }
   expect(T_SEMI);
+  shown = is_conc ? show(s) : s.name;
+  define(is_conc ? PARAMETER_CONC : PARAMETER, s, "parameter %s", shown);
+  for (int i = 0; i < FIELDS; i++)
+    v[i] = value_of(e[i], "the %s of parameter %s", fields[i], shown);
   if (is_conc) {
-    if (ok[INIT])
-      NewParamConc(s.name, s.charge, v[INIT]);
+    NewParamConc(s.name, s.charge, v[INIT]);
     NewLowHighPrefConc(s.name, s.charge, v[LOW], v[HIGH], v[PREF]);
     NewDirectForConc(s.name, s.charge, (int)v[DIRECTION]);
     NewDeltaConc(s.name, s.charge, v[DELTA]);
   } else {
-    if (ok[INIT])
-      NewParameter(s.name, v[INIT]);
+    NewParameter(s.name, v[INIT]);
     NewLowHighPrefParam(s.name, v[LOW], v[HIGH], v[PREF]);
     NewDirectForParam(s.name, (int)v[DIRECTION]);
     NewDeltaParam(s.name, v[DELTA]);
@@ -547,7 +633,7 @@ static void reaction_side(int side) {
   } while (accept(T_PLUS));
 }
 
-/* ( "k" | "v" ) arrow "=" expr: DIRECT is -1 forwards and 1 backwards. */
+/* ( "k" | "v" ) arrow "=" expr ";": DIRECT is -1 forwards and 1 backwards. */
 static void rate(int direct) {
   char kind = tok.text[0];
   expr_t e;
@@ -555,74 +641,57 @@ static void rate(int direct) {
   next();
   expect(T_EQUAL);
   e = expr();
+  expect(T_SEMI);
   if (kind == 'k')
     NewRateConst(GetCurrentReaction(), direct, e);
   else
     NewRateExpr(GetCurrentReaction(), direct, e);
 }
 
-static void rates(void) {
+static void rates(Direc kind) {
   int r = GetCurrentReaction();
-  char name[STRING_LENGTH];
-  bool ok;
 
   while (tok.kind == T_NAME && peek() == T_LPAR) {
     species_t s;
-    double value;
     expr_t e;
-    int line;
 
-    expect_name(name);
+    if (strcmp(tok.text, "c") != 0)
+      syntax_error("'c'");
+    next();
     expect(T_LPAR);
     s = species();
     expect(T_RPAR);
     expect(T_EQUAL);
     e = expr();
-    line = tok.line;
     expect(T_SEMI);
-    value = eval(e, &ok);
-    if (strcmp(name, "c") != 0)
-      fprintf(stderr, "c expected!\n");
-    else if (!ok)
-      fprintf(stderr, "Unable to evaluate expression in line %d.\n", line);
-    else
-      NewPowerConst(r, s.name, s.charge, value, -1);
+    NewPowerConst(r, s.name, s.charge, value_of(e, "the power constant of %s", show(s)), -1);
   }
-  if (tok.kind == T_LEFTARR) {
-    rate(-1);
-    expect(T_SEMI);
-    if (tok.kind != T_RIGHTARR) {
-      if (GetReactKind(r) == bi)
-        fprintf(stderr, "The reaction in line %d is two-ways.\n", tok.line);
-      return;
-    }
-    if (GetReactKind(r) != bi) {
-      int line = tok.line;
-      next();
-      expect(T_EQUAL);
-      (void) expr();
-      expect(T_SEMI);
-      fprintf(stderr, "The reaction in line %d is a >one-way< reaction or >equilibrium.<\n", line);
-      return;
-    }
-    rate(1);
+  if (kind == equi) {
+    if (tok.kind != T_NAME || strcmp(tok.text, "K") != 0)
+      syntax_error("'K' for an equilibrium");
+    next();
+    expect(T_EQUAL);
+    NewRateConst(r, 0, expr());
     expect(T_SEMI);
     return;
   }
-  if (tok.kind != T_NAME)
-    syntax_error("'k>', 'v>' or 'K'");
-  expect_name(name);
-  expect(T_EQUAL);
-  if (strcmp(name, "K") != 0) {
-    (void) expr();
-    fprintf(stderr, "Syntax error: K expected in line %d.\n", tok.line);
-  } else
-    NewRateConst(r, 0, expr());
+  if (tok.kind != T_LEFTARR)
+    syntax_error("'k>' or 'v>'");
+  rate(-1);
+  if (tok.kind == T_RIGHTARR) {
+    if (kind != bi)
+      report_error(tok.line, "reaction %d is one-way and has no backward rate", r);
+    rate(1);
+  } else if (kind == bi)
+    report_error(stmt_line, "reaction %d is two-way and needs a backward rate, 'k<' or 'v<'", r);
 }
 
 static void reaction(void) {
+  species_t no = {.charge = 0.0};
   Direc kind;
 
+  snprintf(no.name, sizeof no.name, "%d", (int)tok.value);
+  define(REACTION, no, "reaction %s", no.name);
   NewReaction((int)tok.value);
   next();
   expect(T_COLON);
@@ -638,7 +707,7 @@ static void reaction(void) {
   AddReactionKind(GetCurrentReaction(), kind);
   reaction_side(-1);
   expect(T_SEMI);
-  rates();
+  rates(kind);
 }
 
 /* name "'" "=" expr ";" */
@@ -648,6 +717,7 @@ static void ode(void) {
 
   expect_name(name);
   expect(T_PRIME);
+  define(ODE, named(name), "the differential equation for %s", name);
   expect(T_EQUAL);
   e = expr();
   expect(T_SEMI);
@@ -659,24 +729,23 @@ static void ode(void) {
 
 static void initial(void) {
   char name[STRING_LENGTH];
-  bool time0, ok;
   double value;
   expr_t e;
 
   if (tok.kind == T_LCONC) {
     species_t s = conc();
+    bool time0 = accept(T_TIME0);
 
-    time0 = accept(T_TIME0);
     expect(T_EQUAL);
     e = expr();
     expect(T_SEMI);
-    value = eval(e, &ok);
-    if (!time0)
+    if (time0) {
+      define(INITIAL_CONC, s, "the initial value of %s", show(s));
+      NewBeginConc(s.name, s.charge, value_of(e, "the initial value of %s", show(s)));
+    } else {
+      define(CONSTRAINT, s, "the constraint on %s", show(s));
       NewConstraint(s.name, s.charge, e);
-    else if (!ok)
-      fprintf(stderr, "Unable to evaluate expression.\n");
-    else
-      NewBeginConc(s.name, s.charge, value);
+    }
     return;
   }
   expect_name(name);
@@ -687,23 +756,20 @@ static void initial(void) {
     expect(T_EQUAL);
     e = expr();
     expect(T_SEMI);
-    value = eval(e, &ok);
+    value = value_of(e, "the constant %s(%s)", name, s.name);
     NewSpecConst(s.name, s.charge, name, value);
     if (GetError() == NotFound && s.charge == 0.0)
       NewDynVarConst(s.name, name, value);
     return;
   }
-  time0 = accept(T_TIME0);
+  expect(T_TIME0);
   expect(T_EQUAL);
   e = expr();
   expect(T_SEMI);
-  value = eval(e, &ok);
-  if (!ok)
-    fprintf(stderr, "Line %d: Unable to evaluate expression\n", tok.line);
-  else if (!time0)
-    fprintf(stderr, "Line %d: (0) expected\n", tok.line);
-  else
-    NewInitValue(name, value);
+  define(INITIAL_VALUE, named(name), "the initial value of %s", name);
+  if (!recorded(ODE, named(name)))
+    report_error(stmt_line, "%s has no differential equation", name);
+  NewInitValue(name, value_of(e, "the initial value of %s", name));
 }
 
 /*** Model ***/
@@ -774,6 +840,7 @@ static void enter(section_t s, const char *what) {
 }
 
 static void statement(void) {
+  stmt_line = tok.line;
   if (tok.kind == T_PARAM || tok.kind == T_PRINT || (tok.kind == T_NAME && peek() == T_EQUAL)) {
     enter(DECLARATIONS, "a declaration");
     if (accept(T_PARAM))
@@ -825,6 +892,10 @@ int parse(void) {
       statement();
     else
       recover();
+  check_species_used();
+  free(entries);
+  entries = NULL;
+  nentries = max_entries = 0;
   if (!has_reactions)
     report_error(tok.line, "the model has no reactions or differential equations");
   if (errors > 0)

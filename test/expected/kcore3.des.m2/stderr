@@ -2,4 +2,5 @@ Line 19: unexpected character '<'
 Line 19: unexpected character '>'
 Line 19: expected ',', found ';'
 Line 20: expected ',', found ';'
-4 errors found, no code generated.
+Line 41: species [Ce(+1)] is in no reaction
+5 errors found, no code generated.
