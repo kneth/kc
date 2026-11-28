@@ -1,2 +1,5 @@
-Line 19: syntax error at input text ;
-Continuation program aborted: Wrong number of parameters - should be between 2 and 40.
+Line 19: unexpected character '<'
+Line 19: unexpected character '>'
+Line 19: expected ',', found ';'
+Line 20: expected ',', found ';'
+4 errors found, no code generated.

@@ -67,7 +67,10 @@ int main(int argc, char *argv[]) {
       (void) fprintf(stderr, "Warning: Option %c ignored.\n", optopt);
       break;
     } /* switch */
-  (void) parse();
+  if ((j=parse()) != 0) {
+    (void) fprintf(stderr, "%d error%s found, no code generated.\n", j, j==1 ? "" : "s");
+    exit(EXIT_FAILURE);
+  }
   CodeGenCall(mode);
   expr_free_all();
 } 

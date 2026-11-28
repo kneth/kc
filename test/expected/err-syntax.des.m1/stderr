@@ -1,0 +1,12 @@
+Line 2: expected an expression, found ';'
+Line 3: unexpected character '@'
+Line 3: expected ';', found '4'
+Line 4: expected a name, found ';'
+Line 6: expected ';', found '2'
+Line 7: expected a name, found '->'
+Line 9: unexpected character '<'
+Line 9: expected '->', '<->' or '=', found '-'
+Line 11: a declaration must come before the reactions
+Line 13: a differential equation must come before the initial values
+Line 14: expected ')', found ';'
+11 errors found, no code generated.

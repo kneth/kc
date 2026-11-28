@@ -1,4 +1,13 @@
 kc v1.10, (C) Copyright by Kenneth Geisshirt and Keld Nielsen, 1992-1996
+Species used (*=dyn. var.):
+  *y1
+  *y2
+  *y3
+  *y4
+Constants declared:
+  method = 1.000000e+00
+  htime = 1.000000e-04
+  etime = 1.000000e+03
 The Jacobian matrix is:
 J(1, 1) =        nan
 J(1, 2) = 0.00000000000000e+00

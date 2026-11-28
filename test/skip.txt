@@ -7,11 +7,9 @@ B1.des.m1
 burst.des.m1
 burst-2par.des.m1
 burst3.13.m1
-kcore3.des.m1
 open.des.m1
 reak.m1
 test4.des.m1
-test7.des.m1
 zhab.des.m1
 
 # Lorenz is chaotic: the end state of the simulation depends on the compiler.

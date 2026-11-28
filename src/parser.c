@@ -3,7 +3,7 @@
 
   A model has three sections, in this order:
 
-    model      = { declaration } reaction { reaction } initial { initial }
+    model      = { declaration } reaction { reaction } { initial }
     declaration= name "=" ( expr | '"' name '"' ) ";"
                | "#parameter" ( name | conc ) "=" expr { "," expr } ";"
                | "#print" ( name | conc ) { "," ( name | conc ) } ";"
@@ -21,11 +21,16 @@
 
   In expressions, unary minus binds tighter than "^", and all binary
   operators are left-associative.
+
+  Errors are reported with their line number and counted. After a syntax
+  error the parser skips to the end of the statement and carries on, so one
+  run reports all errors.
 ****************************************************************************/
 
 #include <ctype.h>
 #include <float.h>
 #include <setjmp.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +40,20 @@
 #include "parser.h"
 #include "symbmath.h"
 #include "tableman.h"
+
+static int errors;
+
+/* Reports an error in the model at LINE. */
+static void report_error(int line, const char *format, ...) {
+  va_list args;
+
+  fprintf(stderr, "Line %d: ", line);
+  va_start(args, format);
+  vfprintf(stderr, format, args);
+  va_end(args);
+  fputc('\n', stderr);
+  errors++;
+}
 
 /*** Lexer ***/
 
@@ -58,6 +77,15 @@ static const struct { const char *name; expr_func_t func; } functions[] = {
   {"tan", Tan}, {"sinh", Sinh}, {"cosh", Cosh}, {"tanh", Tanh},
   {"asin", Asin}, {"acos", Acos}, {"atan", Atan}, {"asinh", Asinh},
   {"acosh", Acosh}, {"atanh", Atanh}
+};
+
+static const struct { const char *text; kind_t kind; } symbols[] = {
+  {"#parameter", T_PARAM}, {"#print", T_PRINT}, {"<->", T_TWOWAYS},
+  {"<=>", T_TWOWAYS}, {"(0)", T_TIME0}, {"->", T_ONEWAY}, {"**", T_POW},
+  {"'", T_PRIME}, {"(", T_LPAR}, {")", T_RPAR}, {"=", T_EQUAL},
+  {".", T_RADICAL}, {"+", T_PLUS}, {"-", T_MINUS}, {"^", T_POW},
+  {"*", T_MUL}, {"/", T_DIV}, {"[", T_LCONC}, {"]", T_RCONC},
+  {",", T_COMMA}, {";", T_SEMI}, {":", T_COLON}, {"\"", T_QUOTE}
 };
 
 static int lineno;
@@ -93,8 +121,7 @@ static void skip_comment(int close) {
       return;
     prev = c;
   }
-  fprintf(stderr, "Line %d: comment is not closed\n", start);
-  exit(EXIT_FAILURE);
+  report_error(start, "comment is not closed");
 }
 
 static void add_char(token_t *t, size_t *n, int c) {
@@ -154,9 +181,8 @@ static void scan_name(token_t *t, int c) {
   for (; isalnum(c); c = getch(), len++)
     add_char(t, &n, c);
   if (len >= STRING_LENGTH) {
-    fprintf(stderr, "Line %d: name %s is longer than %d characters\n",
-            lineno, t->text, STRING_LENGTH-1);
-    exit(EXIT_FAILURE);
+    report_error(lineno, "name %s is longer than %d characters", t->text, STRING_LENGTH-1);
+    t->text[STRING_LENGTH-1] = '\0';
   }
   t->kind = T_NAME;
   if ((strcmp(t->text, "k") == 0 || strcmp(t->text, "v") == 0) && (c == '>' || c == '<')) {
@@ -174,15 +200,6 @@ static void scan_name(token_t *t, int c) {
 
 /* Reads the next token into T. */
 static void lex(token_t *t) {
-  static const struct { const char *text; kind_t kind; } symbols[] = {
-    {"#parameter", T_PARAM}, {"#print", T_PRINT}, {"<->", T_TWOWAYS},
-    {"<=>", T_TWOWAYS}, {"(0)", T_TIME0}, {"->", T_ONEWAY}, {"**", T_POW},
-    {"'", T_PRIME}, {"(", T_LPAR}, {")", T_RPAR}, {"=", T_EQUAL},
-    {".", T_RADICAL}, {"+", T_PLUS}, {"-", T_MINUS}, {"^", T_POW},
-    {"*", T_MUL}, {"/", T_DIV}, {"[", T_LCONC}, {"]", T_RCONC},
-    {",", T_COMMA}, {";", T_SEMI}, {":", T_COLON}, {"\"", T_QUOTE}
-  };
-
   for (;;) {
     int c = getch();
 
@@ -196,7 +213,7 @@ static void lex(token_t *t) {
       lineno++;
       continue;
     }
-    if (c == ' ' || c == '\t')
+    if (c == ' ' || c == '\t' || c == '\r')
       continue;
     if ((c == '/' || c == '(') && follows("*")) {
       skip_comment(c == '/' ? '/' : ')');
@@ -217,7 +234,7 @@ static void lex(token_t *t) {
         t->kind = symbols[i].kind;
         return;
       }
-    putchar(getch());   /* like lex, copy unknown characters to the output */
+    report_error(lineno, "unexpected character '%c'", getch());
   }
 }
 
@@ -230,9 +247,11 @@ typedef struct {
 
 static token_t tok, ahead;  /* the current token and, if has_ahead, the next */
 static bool    has_ahead;
-static jmp_buf on_error;
+static int     last_line;   /* line of the token before tok */
+static jmp_buf on_error;    /* where a syntax error continues */
 
 static void next(void) {
+  last_line = tok.line;
   if (has_ahead) {
     tok = ahead;
     has_ahead = false;
@@ -248,9 +267,18 @@ static kind_t peek(void) {
   return ahead.kind;
 }
 
-static _Noreturn void syntax_error(void) {
-  fprintf(stderr, "Line %d: syntax error at input text %s\n", tok.line, tok.text);
+/* Reports at LINE that EXPECTED was expected at the current token, and
+   abandons the statement. */
+static _Noreturn void syntax_error_at(int line, const char *expected) {
+  if (tok.kind == T_EOF)
+    report_error(line, "expected %s, found end of input", expected);
+  else
+    report_error(line, "expected %s, found '%s'", expected, tok.text);
   longjmp(on_error, 1);
+}
+
+static _Noreturn void syntax_error(const char *expected) {
+  syntax_error_at(tok.line, expected);
 }
 
 static bool accept(kind_t kind) {
@@ -260,14 +288,22 @@ static bool accept(kind_t kind) {
   return true;
 }
 
+/* KIND must be a symbol. A missing symbol, typically a ';' at the end of a
+   line, is reported on the line of the token before it. */
 static void expect(kind_t kind) {
-  if (!accept(kind))
-    syntax_error();
+  char expected[16] = "";
+
+  if (accept(kind))
+    return;
+  for (size_t i = 0; expected[0] == '\0'; i++)
+    if (symbols[i].kind == kind)
+      snprintf(expected, sizeof expected, "'%s'", symbols[i].text);
+  syntax_error_at(last_line < tok.line ? last_line : tok.line, expected);
 }
 
 static void expect_name(char name[STRING_LENGTH]) {
   if (tok.kind != T_NAME)
-    syntax_error();
+    syntax_error("a name");
   strcpy(name, tok.text);
   next();
 }
@@ -281,7 +317,12 @@ static double charge(void) {
   if (accept(T_RADICAL))
     q = FLT_MAX;
   else {
-    q = accept(T_PLUS) ? 1.0 : (expect(T_MINUS), -1.0);
+    if (accept(T_PLUS))
+      q = 1.0;
+    else if (accept(T_MINUS))
+      q = -1.0;
+    else
+      syntax_error("'+', '-' or '.'");
     if (tok.kind == T_NUMBER) {
       q *= tok.value;
       next();
@@ -358,7 +399,7 @@ static expr_t primary(void) {
     return expr_var(name);
   }
   default:
-    syntax_error();
+    syntax_error("an expression");
   }
 }
 
@@ -408,12 +449,14 @@ static double eval(expr_t e, bool *ok) {
 
 /*** Declarations ***/
 
-static void constant(char name[STRING_LENGTH]) {
+static void constant(void) {
+  char name[STRING_LENGTH];
   int line;
   bool ok;
   double value;
   expr_t e;
 
+  expect_name(name);
   expect(T_EQUAL);
   if (accept(T_QUOTE)) {
     char string[STRING_LENGTH];
@@ -566,6 +609,8 @@ static void rates(void) {
     expect(T_SEMI);
     return;
   }
+  if (tok.kind != T_NAME)
+    syntax_error("'k>', 'v>' or 'K'");
   expect_name(name);
   expect(T_EQUAL);
   if (strcmp(name, "K") != 0) {
@@ -586,10 +631,10 @@ static void reaction(void) {
     kind = uni;
   else if (accept(T_TWOWAYS))
     kind = bi;
-  else {
-    expect(T_EQUAL);
+  else if (accept(T_EQUAL))
     kind = equi;
-  }
+  else
+    syntax_error("'->', '<->' or '='");
   AddReactionKind(GetCurrentReaction(), kind);
   reaction_side(-1);
   expect(T_SEMI);
@@ -713,36 +758,77 @@ static void report(void) {
   }
 }
 
-static bool at_reaction(void) {
-  return tok.kind == T_NUMBER || (tok.kind == T_NAME && peek() == T_PRIME);
+typedef enum { DECLARATIONS, REACTIONS, INITIALS } section_t;
+
+static section_t section;       /* the furthest section seen so far */
+static bool      has_reactions;
+
+/* Notes that a statement of section S, described by WHAT, starts here. */
+static void enter(section_t s, const char *what) {
+  if (s < section)
+    report_error(tok.line, "%s must come before the %s", what,
+                 section == REACTIONS ? "reactions" : "initial values");
+  else
+    section = s;
+  has_reactions |= s == REACTIONS;
 }
 
-int parse(void) {
-  lineno = 1;
-  if (setjmp(on_error))
-    return 1;
-  SetupTableMan();
-  next();
-  for (;;)
+static void statement(void) {
+  if (tok.kind == T_PARAM || tok.kind == T_PRINT || (tok.kind == T_NAME && peek() == T_EQUAL)) {
+    enter(DECLARATIONS, "a declaration");
     if (accept(T_PARAM))
       parameter();
     else if (accept(T_PRINT))
       print_list();
-    else if (tok.kind == T_NAME && peek() == T_EQUAL) {
-      char name[STRING_LENGTH];
-      expect_name(name);
-      constant(name);
-    } else
-      break;
-  do
-    if (tok.kind == T_NUMBER)
-      reaction();
     else
-      ode();
-  while (at_reaction());
-  do
+      constant();
+  } else if (tok.kind == T_NUMBER) {
+    enter(REACTIONS, "a reaction");
+    reaction();
+  } else if (tok.kind == T_NAME && peek() == T_PRIME) {
+    enter(REACTIONS, "a differential equation");
+    ode();
+  } else if (tok.kind == T_NAME || tok.kind == T_LCONC) {
+    enter(INITIALS, "an initial value");
     initial();
-  while (tok.kind != T_EOF);
+  } else
+    syntax_error("a declaration, reaction or initial value");
+}
+
+/* Skips the rest of a statement after a syntax error: up to and including
+   the next ';', or up to a reaction or '#' declaration on a later line.
+   The rate constants of a broken reaction are skipped too. */
+static void recover(void) {
+  int line = last_line;
+
+  while (tok.kind != T_EOF) {
+    if (tok.line > line && (tok.kind == T_PARAM || tok.kind == T_PRINT ||
+                            (tok.kind == T_NUMBER && peek() == T_COLON)))
+      return;
+    if (accept(T_SEMI)) {
+      if (tok.kind != T_LEFTARR && tok.kind != T_RIGHTARR)
+        return;
+    } else
+      next();
+  }
+}
+
+int parse(void) {
+  lineno = 1;
+  errors = 0;
+  section = DECLARATIONS;
+  has_reactions = false;
+  SetupTableMan();
+  next();
+  while (tok.kind != T_EOF)
+    if (setjmp(on_error) == 0)
+      statement();
+    else
+      recover();
+  if (!has_reactions)
+    report_error(tok.line, "the model has no reactions or differential equations");
+  if (errors > 0)
+    return errors;
   if (verbose == 1)
     report();
   if (IsNonAutoSystem() == 1) {
