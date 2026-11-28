@@ -1,3 +1,2 @@
-Line 7: syntax error at input text ;
-ERROR: The constant ngrid is not defined!
-ERROR: The constant mgrid is not defined!
+Line 7: expected ',', found ';'
+1 error found, no code generated.

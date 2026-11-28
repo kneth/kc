@@ -1,0 +1,21 @@
+Line 3: constant k1 is defined twice
+Line 4: constant k2 must be a number, but uses a variable
+Line 6: parameter k1 is defined twice
+Line 7: the upper bound of parameter [Q] must be a number, but uses a variable
+Line 10: reaction 1 is one-way and has no backward rate
+Line 11: reaction 2 is two-way and needs a backward rate, 'k<' or 'v<'
+Line 12: expected 'K' for an equilibrium, found 'k>'
+Line 14: reaction 4 is defined twice
+Line 15: expected 'c', found 'd'
+Line 16: the power constant of [A] must be a number, but uses a variable
+Line 18: the differential equation for x is defined twice
+Line 20: [B](0) is used before it is defined
+Line 21: the initial value of [A] is defined twice
+Line 22: the initial value of [A] is defined twice
+Line 24: the initial value of [B] must be a number, but uses a variable
+Line 26: the constraint on [C] is defined twice
+Line 28: the initial value of x is defined twice
+Line 29: z has no differential equation
+Line 7: species [Q] is in no reaction
+Line 16: species [R] is in no reaction
+20 errors found, no code generated.

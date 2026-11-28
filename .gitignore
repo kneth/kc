@@ -80,5 +80,3 @@ dkms.conf
 *.synctex.gz
 # Build output
 build/
-src/parser.c
-src/lex.c

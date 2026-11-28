@@ -1,1 +1,2 @@
-Line 33: syntax error at input text .
+Line 33: expected an expression, found '.'
+1 error found, no code generated.

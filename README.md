@@ -136,8 +136,8 @@ program is?), and a list of future enchancement is found in the file
 
 ## Installation and running
 
-kc needs a C17 compiler, [CMake](https://cmake.org) 3.20 or newer, flex and
-bison (or lex and yacc). Nothing else is required.
+kc needs a C17 compiler and [CMake](https://cmake.org) 3.20 or newer.
+Nothing else is required.
 
 ```sh
 cmake -B build -DCMAKE_INSTALL_PREFIX=/usr/local

@@ -9,7 +9,7 @@ epsr = 1.0L-4;
 espa = 1.0L-20;
 
 101: HBrO2              -> P; k> = j0;
-101: Br(-)              -> P; k> = j0;
+102: Br(-)              -> P; k> = j0;
 103: CeIV               -> P; k> = j0;
 104: HOBr               -> P; k> = j0;
 105: BrO2               -> P; k> = j0;

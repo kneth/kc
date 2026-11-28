@@ -8,8 +8,10 @@ current C compilers, and an automated test suite has been added.
 ### Build and tooling
 
 * CMake replaces `kc-inst` and the per-platform Makefiles. Only a C
-  compiler, flex and bison are needed; the parser and lexer are
-  generated at build time.
+  compiler is needed.
+* A hand-written lexer and recursive-descent parser (`src/parser.c`)
+  replace the flex and bison sources, so building kc no longer needs
+  flex and bison. The input language is unchanged.
 * The sources build as C17 (or C23) without warnings under
   `-Wall -Wextra -Wpedantic` on current GCC and clang.
 * `kci` runs kc in mode 3, compiles the model and runs the simulation
@@ -52,8 +54,30 @@ current C compilers, and an automated test suite has been added.
   dynamical variables in mode 5 (`hessian`).
 * A new test model covers the rules of the expression reducer
   (`reduce1`).
+* New test models cover syntax errors (`err-syntax`) and the
+  consistency checks (`err-checks`).
 
 ### Changed results
+
+* kc reports every syntax error in a model, not only the first, and
+  says what it expected. If a model has any error, kc exits with
+  status 1 and generates no code; before, it generated code from the
+  part of the model it had read and exited with status 0.
+* kc checks models for consistency and reports these mistakes as
+  errors: rate constants that do not fit the reaction (a backward rate
+  on a one-way reaction, none on a two-way reaction, an equilibrium
+  without `K`), anything defined twice, a species in `[ ]` that takes
+  part in no reaction, an initial value for a variable without a
+  differential equation, and a constant, initial value or `#parameter`
+  field that uses a variable. Four example models had such mistakes and
+  have been fixed; in `real.des`, two reactions numbered 101 had been
+  merged into one.
+* Numbers in a model are read in double precision instead of single
+  precision, so mode 1 Jacobians and generated constants show the exact
+  values written in the model.
+* The initial values may be left out of a model; they default to 0.
+* An equilibrium's `K = ...` ends with `;` like the other rate
+  constants.
 
 * Mode 1 uses the intended default precision (`epsa` = 1.0e-18) when
   the model sets none. Before, the precision was 0: eight models

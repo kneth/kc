@@ -10,14 +10,14 @@ Constants declared:
   debug = 2.000000e+00
   m = -1.000000e-01
 The Jacobian matrix is:
-J(1, 1) = 8.99999998509884e-01
+J(1, 1) = 9.00000000000000e-01
 J(1, 2) = 1.00000000000000e+00
 J(2, 1) = -1.00000000000000e+00
-J(2, 2) = -1.00000001490116e-01
+J(2, 2) = -1.00000000000000e-01
 
 The eigenvalues are:
-  (3.9999999851e-01, -8.6602540378e-01)
-  (3.9999999851e-01, 8.6602540378e-01)
+  (4.0000000000e-01, -8.6602540378e-01)
+  (4.0000000000e-01, 8.6602540378e-01)
 
 The eigenvectors are:
   (1.0000000000e+00, 1.4874168143e-17)
@@ -29,6 +29,6 @@ The eigenvectors are:
 No. 0,REAL part: Left 4.000000e-01,  Right 4.000000e-01, Diff. 0.000000e+00
 No. 0,IM   part: Left -8.660254e-01,  Right -8.660254e-01, Diff 1.110223e-16
 No. 1,REAL part: Left -9.500000e-01,  Right -9.500000e-01, Diff. -2.220446e-16
-No. 1,IM   part: Left -8.660254e-02,  Right -8.660254e-02, Diff 9.714451e-17
+No. 1,IM   part: Left -8.660254e-02,  Right -8.660254e-02, Diff 5.551115e-17
 
 The eigenvalues 

@@ -1,1 +1,2 @@
-Line 7: syntax error at input text ;
+Line 7: expected ',', found ';'
+1 error found, no code generated.

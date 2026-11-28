@@ -23,11 +23,10 @@
 #include <unistd.h>
 #include "codecall.h"
 #include "misc.h"
+#include "parser.h"
 #include "symbmath.h"
 
 int    mode;
-
-#include "parser.c"
 
 int main(int argc, char *argv[]) {
 
@@ -68,7 +67,10 @@ int main(int argc, char *argv[]) {
       (void) fprintf(stderr, "Warning: Option %c ignored.\n", optopt);
       break;
     } /* switch */
-  (void) yyparse();
+  if ((j=parse()) != 0) {
+    (void) fprintf(stderr, "%d error%s found, no code generated.\n", j, j==1 ? "" : "s");
+    exit(EXIT_FAILURE);
+  }
   CodeGenCall(mode);
   expr_free_all();
 } 

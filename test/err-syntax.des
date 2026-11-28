@@ -1,0 +1,14 @@
+/* Syntax errors: kc reports each one and generates no code. */
+k1 = 2.0 *;
+k2 = 3.0 @ 4;
+#print [A], ;
+
+1: A -> B; k> = k1
+2: B + -> C; k> = k2;
+3: C -> A; k> = 1.0;
+4: A <- B; k> = 1.0;
+
+x = 1.0;
+[A](0) = 1.0;
+y' = -y;
+[B](0) = (2.0;

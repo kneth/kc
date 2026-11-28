@@ -22,9 +22,6 @@ jobs:
       CC: ${{ matrix.cc }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install flex and bison
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y flex bison
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_STANDARD=${{ matrix.std }} -DCMAKE_C_FLAGS=-Werror -DKC_SANITIZE=${{ matrix.sanitize || 'OFF' }}
       - name: Build
