@@ -172,7 +172,7 @@ static void scan_number(token_t *t, int c) {
   for (char *p = number; *p != '\0'; p++)
     if (*p == 'l' || *p == 'L')
       *p = 'e';
-  t->value = (double)strtof(number, NULL);
+  t->value = strtod(number, NULL);
 }
 
 static void scan_name(token_t *t, int c) {
